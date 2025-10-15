@@ -73,18 +73,18 @@ export default function NavBar() {
         <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 pb-4">
           <div className="mt-2 rounded-xl bg-white/95 dark:bg-black/60 shadow-lg p-4 backdrop-blur-sm">
             <div className="flex flex-col gap-2">
-              <Link href="#services" onClick={() => setMobileOpen(false)} className="block text-lg px-4 py-3 rounded-lg hover:bg-slate-50 dark:hover:bg-white/5 focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-300">Services</Link>
-              <Link href="#how" onClick={() => setMobileOpen(false)} className="block text-lg px-4 py-3 rounded-lg hover:bg-slate-50 dark:hover:bg-white/5 focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-300">How it works</Link>
-              <Link href="#track" onClick={() => setMobileOpen(false)} className="block text-lg px-4 py-3 rounded-lg hover:bg-slate-50 dark:hover:bg-white/5 focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-300">Track</Link>
+              <Link href="/services" onClick={() => setMobileOpen(false)} className="block text-lg px-4 py-3 rounded-lg hover:bg-slate-50 dark:hover:bg-white/5 focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-300">Services</Link>
+              <Link href="/#how" onClick={() => setMobileOpen(false)} className="block text-lg px-4 py-3 rounded-lg hover:bg-slate-50 dark:hover:bg-white/5 focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-300">How it works</Link>
+              <Link href="/track" onClick={() => setMobileOpen(false)} className="block text-lg px-4 py-3 rounded-lg hover:bg-slate-50 dark:hover:bg-white/5 focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-300">Track</Link>
 
               <div className="pt-1 border-t border-slate-100 dark:border-slate-800" />
 
               <Link href="/book" onClick={() => setMobileOpen(false)} className="block text-center rounded-lg bg-emerald-600 text-white px-4 py-3 font-semibold shadow-md focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-300">Book Pickup</Link>
 
-              <div className="flex gap-3 mt-2 justify-center">
-                <Link href="#contact" className="text-sm px-3 py-2 rounded-md hover:underline focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-300">Contact</Link>
-                <Link href="#privacy" className="text-sm px-3 py-2 rounded-md hover:underline focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-300">Privacy</Link>
-              </div>
+              {/* <div className="flex gap-3 mt-2 justify-center">
+                <Link href="/#contact" className="text-sm px-3 py-2 rounded-md hover:underline focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-300">Contact</Link>
+                <Link href="/#privacy" className="text-sm px-3 py-2 rounded-md hover:underline focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-300">Privacy</Link>
+              </div> */}
             </div>
           </div>
         </div>

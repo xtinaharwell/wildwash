@@ -144,15 +144,6 @@ export default function Home() {
             </div>
           </div>
         </section>
-
-        {/* Footer */}
-        <footer className="mt-16 text-sm text-slate-600 dark:text-slate-400 flex flex-col sm:flex-row items-center justify-between gap-4">
-          <div>© {new Date().getFullYear()} Wild Wash · wildwash.co</div>
-          <div className="flex gap-4">
-            <a href="/privacy">Privacy</a>
-            <a href="/terms">Terms</a>
-          </div>
-        </footer>
       </main>
     </div>
   );
