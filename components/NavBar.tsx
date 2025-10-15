@@ -84,7 +84,7 @@ export default function NavBar() {
 
               <div className="flex gap-3 mt-2 justify-center">
                 <Link href="/contact" className="text-sm px-3 py-2 rounded-md hover:underline focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-300">Contact</Link>
-                {/* <Link href="/#privacy" className="text-sm px-3 py-2 rounded-md hover:underline focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-300">Privacy</Link> */}
+                <Link href="/admin" className="text-sm px-3 py-2 rounded-md hover:underline focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-300">Admin</Link>
               </div>
             </div>
           </div>
