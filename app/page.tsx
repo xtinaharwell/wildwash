@@ -1,40 +1,25 @@
 "use client"
 
-import Image from "next/image";
+import React from "react";
+import Link from "next/link";
 
 export default function Home() {
   return (
     <div className="min-h-screen bg-gradient-to-b from-white via-[#f8fafc] to-[#eef2ff] dark:from-[#071025] dark:via-[#041022] dark:to-[#011018] text-slate-900 dark:text-slate-100">
-      <header className="max-w-6xl mx-auto px-6 py-6 flex items-center justify-between">
-        <div className="flex items-center gap-4">
-          <div className="w-12 h-12 rounded-2xl bg-emerald-500/90 flex items-center justify-center shadow-md">
-            <span className="font-bold text-white">WW</span>
-          </div>
-          <div>
-            <h1 className="text-lg font-semibold">Wild Wash</h1>
-            <p className="text-xs opacity-80">Smart laundry, cleaning & fumigation — tracked and stress-free.</p>
-          </div>
-        </div>
-
-        <nav className="flex items-center gap-4">
-          <a className="text-sm hover:underline" href="#services">Services</a>
-          <a className="text-sm hover:underline" href="#how">How it works</a>
-          <a className="text-sm hover:underline" href="#track">Track</a>
-          <a className="rounded-full bg-emerald-600 text-white px-4 py-2 text-sm font-medium hover:opacity-95" href="#book">Book Pickup</a>
-        </nav>
-      </header>
-
-      <main className="max-w-6xl mx-auto px-6 pb-20">
+      {/* main content */}
+      <main className="max-w-6xl mx-auto px-6 pb-20 pt-8">
         {/* HERO */}
         <section className="grid grid-cols-1 md:grid-cols-12 gap-8 items-center py-8">
           <div className="md:col-span-7">
             <h2 className="text-4xl sm:text-5xl font-extrabold leading-tight">Laundry without the worry. Track every item from pickup to delivery.</h2>
-            <p className="mt-4 text-lg text-slate-600 dark:text-slate-300 max-w-2xl">Wild Wash combines secure item tagging, real‑time status updates, pickup on demand, and professional fumigation & cleaning — so nothing gets lost and you always know when your things are ready.</p>
+            <p className="mt-4 text-lg text-slate-600 dark:text-slate-300 max-w-2xl">Wild Wash combines secure item tagging, real-time status updates, pickup on demand, and professional fumigation & cleaning — so nothing gets lost and you always know when your things are ready.</p>
 
             <div className="mt-6 flex flex-wrap gap-3">
-              <a href="#book" className="inline-flex items-center gap-2 bg-emerald-600 text-white px-5 py-3 rounded-full font-semibold shadow hover:scale-[1.01] transition-transform">Book a pickup</a>
-              <a href="#track" className="inline-flex items-center gap-2 border border-slate-200 dark:border-slate-700 px-4 py-3 rounded-full text-sm">Track an order</a>
+              <a href="/book" className="inline-flex items-center gap-2 bg-emerald-600 text-white px-5 py-3 rounded-full font-semibold shadow hover:scale-[1.01] transition-transform">Book a pickup</a>
+              <a href="/track" className="inline-flex items-center gap-2 border border-slate-200 dark:border-slate-700 px-4 py-3 rounded-full text-sm">Track an order</a>
+              <a href="#how" className="inline-flex items-center gap-2 border border-slate-200 dark:border-slate-700 px-4 py-3 rounded-full text-sm">How it works</a>
             </div>
+            
 
             <div className="mt-8 grid grid-cols-2 sm:grid-cols-4 gap-3">
               <Badge label="Contactless pickup" />
@@ -62,14 +47,29 @@ export default function Home() {
         </section>
 
         {/* Services */}
+                        
         <section id="services" className="mt-10">
-          <h3 className="text-2xl font-bold">Services</h3>
+          <Link
+                    href="/services"
+                    aria-label="Go to Wild Wash home"
+                    title="Wild Wash — Home"
+                    className="w-48 h-12 rounded-2xl bg-emerald-500/95 flex items-center justify-center shadow-md shrink-0 focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-300"
+                    >
+                      <h3 className="text-2xl font-bold">Services</h3>
+          </Link>
           <p className="mt-2 text-slate-600 dark:text-slate-300 max-w-3xl">From everyday laundry to specialized fumigation and deep-clean for mattresses, we offer transparent pricing and item-level tracking so you always know where your belongings are.</p>
 
           <div className="mt-6 grid grid-cols-1 md:grid-cols-3 gap-6">
             <ServiceCard title="Wash & Fold" price="From KSh 250/kg" desc="Quick turnaround, gentle detergents, and item-by-item tracking."/>
             <ServiceCard title="Fumigation & Sanitization" price="From KSh 1,500" desc="Professional treatments for pests and allergens with certification."/>
             <ServiceCard title="Pickup & Delivery" price="KSh 150 (zones)" desc="Contactless pickup — leave items outside and we’ll collect them."/>
+          </div>
+
+          {/* See more packages button - placed just before How it works */}
+          <div className="mt-8 flex justify-center">
+          <Link href="/services" className="inline-flex items-center gap-2 border border-slate-200 dark:border-slate-700 px-5 py-3 rounded-full text-sm font-semibold hover:shadow-md focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-300" aria-label="See more packages">
+          See more packages
+          </Link>
           </div>
         </section>
 
@@ -97,8 +97,8 @@ export default function Home() {
             </ul>
 
             <div className="mt-6 flex gap-3">
-              <a className="rounded-full bg-emerald-600 text-white px-4 py-2 font-semibold" href="#book">Book now</a>
-              <a className="rounded-full border border-slate-200 px-4 py-2 font-medium" href="#contact">Get a quote</a>
+              <a className="rounded-full bg-emerald-600 text-white px-4 py-2 font-semibold" href="/book">Book now</a>
+              <a className="rounded-full border border-slate-200 px-4 py-2 font-medium" href="/contact">Get a quote</a>
             </div>
           </div>
 
@@ -128,7 +128,7 @@ export default function Home() {
             <h4 className="font-semibold">Ready to simplify laundry day?</h4>
             <p className="mt-2 text-sm text-slate-700 dark:text-slate-300">Schedule a pickup, get real-time tracking, and experience secure handling for every item.</p>
             <div className="mt-4 flex gap-3">
-              <a id="book" href="#" className="rounded-full bg-emerald-600 text-white px-4 py-3 font-semibold">Book pickup</a>
+              <a id="book" href="/book" className="rounded-full bg-emerald-600 text-white px-4 py-3 font-semibold">Book pickup</a>
               <a href="mailto:hello@wildwash.co" className="rounded-full border border-emerald-200 px-4 py-3">Contact sales</a>
             </div>
           </div>
@@ -149,9 +149,8 @@ export default function Home() {
         <footer className="mt-16 text-sm text-slate-600 dark:text-slate-400 flex flex-col sm:flex-row items-center justify-between gap-4">
           <div>© {new Date().getFullYear()} Wild Wash · wildwash.co</div>
           <div className="flex gap-4">
-            <a href="#">Privacy</a>
-            <a href="#">Terms</a>
-            <a href="#">Careers</a>
+            <a href="/privacy">Privacy</a>
+            <a href="/terms">Terms</a>
           </div>
         </footer>
       </main>
@@ -162,7 +161,7 @@ export default function Home() {
 /* --- Small presentational components --- */
 function Badge({ label }: { label: string }){
   return (
-    <div className="rounded-full bg-white/70 dark:bg-white/5 px-3 py-2 text-sm font-medium shadow">{label}</div>
+    <div className="rounded-full bg-white/70 dark:bg-white/5 px-3 py-2 text-sm font-medium shadow select-none">{label}</div>
   )
 }
 
