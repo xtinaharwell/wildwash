@@ -33,7 +33,7 @@ export default function Footer() {
           </div>
 
           <div className="mt-6 text-sm text-slate-600 dark:text-slate-300">
-            <div>Phone: <a href="tel:+254705415948" className="font-medium text-slate-800 dark:text-slate-100">+254 700 000 000</a></div>
+            <div>Phone: <a href="tel:+254705415948" className="font-medium text-slate-800 dark:text-slate-100">+254 705 415948</a></div>
             <div className="mt-1">Email: <a href="mailto:hello@wildwash.co" className="font-medium text-slate-800 dark:text-slate-100">hello@wildwash.co</a></div>
             {/* <div className="mt-2">Service hours: Mon–Sat 7:00–19:00 · Sun 8:00–14:00</div> */}
           </div>
