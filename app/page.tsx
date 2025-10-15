@@ -1,9 +1,47 @@
 "use client"
 
-import React from "react";
+import React, { useEffect, useState } from "react";
 import Link from "next/link";
 
 export default function Home() {
+  const [offersExpiringSoon, setOffersExpiringSoon] = useState(false);
+
+  useEffect(() => {
+    let mounted = true;
+    async function checkOffers() {
+      try {
+        // try real endpoint first (if you have it)
+        const res = await fetch('/api/offers');
+        let data;
+        if (res.ok) {
+          data = await res.json();
+        } else {
+          // fallback sample offers if API not available
+          data = [
+            { id: 'o1', title: '25% off Standard Wash', expires: new Date(Date.now() + 2 * 24 * 60 * 60 * 1000).toISOString() },
+            { id: 'o2', title: 'Free Pickup for New Customers', expires: new Date(Date.now() + 6 * 24 * 60 * 60 * 1000).toISOString() }
+          ];
+        }
+
+        const now = Date.now();
+        const threeDays = 3 * 24 * 60 * 60 * 1000;
+        const soon = data.some((o: any) => {
+          if (!o.expires) return false;
+          const exp = new Date(o.expires).getTime();
+          return exp > now && exp - now <= threeDays;
+        });
+
+        if (mounted) setOffersExpiringSoon(Boolean(soon));
+      } catch (err) {
+        // if fetch fails, keep default false
+        if (mounted) setOffersExpiringSoon(false);
+      }
+    }
+
+    checkOffers();
+    return () => { mounted = false; };
+  }, []);
+
   return (
     <div className="min-h-screen bg-gradient-to-b from-white via-[#f8fafc] to-[#eef2ff] dark:from-[#071025] dark:via-[#041022] dark:to-[#011018] text-slate-900 dark:text-slate-100">
       {/* main content */}
@@ -14,12 +52,23 @@ export default function Home() {
             <h2 className="text-4xl sm:text-5xl font-extrabold leading-tight">Laundry without the worry. Track every item from pickup to delivery.</h2>
             <p className="mt-4 text-lg text-slate-600 dark:text-slate-300 max-w-2xl">Wild Wash combines secure item tagging, real-time status updates, pickup on demand, and professional fumigation & cleaning — so nothing gets lost and you always know when your things are ready.</p>
 
-            <div className="mt-6 flex flex-wrap gap-3">
-              <a href="/book" className="inline-flex items-center gap-2 bg-emerald-600 text-white px-5 py-3 rounded-full font-semibold shadow hover:scale-[1.01] transition-transform">Book a pickup</a>
-              <a href="/track" className="inline-flex items-center gap-2 border border-slate-200 dark:border-slate-700 px-4 py-3 rounded-full text-sm">Track an order</a>
+            <div className="mt-6 flex flex-wrap gap-3 items-center">
+              <Link href="/book" className="inline-flex items-center gap-2 bg-emerald-600 text-white px-5 py-3 rounded-full font-semibold shadow hover:scale-[1.01] transition-transform">Book a pickup</Link>
+
+              <Link href="/offers" className={`inline-flex items-center gap-2 border ${offersExpiringSoon ? 'border-amber-400 text-amber-600 bg-amber-50' : 'border-slate-200 text-slate-700'} px-4 py-3 rounded-full text-sm font-semibold hover:shadow-sm transition` } aria-label="This week's offers">
+                This week's offers
+                {offersExpiringSoon && (
+                  <span className="ml-2 inline-flex items-center gap-2">
+                    <span className="w-2 h-2 bg-amber-500 rounded-full animate-pulse" />
+                    <span className="text-xs bg-amber-500 text-white px-2 py-0.5 rounded-full">Ends soon</span>
+                  </span>
+                )}
+              </Link>
+
+              <Link href="/orders" className="inline-flex items-center gap-2 border border-slate-200 dark:border-slate-700 px-4 py-3 rounded-full text-sm">View your orders</Link>
+              <Link href="/track" className="inline-flex items-center gap-2 border border-slate-200 dark:border-slate-700 px-4 py-3 rounded-full text-sm">Track an order</Link>
               <a href="#how" className="inline-flex items-center gap-2 border border-slate-200 dark:border-slate-700 px-4 py-3 rounded-full text-sm">How it works</a>
             </div>
-            
 
             <div className="mt-8 grid grid-cols-2 sm:grid-cols-4 gap-3">
               <Badge label="Contactless pickup" />
@@ -34,9 +83,9 @@ export default function Home() {
               <div className="text-sm font-medium mb-4">Live sample — your order</div>
 
               <div className="flex flex-col gap-3">
-                <StatusRow label="Received" subtitle="We picked up your bundle — 12 items" time="10:12 AM"/>
-                <StatusRow label="Washing" subtitle="Cycle in progress — 40%" time="10:25 AM"/>
-                <StatusRow label="Ready" subtitle="Drying & folding complete — ready for delivery" time="14:10 PM" ready/>
+                <StatusRow label="Received" subtitle="We picked up your bundle — 12 items" time="10:12 AM" />
+                <StatusRow label="Washing" subtitle="Cycle in progress — 40%" time="10:25 AM" />
+                <StatusRow label="Ready" subtitle="Drying & folding complete — ready for delivery" time="14:10 PM" ready />
               </div>
 
               <div className="mt-5 text-xs text-slate-500">Notifications via push, SMS & email — automatic pickup options available.</div>
@@ -47,29 +96,28 @@ export default function Home() {
         </section>
 
         {/* Services */}
-                        
         <section id="services" className="mt-10">
           <Link
-                    href="/services"
-                    aria-label="Go to Wild Wash home"
-                    title="Wild Wash — Home"
-                    className="w-48 h-12 rounded-2xl bg-emerald-500/95 flex items-center justify-center shadow-md shrink-0 focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-300"
-                    >
-                      <h3 className="text-2xl font-bold">Services</h3>
+            href="/services"
+            aria-label="Go to Wild Wash home"
+            title="Wild Wash — Home"
+            className="w-48 h-12 rounded-2xl bg-emerald-500/95 flex items-center justify-center shadow-md shrink-0 focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-300"
+          >
+            <h3 className="text-2xl font-bold">Services</h3>
           </Link>
           <p className="mt-2 text-slate-600 dark:text-slate-300 max-w-3xl">From everyday laundry to specialized fumigation and deep-clean for mattresses, we offer transparent pricing and item-level tracking so you always know where your belongings are.</p>
 
           <div className="mt-6 grid grid-cols-1 md:grid-cols-3 gap-6">
-            <ServiceCard title="Wash & Fold" price="From KSh 250/kg" desc="Quick turnaround, gentle detergents, and item-by-item tracking."/>
-            <ServiceCard title="Fumigation & Sanitization" price="From KSh 1,500" desc="Professional treatments for pests and allergens with certification."/>
-            <ServiceCard title="Pickup & Delivery" price="KSh 150 (zones)" desc="Contactless pickup — leave items outside and we’ll collect them."/>
+            <ServiceCard title="Wash & Fold" price="From KSh 250/kg" desc="Quick turnaround, gentle detergents, and item-by-item tracking." />
+            <ServiceCard title="Fumigation & Sanitization" price="From KSh 1,500" desc="Professional treatments for pests and allergens with certification." />
+            <ServiceCard title="Pickup & Delivery" price="KSh 150 (zones)" desc="Contactless pickup — leave items outside and we’ll collect them." />
           </div>
 
           {/* See more packages button - placed just before How it works */}
           <div className="mt-8 flex justify-center">
-          <Link href="/services" className="inline-flex items-center gap-2 border border-slate-200 dark:border-slate-700 px-5 py-3 rounded-full text-sm font-semibold hover:shadow-md focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-300" aria-label="See more packages">
-          See more packages
-          </Link>
+            <Link href="/services" className="inline-flex items-center gap-2 border border-slate-200 dark:border-slate-700 px-5 py-3 rounded-full text-sm font-semibold hover:shadow-md focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-300" aria-label="See more packages">
+              See more packages
+            </Link>
           </div>
         </section>
 
@@ -97,8 +145,8 @@ export default function Home() {
             </ul>
 
             <div className="mt-6 flex gap-3">
-              <a className="rounded-full bg-emerald-600 text-white px-4 py-2 font-semibold" href="/book">Book now</a>
-              <a className="rounded-full border border-slate-200 px-4 py-2 font-medium" href="/contact">Get a quote</a>
+              <Link href="/book" className="rounded-full bg-emerald-600 text-white px-4 py-2 font-semibold">Book now</Link>
+              <Link href="/contact" className="rounded-full border border-slate-200 px-4 py-2 font-medium">Get a quote</Link>
             </div>
           </div>
 
@@ -128,7 +176,7 @@ export default function Home() {
             <h4 className="font-semibold">Ready to simplify laundry day?</h4>
             <p className="mt-2 text-sm text-slate-700 dark:text-slate-300">Schedule a pickup, get real-time tracking, and experience secure handling for every item.</p>
             <div className="mt-4 flex gap-3">
-              <a id="book" href="/book" className="rounded-full bg-emerald-600 text-white px-4 py-3 font-semibold">Book pickup</a>
+              <Link id="book" href="/book" className="rounded-full bg-emerald-600 text-white px-4 py-3 font-semibold">Book pickup</Link>
               <a href="mailto:hello@wildwash.co" className="rounded-full border border-emerald-200 px-4 py-3">Contact sales</a>
             </div>
           </div>
@@ -140,7 +188,7 @@ export default function Home() {
             </div>
             <div className="mt-4">
               <div className="text-xs text-slate-500">Phone</div>
-              <div className="font-medium">+254 700 000 000</div>
+              <div className="font-medium">+254 705 415948</div>
             </div>
           </div>
         </section>

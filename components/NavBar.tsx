@@ -43,7 +43,7 @@ export default function NavBar() {
 
           <nav className="hidden md:flex items-center gap-3">
             <Link href="/services" className="text-sm px-3 py-2 rounded-md hover:underline focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-300">Services</Link>
-            
+            <Link href="/orders" className="text-sm px-3 py-2 rounded-md hover:underline focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-300">Your Orders</Link>
             <Link href="/track" className="text-sm px-3 py-2 rounded-md hover:underline focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-300">Track</Link>
             <Link href="/book" className="ml-2 inline-flex items-center gap-2 rounded-full bg-emerald-600 text-white px-4 py-2 text-sm font-medium shadow-md hover:brightness-95 focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-300">Book Pickup</Link>
           </nav>
@@ -74,6 +74,7 @@ export default function NavBar() {
           <div className="mt-2 rounded-xl bg-white/95 dark:bg-black/60 shadow-lg p-4 backdrop-blur-sm">
             <div className="flex flex-col gap-2">
               <Link href="/services" onClick={() => setMobileOpen(false)} className="block text-lg px-4 py-3 rounded-lg hover:bg-slate-50 dark:hover:bg-white/5 focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-300">Services</Link>
+              <Link href="/orders" onClick={() => setMobileOpen(false)} className="block text-lg px-4 py-3 rounded-lg hover:bg-slate-50 dark:hover:bg-white/5 focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-300">Your Orders</Link>
               <Link href="/#how" onClick={() => setMobileOpen(false)} className="block text-lg px-4 py-3 rounded-lg hover:bg-slate-50 dark:hover:bg-white/5 focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-300">How it works</Link>
               <Link href="/track" onClick={() => setMobileOpen(false)} className="block text-lg px-4 py-3 rounded-lg hover:bg-slate-50 dark:hover:bg-white/5 focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-300">Track</Link>
 
@@ -81,10 +82,10 @@ export default function NavBar() {
 
               <Link href="/book" onClick={() => setMobileOpen(false)} className="block text-center rounded-lg bg-emerald-600 text-white px-4 py-3 font-semibold shadow-md focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-300">Book Pickup</Link>
 
-              {/* <div className="flex gap-3 mt-2 justify-center">
-                <Link href="/#contact" className="text-sm px-3 py-2 rounded-md hover:underline focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-300">Contact</Link>
-                <Link href="/#privacy" className="text-sm px-3 py-2 rounded-md hover:underline focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-300">Privacy</Link>
-              </div> */}
+              <div className="flex gap-3 mt-2 justify-center">
+                <Link href="/contact" className="text-sm px-3 py-2 rounded-md hover:underline focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-300">Contact</Link>
+                {/* <Link href="/#privacy" className="text-sm px-3 py-2 rounded-md hover:underline focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-300">Privacy</Link> */}
+              </div>
             </div>
           </div>
         </div>
