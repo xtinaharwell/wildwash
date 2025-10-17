@@ -4,93 +4,301 @@ import React, { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 
-type OrderStatus = "Received" | "Washing" | "Drying" | "Ready" | "Delivered" | "Cancelled";
+/**
+ * Orders page (Next.js client component)
+ * - Fetches paginated orders from /api/orders/
+ * - Supports search, status filter, server-side pagination
+ * - Includes a small "Create order" form that posts to /api/orders/
+ *
+ * Auth note: This component tries two auth modes:
+ *  1) If `localStorage.getItem('access_token')` exists it will send
+ *     `Authorization: Bearer <token>` header (typical SPA JWT flow).
+ *  2) Otherwise it will use cookie session auth and include credentials
+ *     (credentials: 'include') and X-CSRFToken header if found.
+ */
+
+type BackendOrder = {
+  id: number;
+  code: string;
+  created_at: string;
+  items: number;
+  weight_kg?: number | string | null;
+  package: string; // service name
+  price?: string | number | null;
+  price_display?: string | null;
+  status: 'requested' | 'picked' | 'in_progress' | 'ready' | 'delivered' | 'cancelled' | string;
+  estimated_delivery?: string | null;
+  delivered_at?: string | null;
+};
 
 type Order = {
   code: string;
   date: string; // ISO
   items: number;
-  weightKg?: number;
+  weightKg?: number | null;
   package: string;
-  price: string;
-  status: OrderStatus;
-  eta?: string;
-  deliveredAt?: string;
+  price: string; // formatted for display
+  status: "Received" | "Washing" | "Drying" | "Ready" | "Delivered" | "Cancelled";
+  eta?: string | null;
+  deliveredAt?: string | null;
 };
 
-export default function OrdersPage() {
+const statusMap: Record<string, Order['status']> = {
+  requested: "Received",
+  picked: "Washing",
+  in_progress: "Drying",
+  ready: "Ready",
+  delivered: "Delivered",
+  cancelled: "Cancelled",
+};
+
+const frontendToBackendStatus: Record<string, string> = {
+  Received: 'requested',
+  Washing: 'picked',
+  Drying: 'in_progress',
+  Ready: 'ready',
+  Delivered: 'delivered',
+  Cancelled: 'cancelled',
+};
+
+function backendToFrontend(o: BackendOrder): Order {
+  const price = o.price_display ?? (o.price ? `KSh ${Number(o.price).toLocaleString()}` : "");
+  const weightKg = o.weight_kg ? Number(o.weight_kg) : undefined;
+  const eta = o.estimated_delivery ? new Date(o.estimated_delivery).toLocaleString() : undefined;
+  const deliveredAt = o.delivered_at ? new Date(o.delivered_at).toLocaleString() : undefined;
+
+  return {
+    code: o.code || `WW-${o.id}`,
+    date: o.created_at,
+    items: o.items ?? 0,
+    weightKg,
+    package: o.package ?? `Package ${o.id}`,
+    price,
+    status: statusMap[o.status] ?? "Received",
+    eta,
+    deliveredAt,
+  };
+}
+
+function getCookie(name: string) {
+  if (typeof document === 'undefined') return null;
+  const cookies = document.cookie ? document.cookie.split('; ') : [];
+  for (const c of cookies) {
+    const [k, ...v] = c.split('=');
+    if (k === name) return decodeURIComponent(v.join('='));
+  }
+  return null;
+}
+
+export default function OrdersPage(): JSX.Element {
   const router = useRouter();
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
   const [query, setQuery] = useState("");
-  const [statusFilter, setStatusFilter] = useState<"All" | OrderStatus>("All");
+  const [statusFilter, setStatusFilter] = useState<"All" | Order['status']>("All");
   const [page, setPage] = useState(1);
-  const pageSize = 6;
+  const [pageSize] = useState(6);
+  const [totalPages, setTotalPages] = useState(1);
+  const [refreshCounter, setRefreshCounter] = useState(0);
+  const [creating, setCreating] = useState(false);
+  const [createLoading, setCreateLoading] = useState(false);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
-  // sample data (replace with real API call)
-  useEffect(() => {
-    setLoading(true);
-    const sample: Order[] = [
-      { code: "WW-12345", date: "2025-10-14T10:12:00Z", items: 12, weightKg: 4.2, package: "Standard (Wash + Fold)", price: "KSh 1,680", status: "Washing", eta: "Today, 14:10" },
-      { code: "WW-99999", date: "2025-10-13T15:00:00Z", items: 6, weightKg: 2.3, package: "Premium (Delicate & Care)", price: "KSh 1,610", status: "Ready", eta: "Tomorrow, 09:00" },
-      { code: "WW-55555", date: "2025-09-30T08:00:00Z", items: 8, weightKg: 3.1, package: "Express", price: "KSh 2,100", status: "Delivered", deliveredAt: "2025-10-01T11:40:00Z" },
-      { code: "WW-22222", date: "2025-10-01T09:30:00Z", items: 4, weightKg: 1.4, package: "Standard", price: "KSh 900", status: "Received" },
-      { code: "WW-77777", date: "2025-09-25T12:10:00Z", items: 10, weightKg: 5.3, package: "Premium", price: "KSh 2,500", status: "Delivered", deliveredAt: "2025-09-26T10:00:00Z" },
-      { code: "WW-88888", date: "2025-09-20T07:20:00Z", items: 3, weightKg: 1.0, package: "Standard", price: "KSh 450", status: "Cancelled" },
-      { code: "WW-44444", date: "2025-10-10T11:00:00Z", items: 7, weightKg: 2.8, package: "Wash Only", price: "KSh 1,200", status: "Drying" },
-    ];
+  // create form state
+  const [serviceId, setServiceId] = useState<number | null>(null);
+  const [pickupAddress, setPickupAddress] = useState("");
+  const [dropoffAddress, setDropoffAddress] = useState("");
+  const [urgency, setUrgency] = useState(1);
+  const [items, setItems] = useState(1);
+  const [packageCount, setPackageCount] = useState(1);
+  const [weightKg, setWeightKg] = useState<number | ''>('');
+  const [price, setPrice] = useState<string>("");
+  const [estimatedDelivery, setEstimatedDelivery] = useState<string>("");
 
-    // simulate network
-    const t = setTimeout(() => {
-      setOrders(sample);
-      setLoading(false);
-    }, 500);
-
-    return () => clearTimeout(t);
-  }, []);
-
-  const filtered = useMemo(() => {
-    const q = query.trim().toLowerCase();
-    return orders.filter((o) => {
-      if (statusFilter !== "All" && o.status !== statusFilter) return false;
-      if (!q) return true;
-      return (
-        o.code.toLowerCase().includes(q) ||
-        o.package.toLowerCase().includes(q) ||
-        o.price.toLowerCase().includes(q)
-      );
-    });
-  }, [orders, query, statusFilter]);
-
-  const totalPages = Math.max(1, Math.ceil(filtered.length / pageSize));
-  const pageItems = filtered.slice((page - 1) * pageSize, page * pageSize);
-
-  useEffect(() => {
-    // reset page if filter/search changes
-    setPage(1);
-  }, [query, statusFilter]);
-
-  function gotoTrack(code: string) {
-    // navigate to track page with code query param
-    router.push(`/track?code=${encodeURIComponent(code)}`);
-  }
-
-  function calcSummary() {
-    const total = orders.length;
+  // summary computed from current fetched orders
+  const summary = useMemo(() => {
+    const total = orders.length; // note: this reflects only current page
     const completed = orders.filter((o) => o.status === "Delivered").length;
     const active = orders.filter((o) => o.status !== "Delivered" && o.status !== "Cancelled").length;
     return { total, completed, active };
+  }, [orders]);
+
+  useEffect(() => {
+    setPage(1); // reset to first page when filters change
+  }, [query, statusFilter]);
+
+  useEffect(() => {
+    let mounted = true;
+    async function fetchOrders() {
+      setLoading(true);
+      setErrorMessage(null);
+
+      const params = new URLSearchParams();
+      params.set('page', String(page));
+      params.set('page_size', String(pageSize));
+      if (statusFilter !== 'All') params.set('status', frontendToBackendStatus[statusFilter]);
+      if (query) params.set('search', query);
+
+      const url = `/api/orders/?${params.toString()}`;
+
+      try {
+        const token = typeof window !== 'undefined' ? localStorage.getItem('access_token') : null;
+        const headers: Record<string, string> = { 'Accept': 'application/json' };
+        let res: Response;
+
+        if (token) {
+          headers['Authorization'] = `Bearer ${token}`;
+          res = await fetch(url, { headers });
+        } else {
+          // session cookie flow
+          const csrftoken = getCookie('csrftoken');
+          if (csrftoken) headers['X-CSRFToken'] = csrftoken;
+          res = await fetch(url, { headers, credentials: 'include' });
+        }
+
+        if (!res.ok) throw new Error(`Failed to load orders: ${res.status}`);
+        const data = await res.json();
+
+        // support both list and DRF pagination
+        let list: BackendOrder[] = [];
+        let count = 0;
+        if (Array.isArray(data)) {
+          list = data as BackendOrder[];
+          count = list.length;
+        } else {
+          list = (data.results ?? []) as BackendOrder[];
+          count = typeof data.count === 'number' ? data.count : list.length;
+        }
+
+        if (!mounted) return;
+        setOrders(list.map(backendToFrontend));
+        setTotalPages(Math.max(1, Math.ceil(count / pageSize)));
+        setLoading(false);
+      } catch (err: any) {
+        console.error(err);
+        if (!mounted) return;
+        setErrorMessage(err.message ?? 'Failed to load orders');
+        setOrders([]);
+        setLoading(false);
+      }
+    }
+
+    fetchOrders();
+    return () => { mounted = false; };
+  }, [page, pageSize, statusFilter, query, refreshCounter]);
+
+  function gotoTrack(code: string) {
+    router.push(`/track?code=${encodeURIComponent(code)}`);
   }
 
-  const summary = calcSummary();
+  async function handleCreate(e?: React.FormEvent) {
+    if (e) e.preventDefault();
+    setCreateLoading(true);
+    setErrorMessage(null);
+
+    try {
+      const token = typeof window !== 'undefined' ? localStorage.getItem('access_token') : null;
+      const headers: Record<string, string> = { 'Content-Type': 'application/json', 'Accept': 'application/json' };
+      let res: Response;
+
+      const payload = {
+        service: serviceId,
+        pickup_address: pickupAddress,
+        dropoff_address: dropoffAddress,
+        urgency,
+        items,
+        package: packageCount,
+        weight_kg: weightKg === '' ? null : Number(weightKg),
+        price: price ? String(price).replace(/[, ]/g, '') : null,
+        estimated_delivery: estimatedDelivery || null,
+      };
+
+      if (token) {
+        headers['Authorization'] = `Bearer ${token}`;
+        res = await fetch('/api/orders/', { method: 'POST', headers, body: JSON.stringify(payload) });
+      } else {
+        const csrftoken = getCookie('csrftoken');
+        if (csrftoken) headers['X-CSRFToken'] = csrftoken;
+        res = await fetch('/api/orders/', { method: 'POST', headers, body: JSON.stringify(payload), credentials: 'include' });
+      }
+
+      if (!res.ok) {
+        const text = await res.text();
+        throw new Error(`Create failed ${res.status}: ${text}`);
+      }
+
+      const created: BackendOrder = await res.json();
+
+      // after create refresh list (go to page 1 to show newest)
+      setPage(1);
+      setRefreshCounter((c) => c + 1);
+
+      // reset form and close
+      setServiceId(null);
+      setPickupAddress('');
+      setDropoffAddress('');
+      setUrgency(1);
+      setItems(1);
+      setPackageCount(1);
+      setWeightKg('');
+      setPrice('');
+      setEstimatedDelivery('');
+      setCreating(false);
+
+      setCreateLoading(false);
+    } catch (err: any) {
+      console.error(err);
+      setErrorMessage(err.message ?? 'Failed to create order');
+      setCreateLoading(false);
+    }
+  }
+
+  const filtered = orders.filter((o) => {
+    const q = query.trim().toLowerCase();
+    if (!q) return true;
+    return (
+      o.code.toLowerCase().includes(q) ||
+      o.package.toLowerCase().includes(q) ||
+      o.price.toLowerCase().includes(q)
+    );
+  });
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-white via-[#f8fafc] to-[#eef2ff] dark:from-[#071025] dark:via-[#041022] dark:to-[#011018] text-slate-900 dark:text-slate-100 py-12">
-      <div className="max-w-5xl mx-auto px-4">
-        <header className="mb-6">
-          <h1 className="text-3xl font-extrabold">Your orders</h1>
-          <p className="mt-2 text-sm text-slate-600 dark:text-slate-300">All orders for your account — view details, track progress or reorder.</p>
+      <div className="max-w-6xl mx-auto px-4">
+        <header className="mb-6 flex items-center justify-between gap-4">
+          <div>
+            <h1 className="text-3xl font-extrabold">Your orders</h1>
+            <p className="mt-2 text-sm text-slate-600 dark:text-slate-300">All orders for your account — view details, track progress or reorder.</p>
+          </div>
+
+          <div className="flex items-center gap-3">
+            <button onClick={() => setCreating((c) => !c)} className="rounded-full px-4 py-2 bg-emerald-600 text-white text-sm shadow">{creating ? 'Close' : 'New order'}</button>
+          </div>
         </header>
+
+        {creating && (
+          <form onSubmit={handleCreate} className="mb-6 rounded-2xl bg-white/90 dark:bg-white/5 p-4 shadow space-y-3">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+              <input type="number" value={serviceId ?? ''} onChange={(e) => setServiceId(e.target.value ? Number(e.target.value) : null)} placeholder="Service ID (e.g. 1)" className="rounded-md border px-3 py-2 text-sm" required />
+              <input value={pickupAddress} onChange={(e) => setPickupAddress(e.target.value)} placeholder="Pickup address" className="rounded-md border px-3 py-2 text-sm col-span-2" required />
+              <input value={dropoffAddress} onChange={(e) => setDropoffAddress(e.target.value)} placeholder="Dropoff address" className="rounded-md border px-3 py-2 text-sm col-span-2" required />
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-6 gap-3">
+              <input type="number" min={1} max={5} value={urgency} onChange={(e) => setUrgency(Number(e.target.value))} placeholder="Urgency (1-5)" className="rounded-md border px-3 py-2 text-sm" />
+              <input type="number" min={1} value={items} onChange={(e) => setItems(Number(e.target.value))} placeholder="Items" className="rounded-md border px-3 py-2 text-sm" />
+              <input type="number" min={1} value={packageCount} onChange={(e) => setPackageCount(Number(e.target.value))} placeholder="Package count" className="rounded-md border px-3 py-2 text-sm" />
+              <input type="number" step="0.1" value={weightKg === '' ? '' : weightKg} onChange={(e) => setWeightKg(e.target.value === '' ? '' : Number(e.target.value))} placeholder="Weight kg" className="rounded-md border px-3 py-2 text-sm" />
+              <input value={price} onChange={(e) => setPrice(e.target.value)} placeholder="Price (e.g. 1200)" className="rounded-md border px-3 py-2 text-sm" />
+              <input type="datetime-local" value={estimatedDelivery} onChange={(e) => setEstimatedDelivery(e.target.value)} className="rounded-md border px-3 py-2 text-sm" />
+            </div>
+
+            <div className="flex items-center gap-3 justify-end">
+              <button type="submit" disabled={createLoading} className="px-4 py-2 rounded bg-emerald-600 text-white text-sm">{createLoading ? 'Creating…' : 'Create order'}</button>
+            </div>
+          </form>
+        )}
 
         <section className="mb-6 grid grid-cols-1 md:grid-cols-3 gap-4">
           <div className="md:col-span-2 flex gap-3">
@@ -108,8 +316,8 @@ export default function OrdersPage() {
 
           <div className="rounded-2xl bg-white/80 dark:bg-white/5 p-4 shadow text-sm flex items-center justify-between">
             <div>
-              <div className="text-xs text-slate-500">Orders</div>
-              <div className="font-semibold text-lg">{summary.total}</div>
+              <div className="text-xs text-slate-500">Orders (page)</div>
+              <div className="font-semibold text-lg">{orders.length}</div>
             </div>
             <div>
               <div className="text-xs text-slate-500">Active</div>
@@ -125,11 +333,11 @@ export default function OrdersPage() {
         <main>
           {loading ? (
             <div className="rounded-2xl bg-white/80 dark:bg-white/5 p-6 shadow text-sm text-slate-600">Loading your orders…</div>
-          ) : filtered.length === 0 ? (
+          ) : orders.length === 0 ? (
             <div className="rounded-2xl bg-white/80 dark:bg-white/5 p-6 shadow text-sm text-slate-600">No orders found. Try a different filter or <Link href="/contact" className="underline">contact support</Link>.</div>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {pageItems.map((o) => (
+              {orders.map((o) => (
                 <article key={o.code} className="rounded-2xl bg-white/80 dark:bg-white/5 p-4 shadow">
                   <div className="flex items-start justify-between gap-4">
                     <div>
@@ -152,23 +360,23 @@ export default function OrdersPage() {
 
                   <div className="mt-3 flex items-center justify-between">
                     <div className="text-sm text-slate-600">{o.price}</div>
-                    <div className="text-sm text-slate-500">{o.status === 'Delivered' ? `Delivered ${o.deliveredAt ? new Date(o.deliveredAt).toLocaleDateString() : ''}` : ''}</div>
+                    <div className="text-sm text-slate-500">{o.status === 'Delivered' ? `Delivered ${o.deliveredAt ?? ''}` : 'Updates appear here as your order progresses.'}</div>
                   </div>
-
-                  <div className="mt-3 text-xs text-slate-500">{o.status === 'Delivered' ? 'You can reorder or download receipt from the details page.' : 'Updates appear here as your order progresses.'}</div>
                 </article>
               ))}
             </div>
           )}
 
           {/* pagination */}
-          {filtered.length > pageSize && (
+          {totalPages > 1 && (
             <div className="mt-6 flex items-center justify-center gap-3 text-sm">
               <button className="px-3 py-1 rounded border" onClick={() => setPage((p) => Math.max(1, p - 1))} disabled={page === 1}>Prev</button>
               <div className="px-3 py-1">Page {page} of {totalPages}</div>
               <button className="px-3 py-1 rounded border" onClick={() => setPage((p) => Math.min(totalPages, p + 1))} disabled={page === totalPages}>Next</button>
             </div>
           )}
+
+          {errorMessage && <div className="mt-4 text-sm text-red-500">{errorMessage}</div>}
         </main>
       </div>
     </div>
