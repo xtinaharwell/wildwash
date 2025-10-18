@@ -21,9 +21,8 @@ export const apiSlice = createApi({
   reducerPath: 'api',
   baseQuery: fetchBaseQuery({
     baseUrl: process.env.NEXT_PUBLIC_API_BASE_URL || 'https://wildwosh.kibeezy.com',
-    prepareHeaders: (headers, { getState }) => {
-      // If you keep an auth token in auth slice, attach it
-      const token = (getState() as RootState).auth?.token;
+    prepareHeaders: (headers) => {
+      const token = typeof window !== 'undefined' ? localStorage.getItem('access_token') : null;
       if (token) headers.set('authorization', `Bearer ${token}`);
       return headers;
     },
