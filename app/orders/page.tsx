@@ -41,7 +41,8 @@ type Order = {
 const useAppDispatch = () => useDispatch<AppDispatch>();
 const useAppSelector: TypedUseSelectorHook<RootState> = useSelector;
 
-export default function OrdersPage(): JSX.Element {
+export default function OrdersPage(): React.JSX.Element {
+
   const router = useRouter();
   const dispatch = useAppDispatch();
 
