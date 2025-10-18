@@ -1,35 +1,30 @@
-"use client"
+"use client";
 
 import React, { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { useDispatch, useSelector, TypedUseSelectorHook } from "react-redux";
+import type { AppDispatch, RootState } from "@/redux/store";
+import {
+  fetchOrders,
+  createOrder,
+  setPage,
+  setStatusFilter,
+  setQuery,
+  selectOrders,
+  selectOrdersLoading,
+  selectOrdersMeta,
+  selectOrdersError,
+  selectOrdersState,
+} from "@/redux/features/orderSlice";
 
 /**
- * Orders page (Next.js client component)
- * - Fetches paginated orders from /api/orders/
- * - Supports search, status filter, server-side pagination
- * - Includes a small "Create order" form that posts to /api/orders/
+ * Orders page (Next.js client component) — now using Redux slice
  *
- * Auth note: This component tries two auth modes:
- *  1) If `localStorage.getItem('access_token')` exists it will send
- *     `Authorization: Bearer <token>` header (typical SPA JWT flow).
- *  2) Otherwise it will use cookie session auth and include credentials
- *     (credentials: 'include') and X-CSRFToken header if found.
+ * Notes:
+ * - The slice handles fetching and mapping backend -> frontend shape.
+ * - This component keeps local UI state for the create form and "creating" toggle.
  */
-
-type BackendOrder = {
-  id: number;
-  code: string;
-  created_at: string;
-  items: number;
-  weight_kg?: number | string | null;
-  package: string; // service name
-  price?: string | number | null;
-  price_display?: string | null;
-  status: 'requested' | 'picked' | 'in_progress' | 'ready' | 'delivered' | 'cancelled' | string;
-  estimated_delivery?: string | null;
-  delivered_at?: string | null;
-};
 
 type Order = {
   code: string;
@@ -43,68 +38,25 @@ type Order = {
   deliveredAt?: string | null;
 };
 
-const statusMap: Record<string, Order['status']> = {
-  requested: "Received",
-  picked: "Washing",
-  in_progress: "Drying",
-  ready: "Ready",
-  delivered: "Delivered",
-  cancelled: "Cancelled",
-};
-
-const frontendToBackendStatus: Record<string, string> = {
-  Received: 'requested',
-  Washing: 'picked',
-  Drying: 'in_progress',
-  Ready: 'ready',
-  Delivered: 'delivered',
-  Cancelled: 'cancelled',
-};
-
-function backendToFrontend(o: BackendOrder): Order {
-  const price = o.price_display ?? (o.price ? `KSh ${Number(o.price).toLocaleString()}` : "");
-  const weightKg = o.weight_kg ? Number(o.weight_kg) : undefined;
-  const eta = o.estimated_delivery ? new Date(o.estimated_delivery).toLocaleString() : undefined;
-  const deliveredAt = o.delivered_at ? new Date(o.delivered_at).toLocaleString() : undefined;
-
-  return {
-    code: o.code || `WW-${o.id}`,
-    date: o.created_at,
-    items: o.items ?? 0,
-    weightKg,
-    package: o.package ?? `Package ${o.id}`,
-    price,
-    status: statusMap[o.status] ?? "Received",
-    eta,
-    deliveredAt,
-  };
-}
-
-function getCookie(name: string) {
-  if (typeof document === 'undefined') return null;
-  const cookies = document.cookie ? document.cookie.split('; ') : [];
-  for (const c of cookies) {
-    const [k, ...v] = c.split('=');
-    if (k === name) return decodeURIComponent(v.join('='));
-  }
-  return null;
-}
+const useAppDispatch = () => useDispatch<AppDispatch>();
+const useAppSelector: TypedUseSelectorHook<RootState> = useSelector;
 
 export default function OrdersPage(): JSX.Element {
   const router = useRouter();
-  const [orders, setOrders] = useState<Order[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [query, setQuery] = useState("");
-  const [statusFilter, setStatusFilter] = useState<"All" | Order['status']>("All");
-  const [page, setPage] = useState(1);
-  const [pageSize] = useState(6);
-  const [totalPages, setTotalPages] = useState(1);
-  const [refreshCounter, setRefreshCounter] = useState(0);
+  const dispatch = useAppDispatch();
+
+  // Redux state/selectors
+  const orders = useAppSelector(selectOrders);
+  const loading = useAppSelector(selectOrdersLoading);
+  const meta = useAppSelector(selectOrdersMeta);
+  const errorFromState = useAppSelector(selectOrdersError);
+  const fullState = useAppSelector(selectOrdersState); // for createLoading, refreshCounter, etc.
+
+  // Local UI state
   const [creating, setCreating] = useState(false);
-  const [createLoading, setCreateLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
-  // create form state
+  // create form state (local)
   const [serviceId, setServiceId] = useState<number | null>(null);
   const [pickupAddress, setPickupAddress] = useState("");
   const [dropoffAddress, setDropoffAddress] = useState("");
@@ -115,77 +67,32 @@ export default function OrdersPage(): JSX.Element {
   const [price, setPrice] = useState<string>("");
   const [estimatedDelivery, setEstimatedDelivery] = useState<string>("");
 
+  // Local controlled search / filter bound to redux meta
+  const query = meta.query;
+  const statusFilter = meta.statusFilter; // "All" | Order['status']
+  const page = meta.page;
+  const pageSize = meta.pageSize;
+  const totalPages = meta.totalPages ?? 1;
+
   // summary computed from current fetched orders
   const summary = useMemo(() => {
-    const total = orders.length; // note: this reflects only current page
+    const total = orders.length; // this reflects only current page's entries
     const completed = orders.filter((o) => o.status === "Delivered").length;
     const active = orders.filter((o) => o.status !== "Delivered" && o.status !== "Cancelled").length;
     return { total, completed, active };
   }, [orders]);
 
+  // Fetch when relevant meta changes (page, pageSize, statusFilter, query) or when refreshCounter increments
   useEffect(() => {
-    setPage(1); // reset to first page when filters change
-  }, [query, statusFilter]);
+    setErrorMessage(null);
+    dispatch(fetchOrders());
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [dispatch, page, pageSize, statusFilter, query, fullState.refreshCounter]);
 
+  // sync error message from state
   useEffect(() => {
-    let mounted = true;
-    async function fetchOrders() {
-      setLoading(true);
-      setErrorMessage(null);
-
-      const params = new URLSearchParams();
-      params.set('page', String(page));
-      params.set('page_size', String(pageSize));
-      if (statusFilter !== 'All') params.set('status', frontendToBackendStatus[statusFilter]);
-      if (query) params.set('search', query);
-
-      const url = `/api/orders/?${params.toString()}`;
-
-      try {
-        const token = typeof window !== 'undefined' ? localStorage.getItem('access_token') : null;
-        const headers: Record<string, string> = { 'Accept': 'application/json' };
-        let res: Response;
-
-        if (token) {
-          headers['Authorization'] = `Bearer ${token}`;
-          res = await fetch(url, { headers });
-        } else {
-          // session cookie flow
-          const csrftoken = getCookie('csrftoken');
-          if (csrftoken) headers['X-CSRFToken'] = csrftoken;
-          res = await fetch(url, { headers, credentials: 'include' });
-        }
-
-        if (!res.ok) throw new Error(`Failed to load orders: ${res.status}`);
-        const data = await res.json();
-
-        // support both list and DRF pagination
-        let list: BackendOrder[] = [];
-        let count = 0;
-        if (Array.isArray(data)) {
-          list = data as BackendOrder[];
-          count = list.length;
-        } else {
-          list = (data.results ?? []) as BackendOrder[];
-          count = typeof data.count === 'number' ? data.count : list.length;
-        }
-
-        if (!mounted) return;
-        setOrders(list.map(backendToFrontend));
-        setTotalPages(Math.max(1, Math.ceil(count / pageSize)));
-        setLoading(false);
-      } catch (err: any) {
-        console.error(err);
-        if (!mounted) return;
-        setErrorMessage(err.message ?? 'Failed to load orders');
-        setOrders([]);
-        setLoading(false);
-      }
-    }
-
-    fetchOrders();
-    return () => { mounted = false; };
-  }, [page, pageSize, statusFilter, query, refreshCounter]);
+    if (errorFromState) setErrorMessage(errorFromState);
+  }, [errorFromState]);
 
   function gotoTrack(code: string) {
     router.push(`/track?code=${encodeURIComponent(code)}`);
@@ -193,73 +100,54 @@ export default function OrdersPage(): JSX.Element {
 
   async function handleCreate(e?: React.FormEvent) {
     if (e) e.preventDefault();
-    setCreateLoading(true);
     setErrorMessage(null);
 
+    const payload = {
+      service: serviceId,
+      pickup_address: pickupAddress,
+      dropoff_address: dropoffAddress,
+      urgency,
+      items,
+      package: packageCount,
+      weight_kg: weightKg === '' ? null : Number(weightKg),
+      price: price ? String(price).replace(/[, ]/g, '') : null,
+      estimated_delivery: estimatedDelivery || null,
+    };
+
     try {
-      const token = typeof window !== 'undefined' ? localStorage.getItem('access_token') : null;
-      const headers: Record<string, string> = { 'Content-Type': 'application/json', 'Accept': 'application/json' };
-      let res: Response;
-
-      const payload = {
-        service: serviceId,
-        pickup_address: pickupAddress,
-        dropoff_address: dropoffAddress,
-        urgency,
-        items,
-        package: packageCount,
-        weight_kg: weightKg === '' ? null : Number(weightKg),
-        price: price ? String(price).replace(/[, ]/g, '') : null,
-        estimated_delivery: estimatedDelivery || null,
-      };
-
-      if (token) {
-        headers['Authorization'] = `Bearer ${token}`;
-        res = await fetch('/api/orders/', { method: 'POST', headers, body: JSON.stringify(payload) });
+      // dispatch createOrder thunk
+      const resultAction = await dispatch(createOrder(payload));
+      // unwrap-like check: if rejected, it will be of type rejected
+      if (createOrder.rejected.match(resultAction)) {
+        const err = (resultAction.payload as string) || (resultAction.error && resultAction.error.message) || 'Create failed';
+        setErrorMessage(err);
       } else {
-        const csrftoken = getCookie('csrftoken');
-        if (csrftoken) headers['X-CSRFToken'] = csrftoken;
-        res = await fetch('/api/orders/', { method: 'POST', headers, body: JSON.stringify(payload), credentials: 'include' });
+        // success — reset form and close
+        setServiceId(null);
+        setPickupAddress('');
+        setDropoffAddress('');
+        setUrgency(1);
+        setItems(1);
+        setPackageCount(1);
+        setWeightKg('');
+        setPrice('');
+        setEstimatedDelivery('');
+        setCreating(false);
       }
-
-      if (!res.ok) {
-        const text = await res.text();
-        throw new Error(`Create failed ${res.status}: ${text}`);
-      }
-
-      const created: BackendOrder = await res.json();
-
-      // after create refresh list (go to page 1 to show newest)
-      setPage(1);
-      setRefreshCounter((c) => c + 1);
-
-      // reset form and close
-      setServiceId(null);
-      setPickupAddress('');
-      setDropoffAddress('');
-      setUrgency(1);
-      setItems(1);
-      setPackageCount(1);
-      setWeightKg('');
-      setPrice('');
-      setEstimatedDelivery('');
-      setCreating(false);
-
-      setCreateLoading(false);
     } catch (err: any) {
       console.error(err);
-      setErrorMessage(err.message ?? 'Failed to create order');
-      setCreateLoading(false);
+      setErrorMessage(err?.message ?? 'Failed to create order');
     }
   }
 
+  // filter the page-local orders list (search client-side on current page)
   const filtered = orders.filter((o) => {
-    const q = query.trim().toLowerCase();
+    const q = (query ?? "").trim().toLowerCase();
     if (!q) return true;
     return (
-      o.code.toLowerCase().includes(q) ||
-      o.package.toLowerCase().includes(q) ||
-      o.price.toLowerCase().includes(q)
+      (o.code ?? "").toLowerCase().includes(q) ||
+      (o.package ?? "").toLowerCase().includes(q) ||
+      (String(o.price ?? "").toLowerCase()).includes(q)
     );
   });
 
@@ -295,15 +183,15 @@ export default function OrdersPage(): JSX.Element {
             </div>
 
             <div className="flex items-center gap-3 justify-end">
-              <button type="submit" disabled={createLoading} className="px-4 py-2 rounded bg-emerald-600 text-white text-sm">{createLoading ? 'Creating…' : 'Create order'}</button>
+              <button type="submit" disabled={fullState.createLoading} className="px-4 py-2 rounded bg-emerald-600 text-white text-sm">{fullState.createLoading ? 'Creating…' : 'Create order'}</button>
             </div>
           </form>
         )}
 
         <section className="mb-6 grid grid-cols-1 md:grid-cols-3 gap-4">
           <div className="md:col-span-2 flex gap-3">
-            <input value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Search by code, package or price" className="flex-1 rounded-md border px-3 py-2 text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-300" />
-            <select value={statusFilter} onChange={(e) => setStatusFilter(e.target.value as any)} className="rounded-md border px-3 py-2 text-sm">
+            <input value={query ?? ''} onChange={(e) => dispatch(setQuery(e.target.value))} placeholder="Search by code, package or price" className="flex-1 rounded-md border px-3 py-2 text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-300" />
+            <select value={statusFilter} onChange={(e) => dispatch(setStatusFilter(e.target.value as any))} className="rounded-md border px-3 py-2 text-sm">
               <option value="All">All statuses</option>
               <option value="Received">Received</option>
               <option value="Washing">Washing</option>
@@ -337,7 +225,7 @@ export default function OrdersPage(): JSX.Element {
             <div className="rounded-2xl bg-white/80 dark:bg-white/5 p-6 shadow text-sm text-slate-600">No orders found. Try a different filter or <Link href="/contact" className="underline">contact support</Link>.</div>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {orders.map((o) => (
+              {filtered.map((o) => (
                 <article key={o.code} className="rounded-2xl bg-white/80 dark:bg-white/5 p-4 shadow">
                   <div className="flex items-start justify-between gap-4">
                     <div>
@@ -370,9 +258,9 @@ export default function OrdersPage(): JSX.Element {
           {/* pagination */}
           {totalPages > 1 && (
             <div className="mt-6 flex items-center justify-center gap-3 text-sm">
-              <button className="px-3 py-1 rounded border" onClick={() => setPage((p) => Math.max(1, p - 1))} disabled={page === 1}>Prev</button>
+              <button className="px-3 py-1 rounded border" onClick={() => dispatch(setPage(Math.max(1, page - 1)))} disabled={page === 1}>Prev</button>
               <div className="px-3 py-1">Page {page} of {totalPages}</div>
-              <button className="px-3 py-1 rounded border" onClick={() => setPage((p) => Math.min(totalPages, p + 1))} disabled={page === totalPages}>Next</button>
+              <button className="px-3 py-1 rounded border" onClick={() => dispatch(setPage(Math.min(totalPages, page + 1)))} disabled={page === totalPages}>Next</button>
             </div>
           )}
 

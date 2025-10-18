@@ -1,14 +1,12 @@
 // store.ts
 import { configureStore } from '@reduxjs/toolkit';
 import { apiSlice } from './services/apiSlice';
-import authReducer from './features/authSlice';
-import objectUrlsReducer from './features/objectUrlsSlice'; // <-- create or remove if unused
+import ordersReducer from './features/orderSlice';
 
 export const store = configureStore({
   reducer: {
     [apiSlice.reducerPath]: apiSlice.reducer,
-    auth: authReducer,
-    objectUrls: objectUrlsReducer, // remove or provide this reducer if you don't have it
+    orders: ordersReducer,
   },
   middleware: (getDefaultMiddleware) => getDefaultMiddleware().concat(apiSlice.middleware),
   devTools: process.env.NODE_ENV !== 'production',
