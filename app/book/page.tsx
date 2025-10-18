@@ -230,7 +230,7 @@ export default function Page() {
               </fieldset>
 
               <fieldset className="space-y-3">
-                <legend className="text-sm font-semibold text-slate-700">Pick Packages</legend>
+                <legend className="text-sm font-semibold text-slate-700">Pick Package</legend>
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                   {[{ id: "basic", title: "Basic", price: "KSh 300" }, { id: "standard", title: "Standard", price: "KSh 500" }, { id: "premium", title: "Premium", price: "KSh 900" }].map((p) => (
                     <label key={p.id} className={`group block cursor-pointer rounded-xl border p-3 text-sm shadow-sm transition-transform hover:-translate-y-0.5 ${packageType === p.id ? "border-emerald-400 bg-emerald-50" : "border-slate-200 bg-white"}`}>
