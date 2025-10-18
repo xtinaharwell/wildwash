@@ -107,9 +107,9 @@ function getCookie(name: string) {
 export const fetchOrders = createAsyncThunk<
   { orders: Order[]; totalCount: number },
   void,
-  { state: { orders: OrdersState }; rejectValue: string }
+  { state: any; rejectValue: string }
 >('orders/fetchOrders', async (_, { getState, rejectWithValue }) => {
-  const state = getState().orders;
+  const state = getState().orders as OrdersState;
   const params = new URLSearchParams();
   params.set('page', String(state.page));
   params.set('page_size', String(state.pageSize));
