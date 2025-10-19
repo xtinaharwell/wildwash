@@ -23,12 +23,12 @@ const PACKAGE_MAP: Record<string, number> = {
   premium: 3,
 };
 
-
 const API_BASE = process.env.NEXT_PUBLIC_API_BASE ?? ""; // empty = same origin
 
 export default function Page() {
   const [pickupBuilding, setPickupBuilding] = useState("");
   const [pickupContact, setPickupContact] = useState("");
+  // serviceId is number | null
   const [serviceId, setServiceId] = useState<number | null>(null);
   const [services, setServices] = useState<Array<{ id: number; name: string }>>([]);
   const [dropoffAddress, setDropoffAddress] = useState("");
@@ -42,7 +42,7 @@ export default function Page() {
 
   useEffect(() => {
     let mounted = true;
-    fetch(`${API_BASE}/api/services/`, { credentials: "include" })
+    fetch(`${API_BASE}/services/`, { credentials: "include" })
       .then((r) => {
         if (!r.ok) throw new Error("Failed to load services");
         return r.json();
@@ -50,8 +50,18 @@ export default function Page() {
       .then((data) => {
         if (!mounted) return;
         if (Array.isArray(data)) {
-          setServices(data);
-          if (data.length && !serviceId) setServiceId(data[0].id);
+          // Normalize ids to numbers (defensive)
+          const norm = data.map((s) => ({ ...s, id: Number(s.id) }));
+          setServices(norm);
+          // set default service id only if not already set
+          setServiceId((prev) => {
+            if (prev != null) return prev;
+            if (norm.length) {
+              const v = Number(norm[0].id);
+              return Number.isFinite(v) ? v : null;
+            }
+            return null;
+          });
         }
       })
       .catch((err) => {
@@ -67,8 +77,8 @@ export default function Page() {
     setServerErrors(null);
   }
 
-  const canRequestPickup = !!pickupBuilding.trim() && !!pickupContact.trim() && !!serviceId;
-  const canRequestDropoff = !!dropoffAddress.trim() && !!serviceId;
+  const canRequestPickup = !!pickupBuilding.trim() && !!pickupContact.trim() && serviceId != null;
+  const canRequestDropoff = !!dropoffAddress.trim() && serviceId != null;
 
   async function postOrder(payload: Record<string, any>) {
     resetMessage();
@@ -139,7 +149,6 @@ export default function Page() {
       price: null,
       estimated_delivery: null,
     };
-    
 
     await postOrder(payload);
   }
@@ -203,17 +212,61 @@ export default function Page() {
                 <div>
                   <label className="block text-xs text-slate-500 mb-1">Service</label>
                   {services.length ? (
-                    <select value={serviceId ?? ""} onChange={(e) => setServiceId(Number(e.target.value))} className="w-full rounded-lg border border-slate-200 p-3 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-sky-300">
-                      {services.map((s) => (<option key={s.id} value={s.id}>{s.name}</option>))}
+                    <select
+                      value={serviceId ?? ""}
+                      onChange={(e) => {
+                        const n = Number(e.target.value);
+                        setServiceId(Number.isFinite(n) ? n : null);
+                      }}
+                      className="w-full rounded-lg border border-slate-200 p-3 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-sky-300"
+                    >
+                      {services.map((s) => (
+                        <option key={s.id} value={s.id}>
+                          {s.name}
+                        </option>
+                      ))}
                     </select>
                   ) : (
-                    <input value={serviceId ?? ""} onChange={(e) => setServiceId(Number(e.target.value || 0))} placeholder="Service ID (e.g. 1)" className="w-full rounded-lg border border-slate-200 p-3 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-sky-300" />
+                    <input
+                      // ensure we never hand NaN to `value`
+                      value={Number.isFinite(serviceId as number) ? String(serviceId) : ""}
+                      onChange={(e) => {
+                        const raw = e.target.value.trim();
+                        if (raw === "") {
+                          setServiceId(null);
+                          return;
+                        }
+                        const n = Number(raw);
+                        setServiceId(Number.isFinite(n) ? n : null);
+                      }}
+                      placeholder="Service ID (e.g. 1)"
+                      className="w-full rounded-lg border border-slate-200 p-3 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-sky-300"
+                    />
                   )}
                 </div>
 
                 <div className="flex items-center gap-3 pt-2">
-                  <button type="button" onClick={handleRequestPickup} disabled={!canRequestPickup || sending} className={`inline-flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-medium transition-shadow disabled:opacity-50 disabled:cursor-not-allowed shadow-md ${canRequestPickup && !sending ? "bg-emerald-500 text-white hover:brightness-95" : "bg-slate-100 text-slate-600"}`}>Request Pickup</button>
-                  <button type="button" onClick={() => { setPickupBuilding(""); setPickupContact(""); setServiceId(services.length ? services[0].id : null); }} className="inline-flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium bg-slate-50 border border-slate-200 text-slate-700">Clear</button>
+                  <button
+                    type="button"
+                    onClick={handleRequestPickup}
+                    disabled={!canRequestPickup || sending}
+                    className={`inline-flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-medium transition-shadow disabled:opacity-50 disabled:cursor-not-allowed shadow-md ${
+                      canRequestPickup && !sending ? "bg-emerald-500 text-white hover:brightness-95" : "bg-slate-100 text-slate-600"
+                    }`}
+                  >
+                    Request Pickup
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setPickupBuilding("");
+                      setPickupContact("");
+                      setServiceId(services.length ? Number(services[0].id) : null);
+                    }}
+                    className="inline-flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium bg-slate-50 border border-slate-200 text-slate-700"
+                  >
+                    Clear
+                  </button>
                 </div>
               </fieldset>
 
@@ -224,8 +277,19 @@ export default function Page() {
                   <input value={dropoffAddress} onChange={(e) => setDropoffAddress(e.target.value)} placeholder="e.g. Home / Office address for dropoff" className="w-full rounded-lg border border-slate-200 p-3 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-sky-300" />
                 </div>
                 <div className="flex items-center gap-3 pt-2">
-                  <button type="button" onClick={handleRequestDropoff} disabled={!canRequestDropoff || sending} className={`inline-flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-medium transition-shadow disabled:opacity-50 disabled:cursor-not-allowed shadow-md ${canRequestDropoff && !sending ? "bg-sky-600 text-white hover:brightness-95" : "bg-slate-100 text-slate-600"}`}>Request Dropoff / Checkout</button>
-                  <button type="button" onClick={() => setDropoffAddress("")} className="inline-flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium bg-slate-50 border border-slate-200 text-slate-700">Clear</button>
+                  <button
+                    type="button"
+                    onClick={handleRequestDropoff}
+                    disabled={!canRequestDropoff || sending}
+                    className={`inline-flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-medium transition-shadow disabled:opacity-50 disabled:cursor-not-allowed shadow-md ${
+                      canRequestDropoff && !sending ? "bg-sky-600 text-white hover:brightness-95" : "bg-slate-100 text-slate-600"
+                    }`}
+                  >
+                    Request Dropoff / Checkout
+                  </button>
+                  <button type="button" onClick={() => setDropoffAddress("")} className="inline-flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium bg-slate-50 border border-slate-200 text-slate-700">
+                    Clear
+                  </button>
                 </div>
               </fieldset>
 
@@ -236,7 +300,10 @@ export default function Page() {
                     <label key={p.id} className={`group block cursor-pointer rounded-xl border p-3 text-sm shadow-sm transition-transform hover:-translate-y-0.5 ${packageType === p.id ? "border-emerald-400 bg-emerald-50" : "border-slate-200 bg-white"}`}>
                       <input type="radio" name="package" value={p.id} checked={packageType === p.id} onChange={() => setPackageType(p.id)} className="hidden" />
                       <div className="flex items-center justify-between">
-                        <div><div className="font-semibold text-slate-800">{p.title}</div><div className="text-xs text-slate-500 mt-1">{p.id === "basic" ? "Quick wash" : p.id === "standard" ? "Wash + Dry" : "Priority handling"}</div></div>
+                        <div>
+                          <div className="font-semibold text-slate-800">{p.title}</div>
+                          <div className="text-xs text-slate-500 mt-1">{p.id === "basic" ? "Quick wash" : p.id === "standard" ? "Wash + Dry" : "Priority handling"}</div>
+                        </div>
                         <div className="text-sm font-semibold">{p.price}</div>
                       </div>
                     </label>
@@ -249,9 +316,16 @@ export default function Page() {
                 <div className="flex items-center gap-3">
                   <div className="flex-1">
                     <input type="range" min={1} max={3} value={urgency} onChange={(e) => setUrgency(Number(e.target.value))} className="w-full" />
-                    <div className="mt-2 text-xs text-slate-500 flex items-center justify-between"><span>Normal (48h)</span><span>Fast (24h)</span><span>Express (4-6h)</span></div>
+                    <div className="mt-2 text-xs text-slate-500 flex items-center justify-between">
+                      <span>Normal (48h)</span>
+                      <span>Fast (24h)</span>
+                      <span>Express (4-6h)</span>
+                    </div>
                   </div>
-                  <div className="w-28 text-right"><div className="text-xs text-slate-500">Selected</div><div className="mt-1 font-medium text-slate-800">{urgency === 1 ? "Normal" : urgency === 2 ? "Fast" : "Express"}</div></div>
+                  <div className="w-28 text-right">
+                    <div className="text-xs text-slate-500">Selected</div>
+                    <div className="mt-1 font-medium text-slate-800">{urgency === 1 ? "Normal" : urgency === 2 ? "Fast" : "Express"}</div>
+                  </div>
                 </div>
               </fieldset>
 
@@ -271,11 +345,27 @@ export default function Page() {
             <div className="sticky top-6">
               <h3 className="text-sm font-semibold text-slate-700">Summary</h3>
               <div className="mt-3 space-y-3 text-sm text-slate-600">
-                <div><div className="text-xs text-slate-500">Pickup</div><div className="mt-1 font-medium text-slate-800">{pickupBuilding || "—"}</div><div className="text-xs text-slate-500">{pickupContact || "no contact"}</div></div>
-                <div><div className="text-xs text-slate-500">Dropoff</div><div className="mt-1 font-medium text-slate-800">{dropoffAddress || "—"}</div></div>
-                <div><div className="text-xs text-slate-500">Package</div><div className="mt-1 font-medium text-slate-800">{packageType}</div></div>
-                <div><div className="text-xs text-slate-500">Urgency</div><div className="mt-1 font-medium text-slate-800">{urgency === 1 ? "Normal" : urgency === 2 ? "Fast" : "Express"}</div></div>
-                <div><div className="text-xs text-slate-500">Service</div><div className="mt-1 font-medium text-slate-800">{services.find(s => s.id === serviceId)?.name ?? (serviceId ? `ID ${serviceId}` : "—")}</div></div>
+                <div>
+                  <div className="text-xs text-slate-500">Pickup</div>
+                  <div className="mt-1 font-medium text-slate-800">{pickupBuilding || "—"}</div>
+                  <div className="text-xs text-slate-500">{pickupContact || "no contact"}</div>
+                </div>
+                <div>
+                  <div className="text-xs text-slate-500">Dropoff</div>
+                  <div className="mt-1 font-medium text-slate-800">{dropoffAddress || "—"}</div>
+                </div>
+                <div>
+                  <div className="text-xs text-slate-500">Package</div>
+                  <div className="mt-1 font-medium text-slate-800">{packageType}</div>
+                </div>
+                <div>
+                  <div className="text-xs text-slate-500">Urgency</div>
+                  <div className="mt-1 font-medium text-slate-800">{urgency === 1 ? "Normal" : urgency === 2 ? "Fast" : "Express"}</div>
+                </div>
+                <div>
+                  <div className="text-xs text-slate-500">Service</div>
+                  <div className="mt-1 font-medium text-slate-800">{services.find((s) => s.id === serviceId)?.name ?? (serviceId ? `ID ${serviceId}` : "—")}</div>
+                </div>
               </div>
 
               <div className="mt-6 text-xs text-slate-400">Tip: Save preferred addresses in your account for faster bookings.</div>
@@ -285,8 +375,12 @@ export default function Page() {
 
         <footer className="md:hidden border-t bg-white p-3 sticky bottom-0">
           <div className="flex gap-2">
-            <button onClick={handleRequestPickup} disabled={!canRequestPickup || sending} className="flex-1 rounded-lg bg-emerald-500 text-white py-2 text-sm font-medium disabled:opacity-50">Request Pickup</button>
-            <button onClick={handleRequestDropoff} disabled={!canRequestDropoff || sending} className="flex-1 rounded-lg bg-sky-600 text-white py-2 text-sm font-medium disabled:opacity-50">Request Dropoff</button>
+            <button onClick={handleRequestPickup} disabled={!canRequestPickup || sending} className="flex-1 rounded-lg bg-emerald-500 text-white py-2 text-sm font-medium disabled:opacity-50">
+              Request Pickup
+            </button>
+            <button onClick={handleRequestDropoff} disabled={!canRequestDropoff || sending} className="flex-1 rounded-lg bg-sky-600 text-white py-2 text-sm font-medium disabled:opacity-50">
+              Request Dropoff
+            </button>
           </div>
         </footer>
       </div>
