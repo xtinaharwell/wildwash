@@ -42,7 +42,7 @@ export default function Page() {
 
   useEffect(() => {
     // warm the csrf cookie for cross-domain SPA
-    fetch(`${API_BASE}/csrf/`, { method: "GET", credentials: "include" }).catch((e) => {
+    fetch(`${API_BASE}/users/csrf/`, { method: "GET", credentials: "include" }).catch((e) => {
       console.warn("CSRF warmup failed", e);
     });
   }, []);
