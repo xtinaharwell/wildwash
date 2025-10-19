@@ -41,6 +41,13 @@ export default function Page() {
   const [serverErrors, setServerErrors] = useState<any | null>(null);
 
   useEffect(() => {
+    // warm the csrf cookie for cross-domain SPA
+    fetch(`${API_BASE}/csrf/`, { method: "GET", credentials: "include" }).catch((e) => {
+      console.warn("CSRF warmup failed", e);
+    });
+  }, []);
+  
+  useEffect(() => {
     let mounted = true;
     fetch(`${API_BASE}/services/`, { credentials: "include" })
       .then((r) => {
