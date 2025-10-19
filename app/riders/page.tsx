@@ -292,6 +292,8 @@ export default function RidersPage(): React.ReactElement {
   async function ensureMapAndMarkers() {
     try {
       await injectLeafletCss();
+      // @ts-ignore - project may not have Leaflet types installed. Install @types/leaflet or add a declaration file (see comments below) to remove this ignore.
+      // Recommendation: `npm i -D @types/leaflet` or create `types/leaflet.d.ts` with `declare module 'leaflet';`
       const mod = await import("leaflet");
       const L = (mod as any).default || mod;
       leafletLoadedRef.current = true;
