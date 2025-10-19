@@ -23,14 +23,6 @@ import {
   MapPin,
 } from "lucide-react";
 
-/**
- * Admin dashboard that fetches:
- *  - Orders:  GET ${API_BASE}/orders/
- *  - Riders:  GET ${API_BASE}/riders/    (public endpoint returning latest location per rider)
- *
- * Configure API base with NEXT_PUBLIC_API_BASE (defaults to https://wildwosh.kibeezy.com)
- */
-
 /* --- Types --- */
 type RawOrder = Record<string, any>;
 type RawLocation = Record<string, any>;
@@ -61,7 +53,7 @@ type RiderLocation = {
 const API_BASE = process.env.NEXT_PUBLIC_API_BASE ?? "https://wildwosh.kibeezy.com";
 
 /* --- Component --- */
-export default function AdminPage(): JSX.Element {
+export default function AdminPage(): React.ReactElement {
   const [orders, setOrders] = useState<Order[]>([]);
   const [locations, setLocations] = useState<RiderLocation[]>([]);
 
