@@ -346,7 +346,7 @@ function StatCard({ icon, label, value }: { icon: React.ReactNode; label: string
   );
 }
 
-function ChartCard({ title, children }: { title: string; children: React.ReactNode }) {
+function ChartCard({ title, children }: { title: string; children: React.ReactElement }) {
   return (
     <div className="rounded-2xl bg-white/80 dark:bg-white/5 p-4 shadow">
       <h2 className="text-lg font-semibold mb-2">{title}</h2>
@@ -356,3 +356,4 @@ function ChartCard({ title, children }: { title: string; children: React.ReactNo
     </div>
   );
 }
+
