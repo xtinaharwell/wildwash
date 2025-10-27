@@ -12,7 +12,7 @@ async function fetchWithAuth(url: string, options: RequestInit = {}) {
   const response = await fetch(`${API_BASE}${url}`, {
     ...options,
     headers,
-    credentials: 'include',
+    credentials: token ? 'omit' : 'include',
   });
 
   if (!response.ok) {
