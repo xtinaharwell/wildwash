@@ -4,6 +4,18 @@ import React, { useState, useEffect, Suspense } from "react";
 import Link from "next/link";
 import { useSearchParams } from 'next/navigation';
 
+function TrackPageWrapper() {
+  return (
+    <Suspense fallback={<div className="min-h-screen bg-gradient-to-b from-white via-[#f8fafc] to-[#eef2ff] dark:from-[#071025] dark:via-[#041022] dark:to-[#011018] text-slate-900 dark:text-slate-100 py-12">
+      <div className="max-w-4xl mx-auto px-4">
+        <div className="animate-pulse">Loading...</div>
+      </div>
+    </div>}>
+      <TrackPageContent />
+    </Suspense>
+  );
+}
+
 type StatusPoint = {
   key: string;
   label: string;
@@ -384,4 +396,4 @@ function mapStatus(s: string): string {
   return map[s] || s || "Received";
 }
 
-export default TrackPageContent;
+export default TrackPageWrapper;
