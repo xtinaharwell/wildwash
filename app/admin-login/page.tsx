@@ -63,7 +63,7 @@ function AdminLoginContent() {
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-b from-white via-[#f8fafc] to-[#eef2ff] dark:from-[#071025] dark:via-[#041022] dark:to-[#011018]">
-      <div className="max-w-md w-full space-y-8 p-8 bg-white dark:bg-slate-800 rounded-2xl shadow-lg">
+      <div className="max-w-md w-full space-y-8 p-8 bg-white/80 dark:bg-white/5 backdrop-blur rounded-2xl shadow-lg">
         <div>
           <h2 className="text-center text-3xl font-extrabold text-slate-900 dark:text-white">
             Admin Login
@@ -93,7 +93,7 @@ function AdminLoginContent() {
                 value={username}
                 onChange={(e) => setUsername(e.target.value)}
                 className="mt-1 block w-full px-3 py-2 bg-white dark:bg-slate-700 border border-slate-300 dark:border-slate-600 rounded-lg text-sm shadow-sm placeholder-slate-400
-                         focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500"
+                         focus:outline-none focus:border-red-500 focus:ring-1 focus:ring-red-500"
               />
             </div>
 
@@ -109,7 +109,7 @@ function AdminLoginContent() {
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 className="mt-1 block w-full px-3 py-2 bg-white dark:bg-slate-700 border border-slate-300 dark:border-slate-600 rounded-lg text-sm shadow-sm placeholder-slate-400
-                         focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500"
+                         focus:outline-none focus:border-red-500 focus:ring-1 focus:ring-red-500"
               />
             </div>
           </div>
@@ -117,7 +117,7 @@ function AdminLoginContent() {
           <button
             type="submit"
             disabled={loading}
-            className="w-full flex justify-center py-2 px-4 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-emerald-600 hover:bg-emerald-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-emerald-500 disabled:opacity-50 disabled:cursor-not-allowed"
+            className="w-full flex justify-center py-2 px-4 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {loading ? "Signing in..." : "Sign in"}
           </button>

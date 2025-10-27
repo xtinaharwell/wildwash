@@ -98,7 +98,7 @@ export default function SignupPage() {
           <h1 className="text-2xl font-extrabold">Create an account</h1>
           <p className="mt-2 text-sm text-slate-600 dark:text-slate-300">
             Already have an account?{" "}
-            <Link href="/login" className="text-emerald-600 hover:text-emerald-500">
+            <Link href="/login" className="text-red-600 hover:text-red-500">
               Sign in instead
             </Link>
             .
@@ -178,7 +178,7 @@ export default function SignupPage() {
             <button
               type="submit"
               disabled={loading}
-              className="flex-1 rounded-md bg-emerald-600 hover:bg-emerald-500 text-white px-4 py-2 text-sm disabled:opacity-50 disabled:cursor-not-allowed"
+              className="flex-1 rounded-md bg-red-600 hover:bg-red-500 text-white px-4 py-2 text-sm disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {loading ? "Creating account…" : "Create account"}
             </button>

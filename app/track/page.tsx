@@ -195,9 +195,9 @@ export default function TrackPage() {
             value={code}
             onChange={(e) => setCode(e.target.value)}
             placeholder="e.g. WW-12345"
-            className="flex-1 rounded-md border px-3 py-2 text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-300"
+            className="flex-1 rounded-md border px-3 py-2 text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-red-300"
           />
-          <button type="submit" disabled={loading} className="rounded-md bg-emerald-600 text-white px-4 py-2 text-sm">
+          <button type="submit" disabled={loading} className="rounded-md bg-red-600 text-white px-4 py-2 text-sm">
             {loading ? "Searching…" : "Track"}
           </button>
         </form>
@@ -221,7 +221,7 @@ export default function TrackPage() {
 
                   <div className="text-right">
                     <div className="text-xs text-slate-500">Status</div>
-                    <div className="font-semibold text-emerald-600">{order.status}</div>
+                    <div className="font-semibold text-red-600">{order.status}</div>
                     <div className="text-xs text-slate-500 mt-2">ETA</div>
                     <div className="font-medium">{order.eta || "—"}</div>
                     <div className="mt-2 flex items-center gap-2 justify-end">
@@ -234,7 +234,7 @@ export default function TrackPage() {
                 {/* Progress bar */}
                 <div className="mt-4">
                   <div className="h-3 bg-slate-200 rounded-full overflow-hidden">
-                    <div className="h-full rounded-full bg-gradient-to-r from-emerald-400 to-emerald-600" style={{ width: `${calcProgress(order.status)}%` }} />
+                    <div className="h-full rounded-full bg-gradient-to-r from-red-400 to-red-600" style={{ width: `${calcProgress(order.status)}%` }} />
                   </div>
                   <div className="mt-2 text-xs text-slate-500">{calcProgress(order.status)}% complete</div>
                 </div>
@@ -270,7 +270,7 @@ export default function TrackPage() {
                       <ol className="mt-2 space-y-2 text-sm text-slate-600">
                         {order.statusLog.map((s) => (
                           <li key={s.key} className="flex items-start gap-3">
-                            <div className={`mt-1 w-3 h-3 rounded-full ${s.done ? 'bg-emerald-500' : 'bg-slate-200'}`} />
+                            <div className={`mt-1 w-3 h-3 rounded-full ${s.done ? 'bg-red-500' : 'bg-slate-200'}`} />
                             <div>
                               <div className="flex items-baseline gap-2">
                                 <div className="font-medium">{s.label}</div>
@@ -308,7 +308,7 @@ export default function TrackPage() {
               <div className="text-sm text-slate-600">Subscribe to updates for this order:</div>
               <div className="flex items-center gap-2 mt-2">
                 <label className="inline-flex items-center gap-2"><input type="checkbox" checked={subscribed} onChange={() => setSubscribed((s) => !s)} className="w-4 h-4" /> <span>Subscribe</span></label>
-                <button disabled={!order} onClick={() => setSubscribed(true)} className="ml-auto text-xs bg-emerald-600 text-white px-3 py-1 rounded">Enable</button>
+                <button disabled={!order} onClick={() => setSubscribed(true)} className="ml-auto text-xs bg-red-600 text-white px-3 py-1 rounded">Enable</button>
               </div>
 
               {order?.rider && (

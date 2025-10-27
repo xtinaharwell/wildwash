@@ -53,7 +53,7 @@ export default function Home() {
             <p className="mt-4 text-lg text-slate-600 dark:text-slate-300 max-w-2xl">Wild Wash combines secure item tagging, real-time status updates, pickup on demand, and professional fumigation & cleaning — so nothing gets lost and you always know when your things are ready.</p>
 
             <div className="mt-6 flex flex-wrap gap-3 items-center">
-              <Link href="/book" className="inline-flex items-center gap-2 bg-emerald-600 text-white px-5 py-3 rounded-full font-semibold shadow hover:scale-[1.01] transition-transform">Book a pickup</Link>
+              <Link href="/book" className="inline-flex items-center gap-2 bg-red-600 text-white px-5 py-3 rounded-full font-semibold shadow hover:scale-[1.01] transition-transform">Book a pickup</Link>
 
               <Link href="/offers" className={`inline-flex items-center gap-2 border ${offersExpiringSoon ? 'border-amber-400 text-amber-600 bg-amber-50' : 'border-slate-200 text-slate-700'} px-4 py-3 rounded-full text-sm font-semibold hover:shadow-sm transition` } aria-label="This week's offers">
                 This week's offers
@@ -101,7 +101,7 @@ export default function Home() {
             href="/services"
             aria-label="Go to Wild Wash home"
             title="Wild Wash — Home"
-            className="w-48 h-12 rounded-2xl bg-emerald-500/95 flex items-center justify-center shadow-md shrink-0 focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-300"
+            className="w-48 h-12 rounded-2xl bg-red-500/95 flex items-center justify-center shadow-md shrink-0 focus:outline-none focus-visible:ring-2 focus-visible:ring-red-300"
           >
             <h3 className="text-2xl font-bold">Services</h3>
           </Link>
@@ -115,7 +115,7 @@ export default function Home() {
 
           {/* See more packages button - placed just before How it works */}
           <div className="mt-8 flex justify-center">
-            <Link href="/services" className="inline-flex items-center gap-2 border border-slate-200 dark:border-slate-700 px-5 py-3 rounded-full text-sm font-semibold hover:shadow-md focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-300" aria-label="See more packages">
+            <Link href="/services" className="inline-flex items-center gap-2 border border-slate-200 dark:border-slate-700 px-5 py-3 rounded-full text-sm font-semibold hover:shadow-md focus:outline-none focus-visible:ring-2 focus-visible:ring-red-300" aria-label="See more packages">
               See more packages
             </Link>
           </div>
@@ -145,7 +145,7 @@ export default function Home() {
             </ul>
 
             <div className="mt-6 flex gap-3">
-              <Link href="/book" className="rounded-full bg-emerald-600 text-white px-4 py-2 font-semibold">Book now</Link>
+              <Link href="/book" className="rounded-full bg-red-600 text-white px-4 py-2 font-semibold">Book now</Link>
               <Link href="/contact" className="rounded-full border border-slate-200 px-4 py-2 font-medium">Get a quote</Link>
             </div>
           </div>
@@ -155,7 +155,7 @@ export default function Home() {
             <p className="text-sm mt-2 text-slate-600 dark:text-slate-300">Enter your pickup code to see the live status of your bundle.</p>
             <div className="mt-4 flex gap-2">
               <input aria-label="tracking code" placeholder="e.g. WW-12345" className="flex-1 rounded-md border px-3 py-2" />
-              <button className="rounded-md bg-emerald-600 text-white px-4 py-2">Track</button>
+              <button className="rounded-md bg-red-600 text-white px-4 py-2">Track</button>
             </div>
           </div>
         </section>
@@ -172,12 +172,12 @@ export default function Home() {
 
         {/* CTA & Contact */}
         <section className="mt-12 grid grid-cols-1 md:grid-cols-3 gap-6">
-          <div className="md:col-span-2 bg-emerald-50 dark:bg-emerald-900/20 rounded-2xl p-6 shadow">
+          <div className="md:col-span-2 bg-red-50 dark:bg-red-900/20 rounded-2xl p-6 shadow">
             <h4 className="font-semibold">Ready to simplify laundry day?</h4>
             <p className="mt-2 text-sm text-slate-700 dark:text-slate-300">Schedule a pickup, get real-time tracking, and experience secure handling for every item.</p>
             <div className="mt-4 flex gap-3">
-              <Link id="book" href="/book" className="rounded-full bg-emerald-600 text-white px-4 py-3 font-semibold">Book pickup</Link>
-              <a href="mailto:hello@wildwash.co" className="rounded-full border border-emerald-200 px-4 py-3">Contact sales</a>
+              <Link id="book" href="/book" className="rounded-full bg-red-600 text-white px-4 py-3 font-semibold">Book pickup</Link>
+              <a href="mailto:hello@wildwash.co" className="rounded-full border border-red-200 px-4 py-3">Contact sales</a>
             </div>
           </div>
 
@@ -206,7 +206,7 @@ function Badge({ label }: { label: string }){
 
 function StatusRow({ label, subtitle, time, ready }: { label: string; subtitle: string; time?: string; ready?: boolean }){
   return (
-    <div className={`flex items-center justify-between p-3 rounded-lg ${ready ? 'bg-emerald-50 dark:bg-emerald-900/30' : 'bg-white/5'}`}>
+    <div className={`flex items-center justify-between p-3 rounded-lg ${ready ? 'bg-red-50 dark:bg-red-900/30' : 'bg-white/5'}`}>
       <div>
         <div className="font-medium">{label}</div>
         <div className="text-xs text-slate-500">{subtitle}</div>
@@ -229,7 +229,7 @@ function ServiceCard({ title, price, desc }: { title: string; price: string; des
 function Step({ number, title, desc }: { number: number; title: string; desc: string }){
   return (
     <div className="p-4 bg-white/60 dark:bg-white/5 rounded-2xl shadow">
-      <div className="text-emerald-600 font-bold text-lg">{number}</div>
+      <div className="text-red-600 font-bold text-lg">{number}</div>
       <div className="font-semibold mt-2">{title}</div>
       <div className="text-sm mt-1 text-slate-600 dark:text-slate-300">{desc}</div>
     </div>

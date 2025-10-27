@@ -186,7 +186,7 @@ export default function ProfilePage() {
                     <button
                       type="submit"
                       disabled={saving}
-                      className="px-4 py-2 text-sm rounded-md bg-emerald-600 text-white hover:bg-emerald-500 disabled:opacity-50 disabled:cursor-not-allowed"
+                      className="px-4 py-2 text-sm rounded-md bg-red-600 text-white hover:bg-red-500 disabled:opacity-50 disabled:cursor-not-allowed"
                     >
                       {saving ? "Saving..." : "Save Changes"}
                     </button>
@@ -195,7 +195,7 @@ export default function ProfilePage() {
                   <button
                     type="button"
                     onClick={() => setEditMode(true)}
-                    className="px-4 py-2 text-sm rounded-md bg-emerald-600 text-white hover:bg-emerald-500"
+                    className="px-4 py-2 text-sm rounded-md bg-red-600 text-white hover:bg-red-500"
                   >
                     Edit Profile
                   </button>

@@ -405,19 +405,19 @@ export default function RidersPage(): React.ReactElement {
 
   /* ------------------------- UI render ------------------------- */
   return (
-    <div className="min-h-screen bg-gradient-to-b from-white via-slate-50 to-sky-50 p-6 md:p-12 text-slate-900">
-      <div className="max-w-6xl mx-auto">
+    <div className="min-h-screen bg-gradient-to-b from-white via-[#f8fafc] to-[#eef2ff] dark:from-[#071025] dark:via-[#041022] dark:to-[#011018] text-slate-900 dark:text-slate-100 py-12">
+      <div className="max-w-6xl mx-auto px-4">
         <header className="flex items-start justify-between gap-4 mb-6">
           <div>
             <h1 className="text-3xl font-extrabold">Riders</h1>
-            <p className="mt-1 text-sm text-slate-600">View rider profiles, last-known locations, and a live map categorized by vehicle type.</p>
+            <p className="mt-1 text-sm text-slate-600 dark:text-slate-300">View rider profiles, last-known locations, and a live map categorized by vehicle type.</p>
           </div>
           <div className="flex items-center gap-3">
-            <div className="rounded-md bg-white/90 px-1 py-1 border">
-              <button onClick={() => setTab("profiles")} className={`px-3 py-1 text-sm ${tab === "profiles" ? "font-semibold bg-emerald-600 text-white rounded" : ""}`}>List</button>
-              <button onClick={() => setTab("map")} className={`ml-1 px-3 py-1 text-sm ${tab === "map" ? "font-semibold bg-emerald-600 text-white rounded" : ""}`}>Map</button>
+            <div className="rounded-md bg-white/80 dark:bg-white/5 px-1 py-1 border dark:border-slate-700">
+              <button onClick={() => setTab("profiles")} className={`px-3 py-1 text-sm ${tab === "profiles" ? "font-semibold bg-red-600 text-white rounded" : ""}`}>List</button>
+              <button onClick={() => setTab("map")} className={`ml-1 px-3 py-1 text-sm ${tab === "map" ? "font-semibold bg-red-600 text-white rounded" : ""}`}>Map</button>
             </div>
-            <button onClick={refresh} className="inline-flex items-center gap-2 rounded-full border px-3 py-2 bg-white/90 text-sm">
+            <button onClick={refresh} className="inline-flex items-center gap-2 rounded-full border dark:border-slate-700 px-3 py-2 bg-white/80 dark:bg-white/5 text-sm">
               <RefreshCw className="w-4 h-4" /> Refresh
             </button>
           </div>
@@ -425,14 +425,14 @@ export default function RidersPage(): React.ReactElement {
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* Left: Profiles list & search */}
-          <section className="lg:col-span-2 rounded-2xl bg-white/90 p-4 shadow">
+          <section className="lg:col-span-2 rounded-2xl bg-white/80 dark:bg-white/5 p-4 shadow">
             <div className="flex items-center justify-between mb-4">
               <div className="flex items-center gap-3">
-                <User className="w-5 h-5 text-emerald-600" />
+                <User className="w-5 h-5 text-red-600" />
                 <h2 className="text-lg font-semibold">Profiles</h2>
               </div>
               <div className="flex items-center gap-2">
-                <input value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Search by name, phone or vehicle" className="rounded-md border px-3 py-2 text-sm focus:outline-none" />
+                <input value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Search by name, phone or vehicle" className="rounded-md border dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-red-500 dark:focus:ring-red-600" />
               </div>
             </div>
 
@@ -448,14 +448,14 @@ export default function RidersPage(): React.ReactElement {
                   const key = String(p.id);
                   const latest = latestLocationByRider.get(key) ?? latestLocationByRider.get(String(p.user)) ?? undefined;
                   return (
-                    <div key={p.id} className="flex items-center justify-between gap-3 p-3 rounded-lg border border-slate-100 hover:bg-slate-50">
+                    <div key={p.id} className="flex items-center justify-between gap-3 p-3 rounded-lg border border-slate-100 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-white/5">
                       <div>
                         <div className="font-semibold">{p.display_name ?? p.user ?? `Rider ${p.id}`}</div>
-                        <div className="text-xs text-slate-500">{p.vehicle_type ? `${capitalize(p.vehicle_type)}${p.vehicle_reg ? ` • ${p.vehicle_reg}` : ""}` : "No vehicle info"}</div>
+                        <div className="text-xs text-slate-500 dark:text-slate-400">{p.vehicle_type ? `${capitalize(p.vehicle_type)}${p.vehicle_reg ? ` • ${p.vehicle_reg}` : ""}` : "No vehicle info"}</div>
                       </div>
                       <div className="flex items-center gap-2">
                         {latest && latest.latitude && latest.longitude && (
-                          <button onClick={() => openMaps(Number(latest.latitude), Number(latest.longitude))} className="text-xs px-2 py-1 rounded bg-emerald-600 text-white">Locate</button>
+                          <button onClick={() => openMaps(Number(latest.latitude), Number(latest.longitude))} className="text-xs px-2 py-1 rounded bg-red-600 text-white">Locate</button>
                         )}
                         <button onClick={() => openProfileDetail(p.id)} className="text-xs px-2 py-1 rounded bg-slate-100">View</button>
                       </div>
@@ -467,10 +467,10 @@ export default function RidersPage(): React.ReactElement {
           </section>
 
           {/* Right: depending on tab show locations or map + details */}
-          <aside className="rounded-2xl bg-white/90 p-4 shadow space-y-4">
+          <aside className="rounded-2xl bg-white/80 dark:bg-white/5 p-4 shadow space-y-4">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
-                <MapPin className="w-5 h-5 text-emerald-600" />
+                <MapPin className="w-5 h-5 text-red-600" />
                 <h3 className="font-semibold">Latest Locations</h3>
               </div>
               <div className="text-xs text-slate-500">{locations.length} points</div>
@@ -495,7 +495,7 @@ export default function RidersPage(): React.ReactElement {
                         <div className="text-right">
                           <div className="text-xs text-slate-600">{l.latitude ?? "—"}, {l.longitude ?? "—"}</div>
                           <div className="mt-1 flex gap-2 justify-end">
-                            <button onClick={() => openMaps(Number(l.latitude), Number(l.longitude))} className="text-xs px-2 py-1 rounded bg-emerald-600 text-white">Map</button>
+                            <button onClick={() => openMaps(Number(l.latitude), Number(l.longitude))} className="text-xs px-2 py-1 rounded bg-red-600 text-white">Map</button>
                             <button onClick={() => { if (l.rider && typeof l.rider === "number") openProfileDetail(Number(l.rider)); else alert("Open profile not available for this point."); }} className="text-xs px-2 py-1 rounded bg-slate-100">Profile</button>
                           </div>
                         </div>

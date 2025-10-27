@@ -200,7 +200,7 @@ export default function AdminPage(): React.ReactElement {
 
         {(loadingOrders || loadingLocations) ? (
           <div className="flex justify-center items-center py-20">
-            <Loader2 className="animate-spin text-emerald-600 w-6 h-6" />
+            <Loader2 className="animate-spin text-red-600 w-6 h-6" />
           </div>
         ) : (errorOrders || errorLocations) ? (
           <div className="py-8">
@@ -343,7 +343,7 @@ function latestTimeSummary(arr: Array<any>) {
 function StatCard({ icon, label, value }: { icon: React.ReactNode; label: string; value: string }) {
   return (
     <div className="rounded-2xl bg-white/80 dark:bg-white/5 p-4 shadow flex flex-col gap-1">
-      <div className="flex items-center gap-2 text-emerald-600">{icon}<span className="font-semibold">{label}</span></div>
+      <div className="flex items-center gap-2 text-red-600">{icon}<span className="font-semibold">{label}</span></div>
       <div className="text-2xl font-bold">{value}</div>
     </div>
   );

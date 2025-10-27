@@ -185,20 +185,20 @@ export default function Page() {
 
   return (
     <RouteGuard>
-      <main className="min-h-screen bg-gradient-to-b from-white via-slate-50 to-sky-50 p-4 md:p-8 lg:p-12">
-        <div className="mx-auto max-w-4xl rounded-2xl bg-white/90 shadow-xl overflow-hidden">
+      <main className="min-h-screen bg-gradient-to-b from-white via-[#f8fafc] to-[#eef2ff] dark:from-[#071025] dark:via-[#041022] dark:to-[#011018] text-slate-900 dark:text-slate-100 py-12 px-4">
+        <div className="mx-auto max-w-4xl rounded-2xl bg-white/80 dark:bg-white/5 shadow-xl overflow-hidden">
         <div className="md:flex">
           <section className="w-full md:w-2/3 p-6 md:p-8">
             <header className="flex items-start justify-between">
               <div>
-                <h1 className="text-2xl md:text-3xl font-extrabold tracking-tight text-slate-800">Wild Wash</h1>
-                <p className="mt-1 text-sm text-slate-500">Laundry & Cleaning — Pickup and Dropoff</p>
+                <h1 className="text-2xl md:text-3xl font-extrabold tracking-tight text-slate-800 dark:text-slate-100">Wild Wash</h1>
+                <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">Laundry & Cleaning — Pickup and Dropoff</p>
               </div>
               <div className="hidden md:block text-right">
-                <div className="text-xs text-slate-500">Progress</div>
+                <div className="text-xs text-slate-500 dark:text-slate-400">Progress</div>
                 <div className="mt-2 w-40">
                   <div className="h-2 w-full rounded-full bg-slate-200 overflow-hidden">
-                    <div className="h-full rounded-full bg-gradient-to-r from-emerald-400 to-emerald-600 transition-all" style={{ width: `${progress}%` }} />
+                    <div className="h-full rounded-full bg-gradient-to-r from-red-400 to-red-600 transition-all" style={{ width: `${progress}%` }} />
                   </div>
                 </div>
                 <div className="text-xs text-slate-400 mt-1">{progress}%</div>
@@ -207,11 +207,11 @@ export default function Page() {
 
             <form className="mt-6 space-y-6" onSubmit={(e) => e.preventDefault()}>
               <fieldset className="space-y-3">
-                <legend className="text-sm font-semibold text-slate-700">Pickup Address</legend>
+                <legend className="text-sm font-semibold text-slate-700 dark:text-slate-200">Pickup Address</legend>
                 <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                   <div>
-                    <label className="block text-xs text-slate-500 mb-1">Building / Street</label>
-                    <input value={pickupBuilding} onChange={(e) => setPickupBuilding(e.target.value)} placeholder="e.g. Olive Towers, 4th floor" className="w-full rounded-lg border border-slate-200 p-3 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-sky-300" />
+                    <label className="block text-xs text-slate-500 dark:text-slate-400 mb-1">Building / Street</label>
+                    <input value={pickupBuilding} onChange={(e) => setPickupBuilding(e.target.value)} placeholder="e.g. Olive Towers, 4th floor" className="w-full rounded-lg border border-slate-200 dark:border-slate-700 p-3 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-red-500 dark:focus:ring-red-600 bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100" />
                   </div>
                   <div>
                     <label className="block text-xs text-slate-500 mb-1">Contact (phone)</label>
@@ -261,7 +261,7 @@ export default function Page() {
                     onClick={handleRequestPickup}
                     disabled={!canRequestPickup || sending}
                     className={`inline-flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-medium transition-shadow disabled:opacity-50 disabled:cursor-not-allowed shadow-md ${
-                      canRequestPickup && !sending ? "bg-emerald-500 text-white hover:brightness-95" : "bg-slate-100 text-slate-600"
+                      canRequestPickup && !sending ? "bg-red-500 text-white hover:brightness-95" : "bg-slate-100 text-slate-600"
                     }`}
                   >
                     Request Pickup
@@ -307,12 +307,12 @@ export default function Page() {
                 <legend className="text-sm font-semibold text-slate-700">Pick Package</legend>
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                   {[{ id: "basic", title: "Basic", price: "KSh 300" }, { id: "standard", title: "Standard", price: "KSh 500" }, { id: "premium", title: "Premium", price: "KSh 900" }].map((p) => (
-                    <label key={p.id} className={`group block cursor-pointer rounded-xl border p-3 text-sm shadow-sm transition-transform hover:-translate-y-0.5 ${packageType === p.id ? "border-emerald-400 bg-emerald-50" : "border-slate-200 bg-white"}`}>
+                    <label key={p.id} className={`group block cursor-pointer rounded-xl border p-3 text-sm shadow-sm transition-transform hover:-translate-y-0.5 ${packageType === p.id ? "border-red-400 bg-red-50 dark:bg-red-900/30" : "border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800"}`}>
                       <input type="radio" name="package" value={p.id} checked={packageType === p.id} onChange={() => setPackageType(p.id)} className="hidden" />
                       <div className="flex items-center justify-between">
                         <div>
-                          <div className="font-semibold text-slate-800">{p.title}</div>
-                          <div className="text-xs text-slate-500 mt-1">{p.id === "basic" ? "Quick wash" : p.id === "standard" ? "Wash + Dry" : "Priority handling"}</div>
+                          <div className="font-semibold text-slate-800 dark:text-slate-100">{p.title}</div>
+                          <div className="text-xs text-slate-500 dark:text-slate-400 mt-1">{p.id === "basic" ? "Quick wash" : p.id === "standard" ? "Wash + Dry" : "Priority handling"}</div>
                         </div>
                         <div className="text-sm font-semibold">{p.price}</div>
                       </div>
@@ -351,10 +351,10 @@ export default function Page() {
             </form>
           </section>
 
-          <aside className="w-full md:w-1/3 bg-gradient-to-b from-sky-50 to-white p-6 md:p-8 border-l border-slate-100">
+          <aside className="w-full md:w-1/3 bg-gradient-to-b from-slate-50 to-white dark:from-white/5 dark:to-transparent p-6 md:p-8 border-l border-slate-100 dark:border-slate-800">
             <div className="sticky top-6">
-              <h3 className="text-sm font-semibold text-slate-700">Summary</h3>
-              <div className="mt-3 space-y-3 text-sm text-slate-600">
+              <h3 className="text-sm font-semibold text-slate-700 dark:text-slate-200">Summary</h3>
+              <div className="mt-3 space-y-3 text-sm text-slate-600 dark:text-slate-300">
                 <div>
                   <div className="text-xs text-slate-500">Pickup</div>
                   <div className="mt-1 font-medium text-slate-800">{pickupBuilding || "—"}</div>
@@ -383,12 +383,12 @@ export default function Page() {
           </aside>
         </div>
 
-        <footer className="md:hidden border-t bg-white p-3 sticky bottom-0">
+        <footer className="md:hidden border-t border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 p-3 sticky bottom-0">
           <div className="flex gap-2">
-            <button onClick={handleRequestPickup} disabled={!canRequestPickup || sending} className="flex-1 rounded-lg bg-emerald-500 text-white py-2 text-sm font-medium disabled:opacity-50">
+            <button onClick={handleRequestPickup} disabled={!canRequestPickup || sending} className="flex-1 rounded-lg bg-red-600 text-white py-2 text-sm font-medium disabled:opacity-50 hover:bg-red-700">
               Request Pickup
             </button>
-            <button onClick={handleRequestDropoff} disabled={!canRequestDropoff || sending} className="flex-1 rounded-lg bg-sky-600 text-white py-2 text-sm font-medium disabled:opacity-50">
+            <button onClick={handleRequestDropoff} disabled={!canRequestDropoff || sending} className="flex-1 rounded-lg bg-red-600 text-white py-2 text-sm font-medium disabled:opacity-50 hover:bg-red-700">
               Request Dropoff
             </button>
           </div>

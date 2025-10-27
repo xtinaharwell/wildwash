@@ -53,8 +53,8 @@ export default function ServicesPage() {
   const grouped = groupByCategory(services);
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-white via-slate-50 to-sky-50 p-6 md:p-12 text-slate-900 dark:text-slate-100">
-      <div className="mx-auto max-w-5xl">
+    <div className="min-h-screen bg-gradient-to-b from-white via-[#f8fafc] to-[#eef2ff] dark:from-[#071025] dark:via-[#041022] dark:to-[#011018] text-slate-900 dark:text-slate-100 py-12">
+      <div className="max-w-6xl mx-auto px-4">
         <header className="mb-8">
           <h1 className="text-3xl font-extrabold">Services — What we offer</h1>
           <p className="mt-2 text-slate-600 dark:text-slate-300">
@@ -64,7 +64,7 @@ export default function ServicesPage() {
 
         {loading ? (
           <div className="flex justify-center py-20">
-            <ArrowPathIcon className="animate-spin w-8 h-8 text-emerald-600" />
+            <ArrowPathIcon className="animate-spin w-8 h-8 text-red-600" />
           </div>
         ) : error ? (
           <div className="text-center text-red-600">Error: {error}</div>
@@ -73,7 +73,7 @@ export default function ServicesPage() {
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             {Object.entries(grouped).map(([category, list]) => (
-              <section key={category} className="rounded-2xl bg-white/70 dark:bg-white/5 p-4 shadow">
+              <section key={category} className="rounded-2xl bg-white/80 dark:bg-white/5 p-4 shadow">
                 <h2 className="text-xl font-semibold capitalize">
                   {categoryLabel(category)}
                 </h2>
@@ -111,7 +111,7 @@ export default function ServicesPage() {
                         </div>
                         <a
                           href="/book"
-                          className="mt-3 inline-flex items-center gap-2 bg-emerald-600 text-white px-3 py-2 rounded-md text-sm font-medium"
+                          className="mt-3 inline-flex items-center gap-2 bg-red-600 text-white px-3 py-2 rounded-md text-sm font-medium"
                         >
                           Request
                         </a>
@@ -125,9 +125,9 @@ export default function ServicesPage() {
         )}
 
         {/* Rider notification section */}
-        <section className="mt-8 rounded-2xl bg-white/80 dark:bg-white/5 p-6 shadow">
+        <section className="mt-8 rounded-2xl bg-white/90 dark:bg-white/5 p-6 shadow">
           <h3 className="text-xl font-semibold flex items-center gap-2">
-            <BellIcon className="w-5 h-5 text-emerald-600" /> Rider notifications & outputs
+            <BellIcon className="w-5 h-5 text-red-600" /> Rider notifications & outputs
           </h3>
           <p className="mt-2 text-sm text-slate-600 dark:text-slate-300">
             When a pickup or delivery is requested, Wild Wash generates the following outputs and notifies the rider.
@@ -165,7 +165,7 @@ export default function ServicesPage() {
                 <div className="mt-3 flex items-center gap-3">
                   <button
                     onClick={simulateNotify}
-                    className="rounded-md bg-emerald-600 text-white px-4 py-2"
+                    className="rounded-md bg-red-600 text-white px-4 py-2"
                   >
                     Simulate notify
                   </button>

@@ -81,7 +81,7 @@ export default function StaffLoginPage() {
           <button
             type="submit"
             disabled={loading}
-            className="w-full rounded-md bg-emerald-600 hover:bg-emerald-500 text-white px-4 py-2 text-sm disabled:opacity-50 disabled:cursor-not-allowed"
+            className="w-full rounded-md bg-red-600 hover:bg-red-500 text-white px-4 py-2 text-sm disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {loading ? "Signing in…" : "Sign in"}
           </button>

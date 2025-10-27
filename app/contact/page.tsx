@@ -100,10 +100,10 @@ export default function ContactPage() {
               </div>
 
               {error && <div className="text-sm text-red-600">{error}</div>}
-              {success && <div className="text-sm text-emerald-600">{success}</div>}
+              {success && <div className="text-sm text-red-600">{success}</div>}
 
               <div className="flex items-center gap-3">
-                <button type="submit" disabled={submitting} className="px-4 py-2 rounded bg-emerald-600 text-white text-sm">{submitting ? 'Sending…' : 'Send message'}</button>
+                <button type="submit" disabled={submitting} className="px-4 py-2 rounded bg-red-600 text-white text-sm">{submitting ? 'Sending…' : 'Send message'}</button>
                 <a href={`mailto:${supportEmail}`} className="text-sm underline">Or email us directly</a>
               </div>
             </form>

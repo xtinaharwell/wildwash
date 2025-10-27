@@ -165,7 +165,7 @@ export default function OrdersPage(): React.JSX.Element {
           </div>
 
           <div className="flex items-center gap-3">
-            <button onClick={() => setCreating((c) => !c)} className="rounded-full px-4 py-2 bg-emerald-600 text-white text-sm shadow">{creating ? 'Close' : 'New order'}</button>
+            <button onClick={() => setCreating((c) => !c)} className="rounded-full px-4 py-2 bg-red-600 text-white text-sm shadow">{creating ? 'Close' : 'New order'}</button>
           </div>
         </header>
 
@@ -187,14 +187,14 @@ export default function OrdersPage(): React.JSX.Element {
             </div>
 
             <div className="flex items-center gap-3 justify-end">
-              <button type="submit" disabled={fullState.createLoading} className="px-4 py-2 rounded bg-emerald-600 text-white text-sm">{fullState.createLoading ? 'Creating…' : 'Create order'}</button>
+              <button type="submit" disabled={fullState.createLoading} className="px-4 py-2 rounded bg-red-600 text-white text-sm">{fullState.createLoading ? 'Creating…' : 'Create order'}</button>
             </div>
           </form>
         )}
 
         <section className="mb-6 grid grid-cols-1 md:grid-cols-3 gap-4">
           <div className="md:col-span-2 flex gap-3">
-            <input value={query ?? ''} onChange={(e) => dispatch(setQuery(e.target.value))} placeholder="Search by code, package or price" className="flex-1 rounded-md border px-3 py-2 text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-300" />
+            <input value={query ?? ''} onChange={(e) => dispatch(setQuery(e.target.value))} placeholder="Search by code, package or price" className="flex-1 rounded-md border px-3 py-2 text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-red-300" />
             <select value={statusFilter} onChange={(e) => dispatch(setStatusFilter(e.target.value as any))} className="rounded-md border px-3 py-2 text-sm">
               <option value="All">All statuses</option>
               <option value="Received">Received</option>
@@ -213,7 +213,7 @@ export default function OrdersPage(): React.JSX.Element {
             </div>
             <div>
               <div className="text-xs text-slate-500">Active</div>
-              <div className="font-semibold text-lg text-emerald-600">{summary.active}</div>
+              <div className="font-semibold text-lg text-red-600">{summary.active}</div>
             </div>
             <div>
               <div className="text-xs text-slate-500">Completed</div>
@@ -240,7 +240,7 @@ export default function OrdersPage(): React.JSX.Element {
 
                     <div className="text-right">
                       <div className="text-xs text-slate-500">Status</div>
-                      <div className={`font-semibold ${o.status === 'Delivered' ? 'text-slate-700' : 'text-emerald-600'}`}>{o.status}</div>
+                      <div className={`font-semibold ${o.status === 'Delivered' ? 'text-slate-700' : 'text-red-600'}`}>{o.status}</div>
                       {o.eta && <div className="text-xs text-slate-500 mt-2">ETA</div>}
                       {o.eta && <div className="font-medium">{o.eta}</div>}
                       <div className="mt-2 flex items-center gap-2 justify-end">

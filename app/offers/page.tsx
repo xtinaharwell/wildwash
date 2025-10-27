@@ -70,8 +70,8 @@ export default function OffersPage() {
         </header>
 
         <section className="mb-6 flex gap-3 items-center">
-          <input value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Search offers" className="flex-1 rounded-md border px-3 py-2 text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-300" />
-          <button onClick={() => setSubscribed((s) => !s)} className={`px-3 py-2 rounded text-sm ${subscribed ? 'bg-emerald-600 text-white' : 'bg-slate-100'}`}>{subscribed ? 'Subscribed' : 'Subscribe'}</button>
+          <input value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Search offers" className="flex-1 rounded-md border px-3 py-2 text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-red-300" />
+          <button onClick={() => setSubscribed((s) => !s)} className={`px-3 py-2 rounded text-sm ${subscribed ? 'bg-red-600 text-white' : 'bg-slate-100'}`}>{subscribed ? 'Subscribed' : 'Subscribe'}</button>
         </section>
 
         <main>
@@ -84,7 +84,7 @@ export default function OffersPage() {
               </div>
 
               <div className="mt-4 flex items-center gap-2">
-                <button onClick={openBnpl} className="px-3 py-2 rounded bg-emerald-600 text-white text-sm">Opt in to BNPL</button>
+                <button onClick={openBnpl} className="px-3 py-2 rounded bg-red-600 text-white text-sm">Opt in to BNPL</button>
                 <Link href="/help/bnpl" className="text-sm underline">Learn more</Link>
                 <div className="ml-auto text-xs text-slate-500">{bnplOptIn ? 'Opted in' : 'Not opted in'}</div>
               </div>
@@ -126,7 +126,7 @@ export default function OffersPage() {
                   </div>
 
                   <div className="mt-4 flex items-center gap-2">
-                    <button onClick={() => claimOffer(o.id)} className="px-3 py-2 rounded bg-emerald-600 text-white text-sm">Claim</button>
+                    <button onClick={() => claimOffer(o.id)} className="px-3 py-2 rounded bg-red-600 text-white text-sm">Claim</button>
                     <Link href={`/offers/${o.id}`} className="text-sm underline">Details</Link>
                     <div className="ml-auto text-xs text-slate-500">Shareable</div>
                   </div>
@@ -148,7 +148,7 @@ export default function OffersPage() {
               <input value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="+2547XXXXXXXX" className="w-full rounded-md border px-3 py-2 text-sm mt-1" />
 
               <div className="mt-4 flex items-center gap-2">
-                <button onClick={handleBnplOptIn} className="px-3 py-2 rounded bg-emerald-600 text-white text-sm">Confirm opt-in</button>
+                <button onClick={handleBnplOptIn} className="px-3 py-2 rounded bg-red-600 text-white text-sm">Confirm opt-in</button>
                 <button onClick={() => setShowBnplModal(false)} className="px-3 py-2 rounded border text-sm">Cancel</button>
               </div>
 

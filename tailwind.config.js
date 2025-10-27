@@ -15,7 +15,7 @@ module.exports = {
   theme: {
     extend: {
       colors: {
-        emerald: maroon, // 👈 overrides emerald with maroon tones
+        red: maroon, // 👈 overrides red with maroon tones
       },
     },
   },

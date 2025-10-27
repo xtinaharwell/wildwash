@@ -51,12 +51,12 @@ export default function NavBar() {
       <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16">
           <div className="flex items-center gap-3">
-            <div className="w-12 h-12 rounded-2xl bg-emerald-500/95 flex items-center justify-center shadow-md shrink-0">
+            <div className="w-12 h-12 rounded-2xl bg-red-500/95 flex items-center justify-center shadow-md shrink-0">
                 <Link
                     href="/"
                     aria-label="Go to Wild Wash home"
                     title="Wild Wash — Home"
-                    className="w-12 h-12 rounded-2xl bg-emerald-500/95 flex items-center justify-center shadow-md shrink-0 focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-300"
+                    className="w-12 h-12 rounded-2xl bg-red-500/95 flex items-center justify-center shadow-md shrink-0 focus:outline-none focus-visible:ring-2 focus-visible:ring-red-300"
                     >
                     <span className="font-bold text-white select-none">WW</span>
                 </Link>
@@ -68,20 +68,20 @@ export default function NavBar() {
           </div>
 
           <nav className="hidden md:flex items-center gap-3">
-            <Link href="/services" className="text-sm px-3 py-2 rounded-md hover:underline focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-300">Services</Link>
-            <Link href="/orders" className="text-sm px-3 py-2 rounded-md hover:underline focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-300">Your Orders</Link>
-            <Link href="/track" className="text-sm px-3 py-2 rounded-md hover:underline focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-300">Track</Link>
-            <Link href="/book" className="ml-2 inline-flex items-center gap-2 rounded-full bg-emerald-600 text-white px-4 py-2 text-sm font-medium shadow-md hover:brightness-95 focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-300">Book Pickup</Link>
+            <Link href="/services" className="text-sm px-3 py-2 rounded-md hover:underline focus:outline-none focus-visible:ring-2 focus-visible:ring-red-300">Services</Link>
+            <Link href="/orders" className="text-sm px-3 py-2 rounded-md hover:underline focus:outline-none focus-visible:ring-2 focus-visible:ring-red-300">Your Orders</Link>
+            <Link href="/track" className="text-sm px-3 py-2 rounded-md hover:underline focus:outline-none focus-visible:ring-2 focus-visible:ring-red-300">Track</Link>
+            <Link href="/book" className="ml-2 inline-flex items-center gap-2 rounded-full bg-red-600 text-white px-4 py-2 text-sm font-medium shadow-md hover:brightness-95 focus:outline-none focus-visible:ring-2 focus-visible:ring-red-300">Book Pickup</Link>
           </nav>
 
           <div className="flex items-center gap-2">
-            <Link href="/book" className="md:hidden inline-flex items-center justify-center rounded-full bg-emerald-600 text-white px-3 py-2 text-sm font-semibold shadow focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-300" aria-label="Book pickup">Book</Link>
+            <Link href="/book" className="md:hidden inline-flex items-center justify-center rounded-full bg-red-600 text-white px-3 py-2 text-sm font-semibold shadow focus:outline-none focus-visible:ring-2 focus-visible:ring-red-300" aria-label="Book pickup">Book</Link>
 
             {isAuthenticated ? (
               <div className="relative" ref={profileRef}>
                 <button
                   onClick={() => setProfileOpen(!profileOpen)}
-                  className="inline-flex items-center justify-center w-10 h-10 rounded-full bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-300"
+                  className="inline-flex items-center justify-center w-10 h-10 rounded-full bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-red-300"
                 >
                   <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-6 h-6">
                     <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z" />
@@ -101,7 +101,7 @@ export default function NavBar() {
                 )}
               </div>
             ) : (
-              <Link href="/login" className="inline-flex items-center justify-center px-4 py-2 rounded-lg bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-sm font-medium focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-300">
+              <Link href="/login" className="inline-flex items-center justify-center px-4 py-2 rounded-lg bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-sm font-medium focus:outline-none focus-visible:ring-2 focus-visible:ring-red-300">
                 Sign in
               </Link>
             )}
@@ -110,7 +110,7 @@ export default function NavBar() {
               onClick={() => setMobileOpen((s) => !s)}
               aria-expanded={mobileOpen}
               aria-label={mobileOpen ? "Close menu" : "Open menu"}
-              className="md:hidden inline-flex items-center justify-center p-2 rounded-lg hover:bg-slate-100 dark:hover:bg-white/5 focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-300"
+              className="md:hidden inline-flex items-center justify-center p-2 rounded-lg hover:bg-slate-100 dark:hover:bg-white/5 focus:outline-none focus-visible:ring-2 focus-visible:ring-red-300"
             >
               <svg className={`w-6 h-6 transition-transform ${mobileOpen ? "rotate-90" : "rotate-0"}`} viewBox="0 0 24 24" fill="none" stroke="currentColor">
                 {mobileOpen ? (
@@ -128,18 +128,18 @@ export default function NavBar() {
         <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 pb-4">
           <div className="mt-2 rounded-xl bg-white/95 dark:bg-black/60 shadow-lg p-4 backdrop-blur-sm">
             <div className="flex flex-col gap-2">
-              <Link href="/services" onClick={() => setMobileOpen(false)} className="block text-lg px-4 py-3 rounded-lg hover:bg-slate-50 dark:hover:bg-white/5 focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-300">Services</Link>
-              <Link href="/orders" onClick={() => setMobileOpen(false)} className="block text-lg px-4 py-3 rounded-lg hover:bg-slate-50 dark:hover:bg-white/5 focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-300">Your Orders</Link>
-              <Link href="/#how" onClick={() => setMobileOpen(false)} className="block text-lg px-4 py-3 rounded-lg hover:bg-slate-50 dark:hover:bg-white/5 focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-300">How it works</Link>
-              <Link href="/track" onClick={() => setMobileOpen(false)} className="block text-lg px-4 py-3 rounded-lg hover:bg-slate-50 dark:hover:bg-white/5 focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-300">Track</Link>
+              <Link href="/services" onClick={() => setMobileOpen(false)} className="block text-lg px-4 py-3 rounded-lg hover:bg-slate-50 dark:hover:bg-white/5 focus:outline-none focus-visible:ring-2 focus-visible:ring-red-300">Services</Link>
+              <Link href="/orders" onClick={() => setMobileOpen(false)} className="block text-lg px-4 py-3 rounded-lg hover:bg-slate-50 dark:hover:bg-white/5 focus:outline-none focus-visible:ring-2 focus-visible:ring-red-300">Your Orders</Link>
+              <Link href="/#how" onClick={() => setMobileOpen(false)} className="block text-lg px-4 py-3 rounded-lg hover:bg-slate-50 dark:hover:bg-white/5 focus:outline-none focus-visible:ring-2 focus-visible:ring-red-300">How it works</Link>
+              <Link href="/track" onClick={() => setMobileOpen(false)} className="block text-lg px-4 py-3 rounded-lg hover:bg-slate-50 dark:hover:bg-white/5 focus:outline-none focus-visible:ring-2 focus-visible:ring-red-300">Track</Link>
 
               <div className="pt-1 border-t border-slate-100 dark:border-slate-800" />
 
-              <Link href="/book" onClick={() => setMobileOpen(false)} className="block text-center rounded-lg bg-emerald-600 text-white px-4 py-3 font-semibold shadow-md focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-300">Book Pickup</Link>
+              <Link href="/book" onClick={() => setMobileOpen(false)} className="block text-center rounded-lg bg-red-600 text-white px-4 py-3 font-semibold shadow-md focus:outline-none focus-visible:ring-2 focus-visible:ring-red-300">Book Pickup</Link>
 
               <div className="flex gap-3 mt-2 justify-center">
-                <Link href="/contact" className="text-sm px-3 py-2 rounded-md hover:underline focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-300">Contact</Link>
-                <Link href="/admin" className="text-sm px-3 py-2 rounded-md hover:underline focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-300">Admin</Link>
+                <Link href="/contact" className="text-sm px-3 py-2 rounded-md hover:underline focus:outline-none focus-visible:ring-2 focus-visible:ring-red-300">Contact</Link>
+                <Link href="/admin" className="text-sm px-3 py-2 rounded-md hover:underline focus:outline-none focus-visible:ring-2 focus-visible:ring-red-300">Admin</Link>
               </div>
             </div>
           </div>

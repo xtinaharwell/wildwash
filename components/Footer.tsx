@@ -23,8 +23,8 @@ export default function Footer() {
       <div className="max-w-6xl mx-auto grid grid-cols-1 md:grid-cols-4 gap-6 items-start">
         <div className="md:col-span-2">
           <div className="flex items-center gap-3">
-            <div className="w-12 h-12 rounded-2xl bg-emerald-500/95 flex items-center justify-center shadow-md">
-              <span className="font-bold text-white">WW</span>
+            <div className="w-12 h-12 rounded-2xl bg-white/95 dark:bg-slate-800 flex items-center justify-center shadow-md">
+              <img src="/favicon.png" alt="Wild Wash" className="h-8 w-8" />
             </div>
             <div>
               <div className="font-semibold">Wild Wash</div>
@@ -63,8 +63,8 @@ export default function Footer() {
           <div className="font-semibold">Get updates</div>
           <form onSubmit={handleSubscribe} className="mt-2 flex gap-2">
             <label htmlFor="newsletter" className="sr-only">Email address</label>
-            <input id="newsletter" type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="you@domain.com" className="flex-1 rounded-md border px-3 py-2 text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-300" />
-            <button type="submit" className="rounded-md bg-emerald-600 text-white px-3 py-2 text-sm">Subscribe</button>
+            <input id="newsletter" type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="you@domain.com" className="flex-1 rounded-md border px-3 py-2 text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-red-300" />
+            <button type="submit" className="rounded-md bg-red-600 text-white px-3 py-2 text-sm">Subscribe</button>
           </form>
           {sent && <div className="mt-2 text-sm text-slate-600">{sent}</div>}
 
