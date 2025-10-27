@@ -25,6 +25,8 @@ const PACKAGE_MAP: Record<string, number> = {
 
 const API_BASE = process.env.NEXT_PUBLIC_API_BASE ?? ""; // empty = same origin
 
+import RouteGuard from "../../components/RouteGuard";
+
 export default function Page() {
   const [pickupBuilding, setPickupBuilding] = useState("");
   const [pickupContact, setPickupContact] = useState("");
@@ -182,8 +184,9 @@ export default function Page() {
   }
 
   return (
-    <main className="min-h-screen bg-gradient-to-b from-white via-slate-50 to-sky-50 p-4 md:p-8 lg:p-12">
-      <div className="mx-auto max-w-4xl rounded-2xl bg-white/90 shadow-xl overflow-hidden">
+    <RouteGuard>
+      <main className="min-h-screen bg-gradient-to-b from-white via-slate-50 to-sky-50 p-4 md:p-8 lg:p-12">
+        <div className="mx-auto max-w-4xl rounded-2xl bg-white/90 shadow-xl overflow-hidden">
         <div className="md:flex">
           <section className="w-full md:w-2/3 p-6 md:p-8">
             <header className="flex items-start justify-between">
@@ -391,6 +394,7 @@ export default function Page() {
           </div>
         </footer>
       </div>
-    </main>
+      </main>
+    </RouteGuard>
   );
 }

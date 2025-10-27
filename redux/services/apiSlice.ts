@@ -20,7 +20,7 @@ export type Order = {
 export const apiSlice = createApi({
   reducerPath: 'api',
   baseQuery: fetchBaseQuery({
-    baseUrl: process.env.NEXT_PUBLIC_API_BASE_URL || 'https://wildwosh.kibeezy.com',
+  baseUrl: process.env.NEXT_PUBLIC_API_BASE || process.env.NEXT_PUBLIC_API_BASE_URL || 'https://wildwosh.kibeezy.com',
     prepareHeaders: (headers) => {
       const token = typeof window !== 'undefined' ? localStorage.getItem('access_token') : null;
       if (token) headers.set('authorization', `Bearer ${token}`);

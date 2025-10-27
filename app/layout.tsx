@@ -3,6 +3,7 @@ import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { NavBar, Footer, WhatsAppButton } from '@/components'
 import CustomProvider from '@/redux/provider';
+import AuthInitializer from '@/components/AuthInitializer';
 
 
 const geistSans = Geist({
@@ -31,12 +32,13 @@ export default function RootLayout({
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
         <CustomProvider>
-        <NavBar />
-        <main className="pt-8">
-          {children}
-        </main>
-        <WhatsAppButton />         
-        <Footer />
+          <AuthInitializer />
+          <NavBar />
+          <main className="pt-8">
+            {children}
+          </main>
+          <WhatsAppButton />         
+          <Footer />
         </CustomProvider>
       </body>
     </html>

@@ -41,6 +41,8 @@ type Order = {
 const useAppDispatch = () => useDispatch<AppDispatch>();
 const useAppSelector: TypedUseSelectorHook<RootState> = useSelector;
 
+import RouteGuard from "../../components/RouteGuard";
+
 export default function OrdersPage(): React.JSX.Element {
 
   const router = useRouter();
@@ -153,7 +155,8 @@ export default function OrdersPage(): React.JSX.Element {
   });
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-white via-[#f8fafc] to-[#eef2ff] dark:from-[#071025] dark:via-[#041022] dark:to-[#011018] text-slate-900 dark:text-slate-100 py-12">
+    <RouteGuard>
+      <div className="min-h-screen bg-gradient-to-b from-white via-[#f8fafc] to-[#eef2ff] dark:from-[#071025] dark:via-[#041022] dark:to-[#011018] text-slate-900 dark:text-slate-100 py-12">
       <div className="max-w-6xl mx-auto px-4">
         <header className="mb-6 flex items-center justify-between gap-4">
           <div>
@@ -268,6 +271,7 @@ export default function OrdersPage(): React.JSX.Element {
           {errorMessage && <div className="mt-4 text-sm text-red-500">{errorMessage}</div>}
         </main>
       </div>
-    </div>
+      </div>
+    </RouteGuard>
   );
 }
