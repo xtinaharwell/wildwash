@@ -383,3 +383,5 @@ function mapStatus(s: string): string {
   };
   return map[s] || s || "Received";
 }
+
+export default TrackPageContent;
