@@ -46,7 +46,9 @@ function getCookie(name: string) {
 
 import { useSearchParams } from 'next/navigation';
 
-export default function TrackPage() {
+import { Suspense } from 'react';
+
+function TrackPageContent() {
   const searchParams = useSearchParams();
   const [code, setCode] = useState(() => searchParams.get('code') || "");
   const [loading, setLoading] = useState(false);
@@ -99,6 +101,22 @@ export default function TrackPage() {
       let data: any;
       try {
         data = await res.json();
+      // ...existing code...
+      }
+    } catch (err) {
+      // ...existing code...
+    }
+  }
+  // ...existing code...
+}
+
+export default function TrackPage() {
+  return (
+    <Suspense fallback={<div>Loading...</div>}>
+      <TrackPageContent />
+    </Suspense>
+  );
+}
       } catch (e) {
         const text = await res.text().catch(() => "<non-json body>");
         throw new Error(res.ok ? "Server returned non-JSON response" : `Server error: ${res.status} ${text}`);

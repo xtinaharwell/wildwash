@@ -163,6 +163,7 @@ export default function BNPLManager() {
         )}
       </div>
       
+      {/* Only show opt-in if not enrolled, and opt-out if enrolled and balance is 0 */}
       {status.is_enrolled ? (
         <div>
           <div className="p-4 rounded-lg bg-white/50 dark:bg-black/10 mb-6">
@@ -187,61 +188,61 @@ export default function BNPLManager() {
               </div>
             </div>
           </div>
-          
-          {status.current_balance > 0 ? (
-            <div className="p-4 rounded-lg bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800">
-              <div className="flex items-start">
-                <div className="flex-shrink-0">
-                  <svg className="h-5 w-5 text-yellow-400" viewBox="0 0 20 20" fill="currentColor">
-                    <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
-                  </svg>
-                </div>
-                <div className="ml-3">
-                  <h3 className="text-sm font-medium text-yellow-800 dark:text-yellow-200">
-                    Outstanding Balance
-                  </h3>
-                  <div className="mt-2 text-sm text-yellow-700 dark:text-yellow-300">
-                    <p>You need to clear your current balance of KES {status.current_balance.toLocaleString()} before opting out of BNPL.</p>
+          {/* Opt-out button only if balance is 0 */}
+          <div className="space-y-4">
+            <div className="flex items-center gap-4">
+              <button
+                onClick={handleOptOut}
+                disabled={loading || status.current_balance > 0}
+                className="px-4 py-2 rounded-lg bg-red-600 text-white text-sm font-medium hover:bg-red-700 disabled:opacity-50 disabled:hover:bg-red-600 transition-colors focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2"
+              >
+                {loading ? (
+                  <span className="inline-flex items-center">
+                    <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    </svg>
+                    Processing...
+                  </span>
+                ) : (
+                  "Opt Out of BNPL"
+                )}
+              </button>
+              <a href="/help/bnpl" className="text-sm text-slate-600 dark:text-slate-300 hover:underline">
+                Learn more about BNPL
+              </a>
+            </div>
+            {/* If balance > 0, show warning */}
+            {status.current_balance > 0 && (
+              <div className="p-4 rounded-lg bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 mt-2">
+                <div className="flex items-start">
+                  <div className="flex-shrink-0">
+                    <svg className="h-5 w-5 text-yellow-400" viewBox="0 0 20 20" fill="currentColor">
+                      <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+                    </svg>
                   </div>
-                  <div className="mt-4">
-                    <div className="-mx-2 -my-1.5 flex">
-                      <a
-                        href="/orders"
-                        className="px-3 py-2 rounded-md text-sm font-medium text-yellow-800 dark:text-yellow-200 hover:bg-yellow-100 dark:hover:bg-yellow-900/40 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-yellow-50 focus:ring-yellow-600"
-                      >
-                        View Orders
-                      </a>
+                  <div className="ml-3">
+                    <h3 className="text-sm font-medium text-yellow-800 dark:text-yellow-200">
+                      Outstanding Balance
+                    </h3>
+                    <div className="mt-2 text-sm text-yellow-700 dark:text-yellow-300">
+                      <p>You need to clear your current balance of KES {status.current_balance.toLocaleString()} before opting out of BNPL.</p>
+                    </div>
+                    <div className="mt-4">
+                      <div className="-mx-2 -my-1.5 flex">
+                        <a
+                          href="/orders"
+                          className="px-3 py-2 rounded-md text-sm font-medium text-yellow-800 dark:text-yellow-200 hover:bg-yellow-100 dark:hover:bg-yellow-900/40 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-yellow-50 focus:ring-yellow-600"
+                        >
+                          View Orders
+                        </a>
+                      </div>
                     </div>
                   </div>
                 </div>
               </div>
-            </div>
-          ) : (
-            <div className="space-y-4">
-              <div className="flex items-center gap-4">
-                <button
-                  onClick={handleOptOut}
-                  disabled={loading || status.current_balance > 0}
-                  className="px-4 py-2 rounded-lg bg-red-600 text-white text-sm font-medium hover:bg-red-700 disabled:opacity-50 disabled:hover:bg-red-600 transition-colors focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2"
-                >
-                  {loading ? (
-                    <span className="inline-flex items-center">
-                      <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                      </svg>
-                      Processing...
-                    </span>
-                  ) : (
-                    "Opt Out of BNPL"
-                  )}
-                </button>
-                <a href="/help/bnpl" className="text-sm text-slate-600 dark:text-slate-300 hover:underline">
-                  Learn more about BNPL
-                </a>
-              </div>
-            </div>
-          )}
+            )}
+          </div>
         </div>
       ) : (
         <div>
@@ -277,7 +278,7 @@ export default function BNPLManager() {
               </div>
             </div>
           </div>
-          
+          {/* Opt-in button only if not enrolled and phone exists */}
           {profile?.phone ? (
             <div className="space-y-4">
               <div className="p-4 rounded-lg bg-white/50 dark:bg-black/10">
