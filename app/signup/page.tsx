@@ -73,9 +73,12 @@ export default function SignupPage() {
 
       const data = await loginRes.json();
       const token = data?.token ?? data?.access ?? null;
-      if (token) {
+      const user = data?.user;
+
+      if (token && user) {
         localStorage.setItem("access_token", token);
-        dispatch(setAuth());
+        localStorage.setItem("user", JSON.stringify(user));
+        dispatch(setAuth(user));
         router.push("/");
         return;
       }
