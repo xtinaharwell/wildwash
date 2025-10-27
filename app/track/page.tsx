@@ -1,7 +1,8 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, Suspense } from "react";
 import Link from "next/link";
+import { useSearchParams } from 'next/navigation';
 
 type StatusPoint = {
   key: string;
@@ -43,10 +44,6 @@ function getCookie(name: string) {
   }
   return null;
 }
-
-import { useSearchParams } from 'next/navigation';
-
-import { Suspense } from 'react';
 
 function TrackPageContent() {
   const searchParams = useSearchParams();
@@ -101,22 +98,6 @@ function TrackPageContent() {
       let data: any;
       try {
         data = await res.json();
-      // ...existing code...
-      }
-    } catch (err) {
-      // ...existing code...
-    }
-  }
-  // ...existing code...
-}
-
-export default function TrackPage() {
-  return (
-    <Suspense fallback={<div>Loading...</div>}>
-      <TrackPageContent />
-    </Suspense>
-  );
-}
       } catch (e) {
         const text = await res.text().catch(() => "<non-json body>");
         throw new Error(res.ok ? "Server returned non-JSON response" : `Server error: ${res.status} ${text}`);
