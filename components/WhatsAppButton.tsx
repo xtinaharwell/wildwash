@@ -34,7 +34,7 @@ export default function WhatsAppButton() {
     target="_blank"
     rel="noopener noreferrer"
     aria-label="Chat with Wild Wash on WhatsApp"
-    className="fixed z-[9999] flex items-center gap-3 rounded-full bg-red-500 hover:brightness-95 shadow-lg px-3 py-2 transition-transform active:scale-95 focus:outline-none focus-visible:ring-2 focus-visible:ring-red-300"
+    className="fixed z-[9999] flex items-center gap-3 rounded-full bg-emerald-500 hover:brightness-95 shadow-lg px-3 py-2 transition-transform active:scale-95 focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-300"
     // use the safe-area CSS so the button doesn't sit under home indicators / notches
     style={{
         bottom: "calc(env(safe-area-inset-bottom, 0px) + 16px)",
