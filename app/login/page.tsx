@@ -22,13 +22,16 @@ export default function LoginPage() {
     try {
       const data = await client.post('/users/login/', { username, password });
       const token = data?.token ?? data?.access ?? null;
-      if (token) {
+      const user = data?.user;
+      
+      if (token && user) {
         localStorage.setItem("access_token", token);
-        dispatch(setAuth());
+        localStorage.setItem("user", JSON.stringify(user));
+        dispatch(setAuth(user));
         router.push("/");
         return;
       }
-      throw new Error("No token returned");
+      throw new Error("Invalid response from server");
     } catch (err: any) {
       setError(err?.message ?? "Login failed");
     } finally {
