@@ -3,8 +3,7 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useDispatch } from 'react-redux';
-import { setAuth } from '@/redux/features/authSlice';
-import { client } from '@/lib/api/client';
+import { handleLogin, LOGIN_ENDPOINTS } from '@/lib/api/loginHelpers';
 
 export default function StaffLoginPage() {
   const router = useRouter();
@@ -19,23 +18,19 @@ export default function StaffLoginPage() {
     setError(null);
     setLoading(true);
 
-    try {
-      const data = await client.post('/users/staff-login/', { username, password });
-      const token = data?.token;
-      
-      if (token) {
-        localStorage.setItem('access_token', token);
-        dispatch(setAuth(data.user));
-        // Staff should go to their staff dashboard (only data for their assigned location)
-        router.push('/staff');
-        return;
-      }
-      throw new Error('No token returned');
-    } catch (err: any) {
-      setError(err?.message ?? 'Login failed');
-    } finally {
-      setLoading(false);
+    const result = await handleLogin(
+      LOGIN_ENDPOINTS.STAFF,
+      { username, password },
+      dispatch
+    );
+
+    if (result.success) {
+      router.push('/staff');
+    } else {
+      setError(result.error || 'Login failed');
     }
+
+    setLoading(false);
   }
 
   return (

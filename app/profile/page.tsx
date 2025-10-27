@@ -16,6 +16,23 @@ type UserProfile = {
   location: string;
 }
 
+type Offer = {
+  id: number;
+  title: string;
+  description: string;
+  discount_amount: number;
+  valid_from: string;
+  valid_until: string | null;
+  is_active: boolean;
+}
+
+type UserOffer = {
+  id: number;
+  offer: Offer;
+  claimed_at: string;
+  is_used: boolean;
+}
+
 export default function ProfilePage() {
   const router = useRouter();
   const [profile, setProfile] = useState<UserProfile | null>(null);
@@ -24,6 +41,9 @@ export default function ProfilePage() {
   const [saving, setSaving] = useState(false);
   const [editMode, setEditMode] = useState(false);
   const [formData, setFormData] = useState<Partial<UserProfile>>({});
+  const [userOffers, setUserOffers] = useState<UserOffer[]>([]);
+  const [loadingOffers, setLoadingOffers] = useState(false);
+  const [offersError, setOffersError] = useState<string | null>(null);
   
   const isAuthenticated = useSelector((state: RootState) => state.auth.isAuthenticated);
 
@@ -34,7 +54,21 @@ export default function ProfilePage() {
     }
 
     fetchProfile();
+    fetchUserOffers();
   }, [isAuthenticated, router]);
+
+  const fetchUserOffers = async () => {
+    setLoadingOffers(true);
+    setOffersError(null);
+    try {
+      const data = await client.get('/offers/user-offers');
+      setUserOffers(data);
+    } catch (err: any) {
+      setOffersError(err.message || "Failed to load offers");
+    } finally {
+      setLoadingOffers(false);
+    }
+  };
 
   const fetchProfile = async () => {
     setLoading(true);
@@ -203,8 +237,85 @@ export default function ProfilePage() {
               </div>
             </form>
           </div>
+
+          <div className="mt-8">
+            <div className="rounded-2xl bg-white/80 dark:bg-white/5 p-6 shadow">
+              <div className="flex items-center justify-between mb-4">
+                <h2 className="text-xl font-bold">Your Claimed Offers</h2>
+                <button
+                  onClick={fetchUserOffers}
+                  disabled={loadingOffers}
+                  className="text-sm text-red-600 hover:text-red-500"
+                >
+                  {loadingOffers ? "Refreshing..." : "Refresh"}
+                </button>
+              </div>
+
+              {offersError && (
+                <div className="mb-4 text-sm text-red-600 dark:text-red-400">
+                  {offersError}
+                </div>
+              )}
+
+              {loadingOffers ? (
+                <div className="space-y-3">
+                  <div className="h-16 bg-slate-100 dark:bg-slate-800 rounded-lg animate-pulse"></div>
+                  <div className="h-16 bg-slate-100 dark:bg-slate-800 rounded-lg animate-pulse"></div>
+                </div>
+              ) : userOffers.length > 0 ? (
+                <div className="space-y-3">
+                  {userOffers.map((userOffer) => (
+                    <div
+                      key={userOffer.id}
+                      className="p-4 rounded-lg border dark:border-slate-700 bg-white dark:bg-slate-800"
+                    >
+                      <div className="flex items-start justify-between">
+                        <div>
+                          <h3 className="font-medium">{userOffer.offer.title}</h3>
+                          <p className="text-sm text-slate-600 dark:text-slate-400">
+                            {userOffer.offer.description}
+                          </p>
+                          <p className="text-sm text-slate-600 dark:text-slate-400 mt-1">
+                            Claimed on: {new Date(userOffer.claimed_at).toLocaleDateString()}
+                          </p>
+                        </div>
+                        <div className="flex flex-col items-end">
+                          <span className="text-lg font-bold text-red-600">
+                            {userOffer.offer.discount_amount}% OFF
+                          </span>
+                          <span className={`text-xs px-2 py-1 rounded-full mt-1 ${
+                            userOffer.is_used
+                              ? 'bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-400'
+                              : 'bg-green-100 dark:bg-green-900/30 text-green-600 dark:text-green-400'
+                          }`}>
+                            {userOffer.is_used ? 'Used' : 'Available'}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="text-center py-8 text-slate-500 dark:text-slate-400">
+                  <p>You haven't claimed any offers yet.</p>
+                  <a
+                    href="/offers"
+                    className="inline-block mt-2 text-sm text-red-600 hover:text-red-500"
+                  >
+                    Browse Available Offers
+                  </a>
+                </div>
+              )}
+            </div>
+          </div>
+
+          <div className="mt-8">
+            <BNPLManager />
+          </div>
         </div>
       </div>
     </RouteGuard>
   );
 }
+
+import BNPLManager from '@/components/BNPLManager';

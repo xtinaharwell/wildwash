@@ -1,0 +1,361 @@
+'use client';
+
+import React, { useEffect, useState } from 'react';
+import { useSelector } from 'react-redux';
+import { RootState } from '@/redux/store';
+import { client } from '@/lib/api/client';
+
+interface BNPLResponse {
+  data: BNPLStatus;
+}
+
+interface BNPLStatus {
+  is_enrolled: boolean;
+  credit_limit: number;
+  current_balance: number;
+  is_active: boolean;
+  phone_number?: string;
+}
+
+interface UserProfile {
+  phone: string;
+  [key: string]: any;
+}
+
+export default function BNPLManager() {
+  const [status, setStatus] = useState<BNPLStatus | null>(null);
+  const [profile, setProfile] = useState<UserProfile | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
+  const isAuthenticated = useSelector((state: RootState) => state.auth.isAuthenticated);
+
+  const fetchBNPLStatus = async () => {
+    try {
+      const data = await client.get('/payments/bnpl/status/');
+      setStatus(data);
+    } catch (err: any) {
+      console.error('Error fetching BNPL status:', err);
+      setError(err.message || 'Failed to fetch BNPL status');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    if (isAuthenticated) {
+      fetchProfile();
+      fetchBNPLStatus();
+    }
+  }, [isAuthenticated]);
+
+  const fetchProfile = async () => {
+    try {
+      const data = await client.get('/users/me/');
+      setProfile(data);
+    } catch (err: any) {
+      console.error('Error fetching profile:', err);
+    }
+  };
+
+  const handleOptIn = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!profile?.phone) {
+      setError('Please add a phone number to your profile first');
+      return;
+    }
+    try {
+      setLoading(true);
+      const data = await client.post('/payments/bnpl/opt_in/', { 
+        phone_number: profile.phone 
+      });
+      setStatus(data);
+      setError('');
+    } catch (err: any) {
+      setError(err.message || 'Failed to opt in to BNPL');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleOptOut = async () => {
+    try {
+      setLoading(true);
+      await client.post('/payments/bnpl/opt_out/', {});
+      const newStatus = await client.get('/payments/bnpl/status/');
+      setStatus(newStatus);
+      setError('');
+    } catch (err: any) {
+      setError(err.message || 'Failed to opt out of BNPL');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className="rounded-2xl bg-white/80 dark:bg-white/5 p-6 shadow">
+        <div className="animate-pulse space-y-4">
+          <div className="h-6 w-1/4 bg-slate-200 dark:bg-slate-700 rounded"></div>
+          <div className="space-y-3">
+            <div className="h-24 bg-slate-200 dark:bg-slate-700 rounded-lg"></div>
+            <div className="h-10 w-1/3 bg-slate-200 dark:bg-slate-700 rounded-lg"></div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (!status) {
+    return (
+      <div className="rounded-2xl bg-white/80 dark:bg-white/5 p-6 shadow">
+        <div className="rounded-lg bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 p-4">
+          <div className="flex">
+            <div className="flex-shrink-0">
+              <svg className="h-5 w-5 text-red-400" viewBox="0 0 20 20" fill="currentColor">
+                <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
+              </svg>
+            </div>
+            <div className="ml-3">
+              <h3 className="text-sm font-medium text-red-800 dark:text-red-200">Error</h3>
+              <div className="mt-2 text-sm text-red-700 dark:text-red-300">
+                <p>{error || 'Unable to load BNPL status. Please try again later.'}</p>
+              </div>
+              <div className="mt-4">
+                <button
+                  onClick={() => {
+                    setLoading(true);
+                    setError('');
+                    Promise.all([fetchProfile(), fetchBNPLStatus()]);
+                  }}
+                  className="inline-flex items-center px-3 py-2 border border-transparent text-sm leading-4 font-medium rounded-md text-red-700 dark:text-red-200 bg-red-100 dark:bg-red-900/40 hover:bg-red-200 dark:hover:bg-red-900/60 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500"
+                >
+                  <svg className="-ml-0.5 mr-2 h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                  </svg>
+                  Retry
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="rounded-2xl bg-white/80 dark:bg-white/5 p-6 shadow">
+      <div className="flex items-center justify-between mb-4">
+        <h2 className="text-lg font-semibold">Buy Now, Pay Later</h2>
+        {status.is_enrolled && (
+          <div className="flex items-center gap-2">
+            {status.is_active ? (
+              <span className="inline-flex items-center px-3 py-1 text-xs font-medium rounded-full bg-green-100 dark:bg-green-900/30 text-green-600 dark:text-green-400">
+                <span className="w-2 h-2 mr-1.5 rounded-full bg-green-500"></span>
+                Active
+              </span>
+            ) : (
+              <span className="inline-flex items-center px-3 py-1 text-xs font-medium rounded-full bg-yellow-100 dark:bg-yellow-900/30 text-yellow-600 dark:text-yellow-400">
+                <span className="w-2 h-2 mr-1.5 rounded-full bg-yellow-500"></span>
+                Disabled
+              </span>
+            )}
+          </div>
+        )}
+      </div>
+      
+      {status.is_enrolled ? (
+        <div>
+          <div className="p-4 rounded-lg bg-white/50 dark:bg-black/10 mb-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="space-y-3">
+                <div>
+                  <p className="text-xs text-slate-500 dark:text-slate-400">Enrolled Phone</p>
+                  <p className="text-sm font-medium">{status.phone_number || profile?.phone}</p>
+                </div>
+                <div>
+                  <p className="text-xs text-slate-500 dark:text-slate-400">Credit Limit</p>
+                  <p className="text-sm font-medium">KES {status.credit_limit.toLocaleString()}</p>
+                </div>
+              </div>
+              <div className="space-y-3">
+                <div>
+                  <p className="text-xs text-slate-500 dark:text-slate-400">Current Balance</p>
+                  <p className={`text-sm font-medium ${status.current_balance > 0 ? 'text-yellow-600 dark:text-yellow-400' : ''}`}>
+                    KES {status.current_balance.toLocaleString()}
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+          
+          {status.current_balance > 0 ? (
+            <div className="p-4 rounded-lg bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800">
+              <div className="flex items-start">
+                <div className="flex-shrink-0">
+                  <svg className="h-5 w-5 text-yellow-400" viewBox="0 0 20 20" fill="currentColor">
+                    <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+                  </svg>
+                </div>
+                <div className="ml-3">
+                  <h3 className="text-sm font-medium text-yellow-800 dark:text-yellow-200">
+                    Outstanding Balance
+                  </h3>
+                  <div className="mt-2 text-sm text-yellow-700 dark:text-yellow-300">
+                    <p>You need to clear your current balance of KES {status.current_balance.toLocaleString()} before opting out of BNPL.</p>
+                  </div>
+                  <div className="mt-4">
+                    <div className="-mx-2 -my-1.5 flex">
+                      <a
+                        href="/orders"
+                        className="px-3 py-2 rounded-md text-sm font-medium text-yellow-800 dark:text-yellow-200 hover:bg-yellow-100 dark:hover:bg-yellow-900/40 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-yellow-50 focus:ring-yellow-600"
+                      >
+                        View Orders
+                      </a>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          ) : (
+            <div className="space-y-4">
+              <div className="flex items-center gap-4">
+                <button
+                  onClick={handleOptOut}
+                  disabled={loading || status.current_balance > 0}
+                  className="px-4 py-2 rounded-lg bg-red-600 text-white text-sm font-medium hover:bg-red-700 disabled:opacity-50 disabled:hover:bg-red-600 transition-colors focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2"
+                >
+                  {loading ? (
+                    <span className="inline-flex items-center">
+                      <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                      </svg>
+                      Processing...
+                    </span>
+                  ) : (
+                    "Opt Out of BNPL"
+                  )}
+                </button>
+                <a href="/help/bnpl" className="text-sm text-slate-600 dark:text-slate-300 hover:underline">
+                  Learn more about BNPL
+                </a>
+              </div>
+            </div>
+          )}
+        </div>
+      ) : (
+        <div>
+          <div className="bg-gradient-to-br from-red-50 to-red-100 dark:from-red-900/20 dark:to-red-800/20 rounded-lg p-6 mb-6">
+            <div className="flex items-start space-x-4">
+              <div className="flex-shrink-0">
+                <svg className="h-8 w-8 text-red-600 dark:text-red-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z" />
+                </svg>
+              </div>
+              <div>
+                <h3 className="text-lg font-semibold text-red-800 dark:text-red-200 mb-2">
+                  Split Your Payments
+                </h3>
+                <p className="text-sm text-red-700 dark:text-red-300 mb-4">
+                  Get started with Buy Now, Pay Later! Split your order into 2 interest-free payments at checkout. 
+                  Easy approvals using your phone number.
+                </p>
+                <ul className="space-y-2">
+                  <li className="flex items-center text-sm text-red-700 dark:text-red-300">
+                    <svg className="h-5 w-5 mr-2 text-red-500" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                      <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                    </svg>
+                    No interest or hidden fees
+                  </li>
+                  <li className="flex items-center text-sm text-red-700 dark:text-red-300">
+                    <svg className="h-5 w-5 mr-2 text-red-500" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                      <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                    </svg>
+                    Quick approval process
+                  </li>
+                </ul>
+              </div>
+            </div>
+          </div>
+          
+          {profile?.phone ? (
+            <div className="space-y-4">
+              <div className="p-4 rounded-lg bg-white/50 dark:bg-black/10">
+                <p className="text-sm text-slate-700 dark:text-slate-300">
+                  You will be enrolled with:
+                </p>
+                <p className="text-lg font-semibold mt-1">{profile.phone}</p>
+              </div>
+              <div className="flex items-center gap-4">
+                <button
+                  onClick={handleOptIn}
+                  disabled={loading}
+                  className="px-4 py-2 rounded-lg bg-red-600 text-white text-sm font-medium hover:bg-red-700 disabled:opacity-50 disabled:hover:bg-red-600 transition-colors focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2"
+                >
+                  {loading ? (
+                    <span className="inline-flex items-center">
+                      <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                      </svg>
+                      Enrolling...
+                    </span>
+                  ) : (
+                    "Enroll in BNPL"
+                  )}
+                </button>
+                <a href="/help/bnpl" className="text-sm text-slate-600 dark:text-slate-300 hover:underline">
+                  Learn more about BNPL
+                </a>
+              </div>
+            </div>
+          ) : (
+            <div className="p-4 rounded-lg bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800">
+              <div className="flex">
+                <div className="flex-shrink-0">
+                  <svg className="h-5 w-5 text-yellow-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                    <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
+                  </svg>
+                </div>
+                <div className="ml-3">
+                  <h3 className="text-sm font-medium text-yellow-800 dark:text-yellow-200">
+                    Phone Number Required
+                  </h3>
+                  <div className="mt-2 text-sm text-yellow-700 dark:text-yellow-300">
+                    <p>Please add a phone number to your profile to enable BNPL.</p>
+                  </div>
+                  <div className="mt-4">
+                    <a
+                      href="/profile"
+                      className="inline-flex items-center px-3 py-2 border border-transparent text-sm leading-4 font-medium rounded-md text-yellow-700 bg-yellow-100 hover:bg-yellow-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-yellow-500"
+                    >
+                      Update Profile
+                      <svg className="ml-2 -mr-0.5 h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5l7 7-7 7" />
+                      </svg>
+                    </a>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
+      )}
+      
+      {error && (
+        <div className="mt-4 p-4 rounded-lg bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800">
+          <div className="flex">
+            <div className="flex-shrink-0">
+              <svg className="h-5 w-5 text-red-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
+              </svg>
+            </div>
+            <div className="ml-3">
+              <p className="text-sm text-red-700 dark:text-red-300">{error}</p>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}

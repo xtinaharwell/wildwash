@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import Link from "next/link";
 
 type StatusPoint = {
@@ -44,13 +44,23 @@ function getCookie(name: string) {
   return null;
 }
 
+import { useSearchParams } from 'next/navigation';
+
 export default function TrackPage() {
-  const [code, setCode] = useState("");
+  const searchParams = useSearchParams();
+  const [code, setCode] = useState(() => searchParams.get('code') || "");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [order, setOrder] = useState<Order | null>(null);
   const [subscribed, setSubscribed] = useState(false);
-  const [showRaw, setShowRaw] = useState(false);
+
+  // Auto-lookup code from URL parameter
+  useEffect(() => {
+    const urlCode = searchParams.get('code');
+    if (urlCode) {
+      lookupCode(urlCode);
+    }
+  }, [searchParams]);
 
   // base; empty means same origin. Adjust if your API is remote.
   const API_BASE = process.env.NEXT_PUBLIC_API_BASE ?? "https://wildwosh.kibeezy.com";
@@ -59,7 +69,6 @@ export default function TrackPage() {
     setLoading(true);
     setError(null);
     setOrder(null);
-    setShowRaw(false);
 
     const codeParam = c.trim().toUpperCase();
     if (!codeParam) {
@@ -233,10 +242,32 @@ export default function TrackPage() {
 
                 {/* Progress bar */}
                 <div className="mt-4">
-                  <div className="h-3 bg-slate-200 rounded-full overflow-hidden">
-                    <div className="h-full rounded-full bg-gradient-to-r from-red-400 to-red-600" style={{ width: `${calcProgress(order.status)}%` }} />
+                  <div className="h-2 sm:h-3 bg-slate-200 dark:bg-slate-700 rounded-full overflow-hidden">
+                    <div
+                      className={`h-full rounded-full transition-all duration-500 ${
+                        order.status.toLowerCase() === 'cancelled'
+                          ? 'bg-gray-400'
+                          : order.status.toLowerCase() === 'delivered'
+                          ? 'bg-gradient-to-r from-green-400 to-green-600'
+                          : 'bg-gradient-to-r from-red-400 to-red-600 animate-pulse'
+                      }`}
+                      style={{ width: `${calcProgress(order.status)}%` }}
+                    />
                   </div>
-                  <div className="mt-2 text-xs text-slate-500">{calcProgress(order.status)}% complete</div>
+                  <div className="mt-2 flex items-center justify-between text-xs">
+                    <div className="text-slate-500 dark:text-slate-400">
+                      {calcProgress(order.status)}% complete
+                    </div>
+                    <div className={`font-medium ${
+                      order.status.toLowerCase() === 'cancelled'
+                        ? 'text-gray-500'
+                        : order.status.toLowerCase() === 'delivered'
+                        ? 'text-green-600'
+                        : 'text-red-600'
+                    }`}>
+                      {order.status}
+                    </div>
+                  </div>
                 </div>
 
                 {/* DETAILS tab (placed below the progress for single-view) */}
@@ -283,18 +314,6 @@ export default function TrackPage() {
                       </ol>
                     </div>
                   )}
-
-                  {/* show raw JSON on demand */}
-                  <div className="mt-4">
-                    <button onClick={() => setShowRaw((s) => !s)} className="text-xs px-2 py-1 rounded bg-slate-50 border">
-                      {showRaw ? "Hide raw JSON" : "Show raw JSON"}
-                    </button>
-                    {showRaw && order.raw && (
-                      <pre className="mt-2 max-h-48 overflow-auto text-xs bg-black/5 p-2 rounded text-slate-700 whitespace-pre-wrap">
-                        {JSON.stringify(order.raw, null, 2)}
-                      </pre>
-                    )}
-                  </div>
                 </div>
               </div>
             ) : (
@@ -337,23 +356,21 @@ export default function TrackPage() {
 
 function calcProgress(status?: string) {
   if (!status) return 0;
-  switch (status.toLowerCase()) {
-    case "requested":
-    case "received":
-      return 10;
-    case "picked":
-    case "washing":
-      return 40;
-    case "in_progress":
-    case "drying":
-      return 60;
-    case "ready":
-      return 90;
-    case "delivered":
-      return 100;
-    default:
-      return 0;
-  }
+  
+  // Progress mapping for each status
+  const progressMap: Record<string, number> = {
+    requested: 10,
+    received: 10,
+    picked: 30,
+    washing: 50,
+    in_progress: 60,
+    drying: 70,
+    ready: 90,
+    delivered: 100,
+    cancelled: 0
+  };
+  
+  return progressMap[status.toLowerCase()] ?? 0;
 }
 
 function mapStatus(s: string): string {

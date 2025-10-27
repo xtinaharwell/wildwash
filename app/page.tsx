@@ -11,7 +11,7 @@ export default function Home() {
     async function checkOffers() {
       try {
         // try real endpoint first (if you have it)
-        const res = await fetch('/api/offers');
+        const res = await fetch('/offers');
         let data;
         if (res.ok) {
           data = await res.json();

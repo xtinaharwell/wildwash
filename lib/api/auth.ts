@@ -1,0 +1,23 @@
+import axios from 'axios';
+import { getStoredAuthState, clearAuthState } from '../auth';
+
+const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
+
+export const validateToken = async (): Promise<boolean> => {
+  const authState = getStoredAuthState();
+  if (!authState?.token) {
+    return false;
+  }
+
+  try {
+    await axios.get(`${API_URL}/users/me/`, {
+      headers: {
+        Authorization: `Bearer ${authState.token}`
+      }
+    });
+    return true;
+  } catch (error) {
+    clearAuthState();
+    return false;
+  }
+};

@@ -3,9 +3,8 @@
 import React, { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useDispatch } from "react-redux";
-import { setAuth } from "../../redux/features/authSlice";
 import Link from "next/link";
-import { client } from "../../lib/api/client";
+import { handleLogin, LOGIN_ENDPOINTS } from "@/lib/api/loginHelpers";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -19,24 +18,20 @@ export default function LoginPage() {
     e?.preventDefault();
     setError(null);
     setLoading(true);
-    try {
-      const data = await client.post('/users/login/', { username, password });
-      const token = data?.token ?? data?.access ?? null;
-      const user = data?.user;
-      
-      if (token && user) {
-        localStorage.setItem("access_token", token);
-        localStorage.setItem("user", JSON.stringify(user));
-        dispatch(setAuth(user));
-        router.push("/");
-        return;
-      }
-      throw new Error("Invalid response from server");
-    } catch (err: any) {
-      setError(err?.message ?? "Login failed");
-    } finally {
-      setLoading(false);
+    
+    const result = await handleLogin(
+      LOGIN_ENDPOINTS.USER,
+      { username, password },
+      dispatch
+    );
+
+    if (result.success) {
+      router.push("/");
+    } else {
+      setError(result.error || "Login failed");
     }
+    
+    setLoading(false);
   }
 
   return (

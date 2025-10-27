@@ -7,7 +7,6 @@ import { useDispatch, useSelector, TypedUseSelectorHook } from "react-redux";
 import type { AppDispatch, RootState } from "@/redux/store";
 import {
   fetchOrders,
-  createOrder,
   setPage,
   setStatusFilter,
   setQuery,
@@ -56,19 +55,7 @@ export default function OrdersPage(): React.JSX.Element {
   const fullState = useAppSelector(selectOrdersState); // for createLoading, refreshCounter, etc.
 
   // Local UI state
-  const [creating, setCreating] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
-
-  // create form state (local)
-  const [serviceId, setServiceId] = useState<number | null>(null);
-  const [pickupAddress, setPickupAddress] = useState("");
-  const [dropoffAddress, setDropoffAddress] = useState("");
-  const [urgency, setUrgency] = useState(1);
-  const [items, setItems] = useState(1);
-  const [packageCount, setPackageCount] = useState(1);
-  const [weightKg, setWeightKg] = useState<number | ''>('');
-  const [price, setPrice] = useState<string>("");
-  const [estimatedDelivery, setEstimatedDelivery] = useState<string>("");
 
   // Local controlled search / filter bound to redux meta
   const query = meta.query;
@@ -101,47 +88,7 @@ export default function OrdersPage(): React.JSX.Element {
     router.push(`/track?code=${encodeURIComponent(code)}`);
   }
 
-  async function handleCreate(e?: React.FormEvent) {
-    if (e) e.preventDefault();
-    setErrorMessage(null);
 
-    const payload = {
-      service: serviceId,
-      pickup_address: pickupAddress,
-      dropoff_address: dropoffAddress,
-      urgency,
-      items,
-      package: packageCount,
-      weight_kg: weightKg === '' ? null : Number(weightKg),
-      price: price ? String(price).replace(/[, ]/g, '') : null,
-      estimated_delivery: estimatedDelivery || null,
-    };
-
-    try {
-      // dispatch createOrder thunk
-      const resultAction = await dispatch(createOrder(payload));
-      // unwrap-like check: if rejected, it will be of type rejected
-      if (createOrder.rejected.match(resultAction)) {
-        const err = (resultAction.payload as string) || (resultAction.error && resultAction.error.message) || 'Create failed';
-        setErrorMessage(err);
-      } else {
-        // success — reset form and close
-        setServiceId(null);
-        setPickupAddress('');
-        setDropoffAddress('');
-        setUrgency(1);
-        setItems(1);
-        setPackageCount(1);
-        setWeightKg('');
-        setPrice('');
-        setEstimatedDelivery('');
-        setCreating(false);
-      }
-    } catch (err: any) {
-      console.error(err);
-      setErrorMessage(err?.message ?? 'Failed to create order');
-    }
-  }
 
   // filter the page-local orders list (search client-side on current page)
   const filtered = orders.filter((o) => {
@@ -165,32 +112,9 @@ export default function OrdersPage(): React.JSX.Element {
           </div>
 
           <div className="flex items-center gap-3">
-            <button onClick={() => setCreating((c) => !c)} className="rounded-full px-4 py-2 bg-red-600 text-white text-sm shadow">{creating ? 'Close' : 'New order'}</button>
+            <Link href="/book" className="rounded-full px-4 py-2 bg-red-600 text-white text-sm shadow hover:bg-emerald-700">New order</Link>
           </div>
         </header>
-
-        {creating && (
-          <form onSubmit={handleCreate} className="mb-6 rounded-2xl bg-white/90 dark:bg-white/5 p-4 shadow space-y-3">
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-              <input type="number" value={serviceId ?? ''} onChange={(e) => setServiceId(e.target.value ? Number(e.target.value) : null)} placeholder="Service ID (e.g. 1)" className="rounded-md border px-3 py-2 text-sm" required />
-              <input value={pickupAddress} onChange={(e) => setPickupAddress(e.target.value)} placeholder="Pickup address" className="rounded-md border px-3 py-2 text-sm col-span-2" required />
-              <input value={dropoffAddress} onChange={(e) => setDropoffAddress(e.target.value)} placeholder="Dropoff address" className="rounded-md border px-3 py-2 text-sm col-span-2" required />
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-6 gap-3">
-              <input type="number" min={1} max={5} value={urgency} onChange={(e) => setUrgency(Number(e.target.value))} placeholder="Urgency (1-5)" className="rounded-md border px-3 py-2 text-sm" />
-              <input type="number" min={1} value={items} onChange={(e) => setItems(Number(e.target.value))} placeholder="Items" className="rounded-md border px-3 py-2 text-sm" />
-              <input type="number" min={1} value={packageCount} onChange={(e) => setPackageCount(Number(e.target.value))} placeholder="Package count" className="rounded-md border px-3 py-2 text-sm" />
-              <input type="number" step="0.1" value={weightKg === '' ? '' : weightKg} onChange={(e) => setWeightKg(e.target.value === '' ? '' : Number(e.target.value))} placeholder="Weight kg" className="rounded-md border px-3 py-2 text-sm" />
-              <input value={price} onChange={(e) => setPrice(e.target.value)} placeholder="Price (e.g. 1200)" className="rounded-md border px-3 py-2 text-sm" />
-              <input type="datetime-local" value={estimatedDelivery} onChange={(e) => setEstimatedDelivery(e.target.value)} className="rounded-md border px-3 py-2 text-sm" />
-            </div>
-
-            <div className="flex items-center gap-3 justify-end">
-              <button type="submit" disabled={fullState.createLoading} className="px-4 py-2 rounded bg-red-600 text-white text-sm">{fullState.createLoading ? 'Creating…' : 'Create order'}</button>
-            </div>
-          </form>
-        )}
 
         <section className="mb-6 grid grid-cols-1 md:grid-cols-3 gap-4">
           <div className="md:col-span-2 flex gap-3">

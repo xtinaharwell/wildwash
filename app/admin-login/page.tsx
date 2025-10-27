@@ -3,8 +3,8 @@
 import { useState, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useDispatch } from "react-redux";
-import { setAuth } from "@/redux/features/authSlice";
 import Loading from "./loading";
+import { handleLogin, LOGIN_ENDPOINTS } from "@/lib/api/loginHelpers";
 
 export default function AdminLoginPage() {
   return (
@@ -30,35 +30,19 @@ function AdminLoginContent() {
     setError("");
     setLoading(true);
 
-    try {
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE}/users/login/`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ username, password }),
-      });
+    const result = await handleLogin(
+      LOGIN_ENDPOINTS.ADMIN,
+      { username, password },
+      dispatch
+    );
 
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.message || "Login failed");
-      }
-
-      if (data.user?.role !== "admin") {
-        throw new Error("Access denied. Admin privileges required.");
-      }
-
-      // Store the token and user data
-      localStorage.setItem('token', data.token);
-      localStorage.setItem('user', JSON.stringify(data.user));
-      dispatch(setAuth(data.user));
+    if (result.success) {
       router.push(redirect);
-    } catch (err: any) {
-      setError(err.message || "An error occurred during login");
-    } finally {
-      setLoading(false);
+    } else {
+      setError(result.error || "An error occurred during login");
     }
+
+    setLoading(false);
   };
 
   return (

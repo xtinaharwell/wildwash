@@ -1,6 +1,7 @@
-import { createSlice } from '@reduxjs/toolkit';
+import { createSlice, PayloadAction } from '@reduxjs/toolkit';
+import { persistAuthState, clearAuthState } from '@/lib/auth';
 
-interface User {
+export interface User {
 	role?: string;
 	username?: string;
 	[key: string]: any;
@@ -10,6 +11,11 @@ interface AuthState {
 	isAuthenticated: boolean;
 	isLoading: boolean;
 	user: User | null;
+}
+
+interface SetAuthPayload {
+	user: User;
+	token: string;
 }
 
 const initialState = {
@@ -22,15 +28,15 @@ const authSlice = createSlice({
 	name: 'auth',
 	initialState,
 	reducers: {
-		setAuth: (state, action) => {
+		setAuth: (state, action: PayloadAction<SetAuthPayload>) => {
 			state.isAuthenticated = true;
-			state.user = action.payload;
+			state.user = action.payload.user;
+			persistAuthState(action.payload.user, action.payload.token);
 		},
 		logout: state => {
 			state.isAuthenticated = false;
 			state.user = null;
-			localStorage.removeItem('token');
-			localStorage.removeItem('user');
+			clearAuthState();
 		},
 		finishInitialLoad: state => {
 			state.isLoading = false;
