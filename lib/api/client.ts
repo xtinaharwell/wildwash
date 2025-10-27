@@ -1,7 +1,18 @@
 const API_BASE = process.env.NEXT_PUBLIC_API_BASE ?? process.env.NEXT_PUBLIC_API_BASE_URL ?? "https://wildwosh.kibeezy.com";
 
 async function fetchWithAuth(url: string, options: RequestInit = {}) {
-  const token = typeof window !== 'undefined' ? localStorage.getItem('access_token') : null;
+  let token = null;
+  if (typeof window !== 'undefined') {
+    const authState = localStorage.getItem('wildwash_auth_state');
+    if (authState) {
+      try {
+        const { token: storedToken } = JSON.parse(authState);
+        token = storedToken;
+      } catch (e) {
+        console.error('Error parsing auth state:', e);
+      }
+    }
+  }
   
   const headers = {
     'Content-Type': 'application/json',

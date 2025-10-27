@@ -3,7 +3,7 @@ import { User } from '@/redux/features/authSlice';
 import { AppDispatch } from '@/redux/store';
 import { setAuth } from '@/redux/features/authSlice';
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
+const API_BASE = process.env.NEXT_PUBLIC_API_BASE ?? process.env.NEXT_PUBLIC_API_BASE_URL ?? "https://wildwosh.kibeezy.com";
 
 interface LoginResponse {
   token: string;
@@ -17,13 +17,16 @@ export const handleLogin = async (
 ): Promise<{ success: boolean; error?: string }> => {
   try {
     const response = await axios.post<LoginResponse>(
-      `${API_URL}${endpoint}`,
+      `${API_BASE}${endpoint}`,
       credentials
     );
 
     const { token, user } = response.data;
 
-    // Dispatch the auth state with both user and token
+    // Store the auth state which will be used by the API client
+    localStorage.setItem('wildwash_auth_state', JSON.stringify({ user, token }));
+
+    // Update the Redux state
     dispatch(setAuth({ user, token }));
 
     return { success: true };
