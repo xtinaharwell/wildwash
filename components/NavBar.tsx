@@ -70,7 +70,7 @@ export default function NavBar() {
           <nav className="hidden md:flex items-center gap-3">
             <Link href="/services" className="text-sm px-3 py-2 rounded-md hover:underline focus:outline-none focus-visible:ring-2 focus-visible:ring-red-300">Services</Link>
             <Link href="/orders" className="text-sm px-3 py-2 rounded-md hover:underline focus:outline-none focus-visible:ring-2 focus-visible:ring-red-300">Your Orders</Link>
-            <Link href="/track" className="text-sm px-3 py-2 rounded-md hover:underline focus:outline-none focus-visible:ring-2 focus-visible:ring-red-300">Track</Link>
+            <Link href="/financing" className="text-sm px-3 py-2 rounded-md hover:underline focus:outline-none focus-visible:ring-2 focus-visible:ring-red-300">Financing</Link>
             <Link href="/book" className="ml-2 inline-flex items-center gap-2 rounded-full bg-red-600 text-white px-4 py-2 text-sm font-medium shadow-md hover:brightness-95 focus:outline-none focus-visible:ring-2 focus-visible:ring-red-300">Book Pickup</Link>
           </nav>
 
@@ -131,7 +131,7 @@ export default function NavBar() {
               <Link href="/services" onClick={() => setMobileOpen(false)} className="block text-lg px-4 py-3 rounded-lg hover:bg-slate-50 dark:hover:bg-white/5 focus:outline-none focus-visible:ring-2 focus-visible:ring-red-300">Services</Link>
               <Link href="/orders" onClick={() => setMobileOpen(false)} className="block text-lg px-4 py-3 rounded-lg hover:bg-slate-50 dark:hover:bg-white/5 focus:outline-none focus-visible:ring-2 focus-visible:ring-red-300">Your Orders</Link>
               <Link href="/#how" onClick={() => setMobileOpen(false)} className="block text-lg px-4 py-3 rounded-lg hover:bg-slate-50 dark:hover:bg-white/5 focus:outline-none focus-visible:ring-2 focus-visible:ring-red-300">How it works</Link>
-              <Link href="/track" onClick={() => setMobileOpen(false)} className="block text-lg px-4 py-3 rounded-lg hover:bg-slate-50 dark:hover:bg-white/5 focus:outline-none focus-visible:ring-2 focus-visible:ring-red-300">Track</Link>
+              <Link href="/financing" onClick={() => setMobileOpen(false)} className="block text-lg px-4 py-3 rounded-lg hover:bg-slate-50 dark:hover:bg-white/5 focus:outline-none focus-visible:ring-2 focus-visible:ring-red-300">Financing</Link>
 
               <div className="pt-1 border-t border-slate-100 dark:border-slate-800" />
 
