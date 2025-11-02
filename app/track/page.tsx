@@ -3,12 +3,13 @@
 import React, { useState, useEffect, Suspense } from "react";
 import Link from "next/link";
 import { useSearchParams } from 'next/navigation';
+import { Spinner } from "@/components";
 
 function TrackPageWrapper() {
   return (
     <Suspense fallback={<div className="min-h-screen bg-gradient-to-b from-white via-[#f8fafc] to-[#eef2ff] dark:from-[#071025] dark:via-[#041022] dark:to-[#011018] text-slate-900 dark:text-slate-100 py-12">
-      <div className="max-w-4xl mx-auto px-4">
-        <div className="animate-pulse">Loading...</div>
+      <div className="max-w-4xl mx-auto px-4 flex justify-center">
+        <Spinner className="w-8 h-8" />
       </div>
     </div>}>
       <TrackPageContent />
@@ -74,7 +75,7 @@ function TrackPageContent() {
   }, [searchParams]);
 
   // base; empty means same origin. Adjust if your API is remote.
-  const API_BASE = process.env.NEXT_PUBLIC_API_BASE ?? "https://wildwosh.kibeezy.com";
+  const API_BASE = process.env.NEXT_PUBLIC_API_BASE ?? "http://127.0.0.1:8000";
 
   async function lookupCode(c: string) {
     setLoading(true);
@@ -218,7 +219,14 @@ function TrackPageContent() {
             className="flex-1 rounded-md border px-3 py-2 text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-red-300"
           />
           <button type="submit" disabled={loading} className="rounded-md bg-red-600 text-white px-4 py-2 text-sm">
-            {loading ? "Searching…" : "Track"}
+            {loading ? (
+              <span className="inline-flex items-center">
+                <Spinner className="h-4 w-4 text-white -ml-1 mr-2" />
+                Searching...
+              </span>
+            ) : (
+              "Track"
+            )}
           </button>
         </form>
 

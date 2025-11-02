@@ -27,7 +27,7 @@ export default function OffersPage() {
   const [query, setQuery] = useState("");
   const [subscribed, setSubscribed] = useState(false);
 
-  const API_BASE = process.env.NEXT_PUBLIC_API_BASE ?? "https://wildwosh.kibeezy.com";
+  const API_BASE = process.env.NEXT_PUBLIC_API_BASE ?? "http://127.0.0.1:8000";
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {

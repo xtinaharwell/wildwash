@@ -12,7 +12,7 @@ export const validateToken = async (): Promise<boolean> => {
   try {
     await axios.get(`${API_URL}/users/me/`, {
       headers: {
-        Authorization: `Bearer ${authState.token}`
+        Authorization: `Token ${authState.token}`
       }
     });
     return true;

@@ -108,8 +108,8 @@ export default function Home() {
           <p className="mt-2 text-slate-600 dark:text-slate-300 max-w-3xl">From everyday laundry to specialized fumigation and deep-clean for mattresses, we offer transparent pricing and item-level tracking so you always know where your belongings are.</p>
 
           <div className="mt-6 grid grid-cols-1 md:grid-cols-3 gap-6">
-            <ServiceCard title="Wash & Fold" price="From KSh 250/kg" desc="Quick turnaround, gentle detergents, and item-by-item tracking." />
-            <ServiceCard title="Fumigation & Sanitization" price="From KSh 1,500" desc="Professional treatments for pests and allergens with certification." />
+            <ServiceCard title="Wash & Fold" price="From KSh 50/kg" desc="Quick turnaround, gentle detergents, and item-by-item tracking." />
+            <ServiceCard title="Fumigation & Sanitization" price="From KSh 1,500 per room" desc="Professional treatments for pests and allergens with certification." />
             <ServiceCard title="Pickup & Delivery" price="KSh 150 (zones)" desc="Contactless pickup — leave items outside and we’ll collect them." />
           </div>
 

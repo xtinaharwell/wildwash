@@ -121,7 +121,7 @@ export const fetchOrders = createAsyncThunk<
   if (state.query) params.set('search', state.query);
 
   const baseUrl =
-    "https://wildwosh.kibeezy.com/orders/";
+    "http://127.0.0.1:8000/orders/";
   const url = `${baseUrl}?${params.toString()}`;
 
   try {

@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import RouteGuard from "@/components/RouteGuard";
 import type { RootState } from "@/redux/store";
 import { client } from "@/lib/api/client";
+import { Spinner } from "@/components";
 
 type UserProfile = {
   id: number;
@@ -108,15 +109,8 @@ export default function ProfilePage() {
   if (loading) {
     return (
       <div className="min-h-screen bg-gradient-to-b from-white via-[#f8fafc] to-[#eef2ff] dark:from-[#071025] dark:via-[#041022] dark:to-[#011018] text-slate-900 dark:text-slate-100 py-12">
-        <div className="max-w-2xl mx-auto px-4">
-          <div className="animate-pulse">
-            <div className="h-8 w-48 bg-slate-200 dark:bg-slate-700 rounded mb-4"></div>
-            <div className="space-y-3">
-              <div className="h-4 w-full bg-slate-200 dark:bg-slate-700 rounded"></div>
-              <div className="h-4 w-5/6 bg-slate-200 dark:bg-slate-700 rounded"></div>
-              <div className="h-4 w-4/6 bg-slate-200 dark:bg-slate-700 rounded"></div>
-            </div>
-          </div>
+        <div className="max-w-2xl mx-auto px-4 flex justify-center">
+          <Spinner className="w-8 h-8" />
         </div>
       </div>
     );
@@ -222,7 +216,14 @@ export default function ProfilePage() {
                       disabled={saving}
                       className="px-4 py-2 text-sm rounded-md bg-red-600 text-white hover:bg-red-500 disabled:opacity-50 disabled:cursor-not-allowed"
                     >
-                      {saving ? "Saving..." : "Save Changes"}
+                      {saving ? (
+                        <span className="inline-flex items-center">
+                          <Spinner className="h-4 w-4 text-white -ml-1 mr-2" />
+                          Saving...
+                        </span>
+                      ) : (
+                        "Save Changes"
+                      )}
                     </button>
                   </>
                 ) : (
@@ -258,9 +259,8 @@ export default function ProfilePage() {
               )}
 
               {loadingOffers ? (
-                <div className="space-y-3">
-                  <div className="h-16 bg-slate-100 dark:bg-slate-800 rounded-lg animate-pulse"></div>
-                  <div className="h-16 bg-slate-100 dark:bg-slate-800 rounded-lg animate-pulse"></div>
+                <div className="flex justify-center py-8">
+                  <Spinner className="w-6 h-6" />
                 </div>
               ) : userOffers.length > 0 ? (
                 <div className="space-y-3">

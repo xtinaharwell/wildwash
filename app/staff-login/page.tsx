@@ -25,7 +25,10 @@ export default function StaffLoginPage() {
     );
 
     if (result.success) {
-      router.push('/staff');
+      // Get the redirect URL from the search params
+      const params = new URLSearchParams(window.location.search);
+      const redirectUrl = params.get('redirect') || '/staff';
+      router.push(redirectUrl);
     } else {
       setError(result.error || 'Login failed');
     }

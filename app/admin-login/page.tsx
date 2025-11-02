@@ -5,6 +5,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { useDispatch } from "react-redux";
 import Loading from "./loading";
 import { handleLogin, LOGIN_ENDPOINTS } from "@/lib/api/loginHelpers";
+import { Spinner } from "@/components";
 
 export default function AdminLoginPage() {
   return (
@@ -103,7 +104,14 @@ function AdminLoginContent() {
             disabled={loading}
             className="w-full flex justify-center py-2 px-4 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            {loading ? "Signing in..." : "Sign in"}
+            {loading ? (
+              <span className="inline-flex items-center">
+                <Spinner className="h-4 w-4 text-white -ml-1 mr-2" />
+                Signing in...
+              </span>
+            ) : (
+              "Sign in"
+            )}
           </button>
         </form>
       </div>

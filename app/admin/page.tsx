@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useEffect, useState, useCallback } from "react";
+import Link from "next/link";
 import RouteGuard from "@/components/RouteGuard";
 import {
   LineChart,
@@ -51,12 +52,15 @@ type RiderLocation = {
 };
 
 /* --- Config --- */
-const API_BASE = process.env.NEXT_PUBLIC_API_BASE ?? "https://wildwosh.kibeezy.com";
+const API_BASE = process.env.NEXT_PUBLIC_API_BASE ?? "http://127.0.0.1:8000";
 
 /* --- Component --- */
 export default function AdminPage(): React.ReactElement {
   const [orders, setOrders] = useState<Order[]>([]);
   const [locations, setLocations] = useState<RiderLocation[]>([]);
+  const [statusFilter, setStatusFilter] = useState<string>('');
+  const [riderFilter, setRiderFilter] = useState<string>('');
+  const [searchQuery, setSearchQuery] = useState<string>('');
 
   const [loadingOrders, setLoadingOrders] = useState<boolean>(true);
   const [loadingLocations, setLoadingLocations] = useState<boolean>(true);
@@ -178,144 +182,243 @@ export default function AdminPage(): React.ReactElement {
     await Promise.all([fetchOrders(), fetchLocations()]);
   };
 
+  // filter helpers
+  const availableStatuses = Array.from(new Set(orders.map(o => (o.status ?? '').toString()))).filter(Boolean);
+  const availableRiders = Array.from(new Set(orders.map(o => (o.rider ?? '').toString()))).filter(Boolean);
+
+  const filteredOrders = orders.filter(o => {
+    if (statusFilter && String(o.status ?? '').toLowerCase() !== statusFilter.toLowerCase()) return false;
+    if (riderFilter && String(o.rider ?? '').toLowerCase() !== riderFilter.toLowerCase()) return false;
+    if (searchQuery) {
+      const q = searchQuery.toLowerCase();
+      const matchesCode = String(o.code ?? '').toLowerCase().includes(q);
+      const matchesRider = String(o.rider ?? '').toLowerCase().includes(q);
+      if (!matchesCode && !matchesRider) return false;
+    }
+    return true;
+  });
+
+  // Compute body JSX separately to avoid complex inline nested ternaries in JSX
+  const body = (() => {
+    if (loadingOrders || loadingLocations) {
+      return (
+        <div className="flex justify-center items-center py-20">
+          <Loader2 className="animate-spin text-red-600 w-6 h-6" />
+        </div>
+      );
+    }
+    if (errorOrders || errorLocations) {
+      return (
+        <div className="py-8">
+          {errorOrders && <div className="mb-2 text-red-600 flex items-center gap-2"><AlertCircle className="w-4 h-4"/> Orders error: {errorOrders}</div>}
+          {errorLocations && <div className="text-red-600 flex items-center gap-2"><AlertCircle className="w-4 h-4"/> Riders error: {errorLocations}</div>}
+        </div>
+      );
+    }
+
+    return (
+      <div>
+        {/* Summary */}
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 gap-4 mb-6">
+          <StatCard icon={<Users />} label="Total Orders" value={String(totalOrders)} />
+          <StatCard icon={<Loader2 />} label="In Progress" value={String(inProgress)} />
+          <StatCard icon={<CheckCircle />} label="Completed" value={String(completed)} />
+          <StatCard icon={<DollarSign />} label="Revenue" value={`KSh ${totalRevenue.toLocaleString()}`} />
+          <StatCard icon={<Truck />} label="Active Riders (orders)" value={String(new Set(orders.map(o => o.rider)).size)} />
+          <StatCard icon={<MapPin />} label="Riders (locations)" value={String(riderCount)} />
+        </div>
+
+        {/* Charts */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
+          <ChartCard title="Orders per Day">
+            <BarChart data={dailyStats}>
+              <CartesianGrid strokeDasharray="3 3" />
+              <XAxis dataKey="date" />
+              <YAxis />
+              <Tooltip />
+              <Bar dataKey="orders" fill="#10b981" radius={[6, 6, 0, 0]} />
+            </BarChart>
+          </ChartCard>
+
+          <ChartCard title="Revenue Trend">
+            <LineChart data={dailyStats}>
+              <CartesianGrid strokeDasharray="3 3" />
+              <XAxis dataKey="date" />
+              <YAxis />
+              <Tooltip />
+              <Line type="monotone" dataKey="revenue" stroke="#059669" strokeWidth={3} dot={{ r: 5 }} />
+            </LineChart>
+          </ChartCard>
+        </div>
+
+        {/* Tables */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
+          {/* Recent Orders */}
+          <div className="rounded-2xl bg-white/80 dark:bg-slate-900/50 backdrop-blur-sm p-6 shadow-lg shadow-slate-200/20 dark:shadow-slate-900/30 border border-slate-200/50 dark:border-slate-700/50">
+            <h2 className="text-xl font-semibold mb-4 text-slate-900 dark:text-white">Recent Orders</h2>
+            <div className="mb-4 flex flex-wrap items-center gap-3">
+              <div className="flex-1 min-w-[200px]">
+                <select 
+                  value={statusFilter} 
+                  onChange={(e) => setStatusFilter(e.target.value)} 
+                  className="w-full rounded-lg border border-slate-200 bg-white/50 backdrop-blur-sm dark:border-slate-800 dark:bg-slate-900/50 px-3 py-2 text-sm transition-shadow duration-200 hover:bg-white dark:hover:bg-slate-900 focus:outline-none focus:ring-2 focus:ring-red-500/20"
+                >
+                  <option value="">All statuses</option>
+                  {availableStatuses.map(s => <option key={s} value={s}>{s}</option>)}
+                </select>
+              </div>
+
+              <div className="flex-1 min-w-[200px]">
+                <select 
+                  value={riderFilter} 
+                  onChange={(e) => setRiderFilter(e.target.value)} 
+                  className="w-full rounded-lg border border-slate-200 bg-white/50 backdrop-blur-sm dark:border-slate-800 dark:bg-slate-900/50 px-3 py-2 text-sm transition-shadow duration-200 hover:bg-white dark:hover:bg-slate-900 focus:outline-none focus:ring-2 focus:ring-red-500/20"
+                >
+                  <option value="">All riders</option>
+                  {availableRiders.map(r => <option key={r} value={r}>{r}</option>)}
+                </select>
+              </div>
+
+              <div className="flex-1 min-w-[200px]">
+                <input 
+                  value={searchQuery} 
+                  onChange={(e) => setSearchQuery(e.target.value)} 
+                  placeholder="Search code or rider" 
+                  className="w-full rounded-lg border border-slate-200 bg-white/50 backdrop-blur-sm dark:border-slate-800 dark:bg-slate-900/50 px-3 py-2 text-sm transition-shadow duration-200 hover:bg-white dark:hover:bg-slate-900 focus:outline-none focus:ring-2 focus:ring-red-500/20" 
+                />
+              </div>
+
+              <button 
+                onClick={() => { setStatusFilter(''); setRiderFilter(''); setSearchQuery(''); }} 
+                className="text-sm px-3 py-2 text-slate-500 hover:text-slate-900 dark:hover:text-slate-300 transition-colors duration-200 flex items-center gap-2"
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="animate-spin-once">
+                  <path d="M21 12a9 9 0 1 1-9-9c2.52 0 4.93 1 6.74 2.74L21 8" />
+                </svg>
+                Reset filters
+              </button>
+            </div>
+
+            <div className="overflow-x-auto">
+              <table className="min-w-full text-sm divide-y divide-slate-200/50 dark:divide-slate-800/50">
+                <thead className="text-slate-600 dark:text-slate-400">
+                  <tr>
+                    <th className="text-left py-3 px-4 font-medium">Code</th>
+                    <th className="text-left py-3 px-4 font-medium">Status</th>
+                    <th className="text-left py-3 px-4 font-medium">Rider</th>
+                    <th className="text-right py-3 px-4 font-medium">Price (KSh)</th>
+                    <th className="text-right py-3 px-4 font-medium">Date</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-200/50 dark:divide-slate-800/50">
+                  {filteredOrders.slice(0, 50).map((o) => (
+                    <tr key={o.id ?? o.code} className="hover:bg-slate-50/50 dark:hover:bg-slate-800/50 transition-colors duration-150">
+                      <td className="py-3 px-4 font-mono text-indigo-600 dark:text-indigo-400">
+                        <Link href={`/orders/${o.code}`} className="hover:underline">
+                          {o.code}
+                        </Link>
+                      </td>
+                      <td className="py-3 px-4">
+                        <span className={`inline-flex px-2 py-1 rounded-full text-xs font-medium ${
+                          o.status === 'delivered' ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400' :
+                          o.status === 'cancelled' ? 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400' :
+                          'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400'
+                        }`}>
+                          {o.status}
+                        </span>
+                      </td>
+                      <td className="py-3 px-4">{o.rider ?? "—"}</td>
+                      <td className="py-3 px-4 text-right font-medium">{Number(o.price ?? 0).toLocaleString()}</td>
+                      <td className="py-3 px-4 text-right text-slate-500">{o.created_at?.split?.("T")?.[0] ?? "—"}</td>
+                    </tr>
+                  ))}
+                  {filteredOrders.length === 0 && (
+                    <tr>
+                      <td colSpan={5} className="py-8 text-center text-slate-500">
+                        <div className="flex flex-col items-center gap-2">
+                          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                            <circle cx="12" cy="12" r="10"/>
+                            <line x1="8" y1="15" x2="16" y2="15"/>
+                            <line x1="9" y1="9" x2="9.01" y2="9"/>
+                            <line x1="15" y1="9" x2="15.01" y2="9"/>
+                          </svg>
+                          <span>No orders found</span>
+                        </div>
+                      </td>
+                    </tr>
+                  )}
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          {/* Rider Locations */}
+          <div className="rounded-2xl bg-white/80 dark:bg-white/5 p-4 shadow">
+            <div className="flex items-center justify-between">
+              <h2 className="text-lg font-semibold">Rider Locations (latest)</h2>
+              <div className="text-xs text-slate-500">{latestTimeSummary(latestLocationByRider)}</div>
+            </div>
+
+            <div className="overflow-x-auto mt-3">
+              <table className="min-w-full text-sm">
+                <thead className="border-b border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-400">
+                  <tr>
+                    <th className="text-left py-2 px-3">Rider</th>
+                    <th className="text-left py-2 px-3">Last seen</th>
+                    <th className="text-left py-2 px-3">Lat, Lon</th>
+                    <th className="text-left py-2 px-3">Accuracy (m)</th>
+                    <th className="text-left py-2 px-3">Speed (m/s)</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {latestLocationByRider.map((r) => (
+                    <tr key={r.riderKey} className="border-b border-slate-100 dark:border-slate-800">
+                      <td className="py-2 px-3 font-medium">{r.rider_display ?? String(r.riderKey)}</td>
+                      <td className="py-2 px-3">{formatDateTime(r.recorded_at)}</td>
+                      <td className="py-2 px-3">{r.latitude ?? "—"}, {r.longitude ?? "—"}</td>
+                      <td className="py-2 px-3">{r.accuracy ?? "—"}</td>
+                      <td className="py-2 px-3">{r.speed ?? "—"}</td>
+                    </tr>
+                  ))}
+                  {latestLocationByRider.length === 0 && <tr><td colSpan={5} className="py-6 text-center text-slate-500">No rider locations available.</td></tr>}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  })();
+
   return (
     <RouteGuard requireAdmin>
       <div className="min-h-screen bg-gradient-to-b from-white via-[#f8fafc] to-[#eef2ff] dark:from-[#071025] dark:via-[#041022] dark:to-[#011018] text-slate-900 dark:text-slate-100 py-12">
         <div className="max-w-7xl mx-auto px-4">
           <header className="mb-6 flex items-start justify-between gap-4">
-          <div>
-            <h1 className="text-3xl font-extrabold">Admin — Orders & Riders</h1>
-            <p className="mt-2 text-sm text-slate-600 dark:text-slate-300">Live overview of orders and rider locations (public riders endpoint).</p>
-          </div>
-
-          <div className="flex gap-3 items-center">
-            <button
-              onClick={refreshAll}
-              className="inline-flex items-center gap-2 rounded-full border px-3 py-2 text-sm bg-white/90 dark:bg-white/5"
-            >
-              <RefreshCw className="w-4 h-4" /> Refresh
-            </button>
-          </div>
-        </header>
-
-        {(loadingOrders || loadingLocations) ? (
-          <div className="flex justify-center items-center py-20">
-            <Loader2 className="animate-spin text-red-600 w-6 h-6" />
-          </div>
-        ) : (errorOrders || errorLocations) ? (
-          <div className="py-8">
-            {errorOrders && <div className="mb-2 text-red-600 flex items-center gap-2"><AlertCircle className="w-4 h-4"/> Orders error: {errorOrders}</div>}
-            {errorLocations && <div className="text-red-600 flex items-center gap-2"><AlertCircle className="w-4 h-4"/> Riders error: {errorLocations}</div>}
-          </div>
-        ) : (
-          <>
-            {/* Summary */}
-
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 gap-4 mb-6">
-              <StatCard icon={<Users />} label="Total Orders" value={String(totalOrders)} />
-              <StatCard icon={<Loader2 />} label="In Progress" value={String(inProgress)} />
-              <StatCard icon={<CheckCircle />} label="Completed" value={String(completed)} />
-              <StatCard icon={<DollarSign />} label="Revenue" value={`KSh ${totalRevenue.toLocaleString()}`} />
-              <StatCard icon={<Truck />} label="Active Riders (orders)" value={String(new Set(orders.map(o => o.rider)).size)} />
-              <StatCard icon={<MapPin />} label="Riders (locations)" value={String(riderCount)} />
+            <div>
+              <h1 className="text-3xl font-extrabold">Admin — Orders & Riders</h1>
+              <p className="mt-2 text-sm text-slate-600 dark:text-slate-300">Live overview of orders and rider locations (public riders endpoint).</p>
             </div>
 
-            {/* Charts */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
-              <ChartCard title="Orders per Day">
-                <BarChart data={dailyStats}>
-                  <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis dataKey="date" />
-                  <YAxis />
-                  <Tooltip />
-                  <Bar dataKey="orders" fill="#10b981" radius={[6, 6, 0, 0]} />
-                </BarChart>
-              </ChartCard>
-
-              <ChartCard title="Revenue Trend">
-                <LineChart data={dailyStats}>
-                  <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis dataKey="date" />
-                  <YAxis />
-                  <Tooltip />
-                  <Line type="monotone" dataKey="revenue" stroke="#059669" strokeWidth={3} dot={{ r: 5 }} />
-                </LineChart>
-              </ChartCard>
+            <div className="flex gap-3 items-center">
+              <button
+                onClick={refreshAll}
+                className="inline-flex items-center gap-2 rounded-full border px-3 py-2 text-sm bg-white/90 dark:bg-white/5"
+              >
+                <RefreshCw className="w-4 h-4" /> Refresh
+              </button>
             </div>
+          </header>
 
-            {/* Tables */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
-              {/* Recent Orders */}
-              <div className="rounded-2xl bg-white/80 dark:bg-white/5 p-4 shadow">
-                <h2 className="text-lg font-semibold mb-3">Recent Orders</h2>
-                <div className="overflow-x-auto">
-                  <table className="min-w-full text-sm">
-                    <thead className="border-b border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-400">
-                      <tr>
-                        <th className="text-left py-2 px-3">Code</th>
-                        <th className="text-left py-2 px-3">Status</th>
-                        <th className="text-left py-2 px-3">Rider</th>
-                        <th className="text-right py-2 px-3">Price (KSh)</th>
-                        <th className="text-right py-2 px-3">Date</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {orders.slice(0, 50).map((o) => (
-                        <tr key={o.id ?? o.code} className="border-b border-slate-100 dark:border-slate-800">
-                          <td className="py-2 px-3 font-mono">{o.code}</td>
-                          <td className="py-2 px-3">{o.status}</td>
-                          <td className="py-2 px-3">{o.rider ?? "—"}</td>
-                          <td className="py-2 px-3 text-right">{Number(o.price ?? 0).toLocaleString()}</td>
-                          <td className="py-2 px-3 text-right">{o.created_at?.split?.("T")?.[0] ?? "—"}</td>
-                        </tr>
-                      ))}
-                      {orders.length === 0 && <tr><td colSpan={5} className="py-6 text-center text-slate-500">No orders found.</td></tr>}
-                    </tbody>
-                  </table>
-                </div>
-              </div>
-
-              {/* Rider Locations */}
-              <div className="rounded-2xl bg-white/80 dark:bg-white/5 p-4 shadow">
-                <div className="flex items-center justify-between">
-                  <h2 className="text-lg font-semibold">Rider Locations (latest)</h2>
-                  <div className="text-xs text-slate-500">{latestTimeSummary(latestLocationByRider)}</div>
-                </div>
-
-                <div className="overflow-x-auto mt-3">
-                  <table className="min-w-full text-sm">
-                    <thead className="border-b border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-400">
-                      <tr>
-                        <th className="text-left py-2 px-3">Rider</th>
-                        <th className="text-left py-2 px-3">Last seen</th>
-                        <th className="text-left py-2 px-3">Lat, Lon</th>
-                        <th className="text-left py-2 px-3">Accuracy (m)</th>
-                        <th className="text-left py-2 px-3">Speed (m/s)</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {latestLocationByRider.map((r) => (
-                        <tr key={r.riderKey} className="border-b border-slate-100 dark:border-slate-800">
-                          <td className="py-2 px-3 font-medium">{r.rider_display ?? String(r.riderKey)}</td>
-                          <td className="py-2 px-3">{formatDateTime(r.recorded_at)}</td>
-                          <td className="py-2 px-3">{r.latitude ?? "—"}, {r.longitude ?? "—"}</td>
-                          <td className="py-2 px-3">{r.accuracy ?? "—"}</td>
-                          <td className="py-2 px-3">{r.speed ?? "—"}</td>
-                        </tr>
-                      ))}
-                      {latestLocationByRider.length === 0 && <tr><td colSpan={5} className="py-6 text-center text-slate-500">No rider locations available.</td></tr>}
-                    </tbody>
-                  </table>
-                </div>
-              </div>
-            </div>
-          </>
-        )}
-      </div>
+          {body}
+        </div>
       </div>
     </RouteGuard>
   );
 }
+
+
 
 /* --- Helpers & small components --- */
 function formatDateTime(s?: string | null) {
@@ -342,20 +445,22 @@ function latestTimeSummary(arr: Array<any>) {
 
 function StatCard({ icon, label, value }: { icon: React.ReactNode; label: string; value: string }) {
   return (
-    <div className="rounded-2xl bg-white/80 dark:bg-white/5 p-4 shadow flex flex-col gap-1">
-      <div className="flex items-center gap-2 text-red-600">{icon}<span className="font-semibold">{label}</span></div>
-      <div className="text-2xl font-bold">{value}</div>
+    <div className="rounded-2xl bg-white/80 dark:bg-slate-900/50 backdrop-blur-sm p-5 shadow-lg shadow-slate-200/20 dark:shadow-slate-900/30 border border-slate-200/50 dark:border-slate-700/50 flex flex-col gap-2 transition-all duration-300 hover:shadow-xl hover:scale-[1.02]">
+      <div className="flex items-center gap-2 text-red-600">{icon}<span className="font-medium text-slate-600 dark:text-slate-300">{label}</span></div>
+      <div className="text-2xl font-bold text-slate-900 dark:text-white">{value}</div>
     </div>
   );
 }
 
 function ChartCard({ title, children }: { title: string; children: React.ReactElement }) {
   return (
-    <div className="rounded-2xl bg-white/80 dark:bg-white/5 p-4 shadow">
-      <h2 className="text-lg font-semibold mb-2">{title}</h2>
-      <ResponsiveContainer width="100%" height={250}>
-        {children}
-      </ResponsiveContainer>
+    <div className="rounded-2xl bg-white/80 dark:bg-slate-900/50 backdrop-blur-sm p-6 shadow-lg shadow-slate-200/20 dark:shadow-slate-900/30 border border-slate-200/50 dark:border-slate-700/50">
+      <h2 className="text-lg font-semibold mb-4 text-slate-900 dark:text-white">{title}</h2>
+      <div className="transition-transform duration-300 hover:scale-[1.02]">
+        <ResponsiveContainer width="100%" height={250}>
+          {children}
+        </ResponsiveContainer>
+      </div>
     </div>
   );
 }

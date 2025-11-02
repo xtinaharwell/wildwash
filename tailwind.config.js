@@ -12,12 +12,27 @@ const maroon = {
 };
 
 module.exports = {
+  content: [
+    "./app/**/*.{js,ts,jsx,tsx,mdx}",
+    "./pages/**/*.{js,ts,jsx,tsx,mdx}",
+    "./components/**/*.{js,ts,jsx,tsx,mdx}",
+  ],
+  darkMode: ["class"],
   theme: {
     extend: {
       colors: {
         red: maroon, // 👈 overrides red with maroon tones
       },
+      animation: {
+        'spin': 'spin 1s linear infinite',
+      },
+      keyframes: {
+        'spin': {
+          '0%': { transform: 'rotate(0deg)' },
+          '100%': { transform: 'rotate(360deg)' },
+        },
+      },
     },
   },
-  plugins: [],
+  plugins: [require("tailwindcss-animate")],
 };

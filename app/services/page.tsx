@@ -1,7 +1,8 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
-import { ChevronDownIcon, BellIcon, ArrowPathIcon } from "@heroicons/react/24/outline";
+import { ChevronDownIcon, BellIcon } from "@heroicons/react/24/outline";
+import { Spinner } from "@/components";
 
 interface Service {
   id: number;
@@ -25,7 +26,7 @@ export default function ServicesPage() {
     async function loadServices() {
       try {
         setLoading(true);
-        const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "https://wildwosh.kibeezy.com"}/services/`);
+        const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000"}/services/`);
         if (!res.ok) throw new Error("Failed to fetch services");
         const data = await res.json();
         setServices(data);
@@ -64,7 +65,7 @@ export default function ServicesPage() {
 
         {loading ? (
           <div className="flex justify-center py-20">
-            <ArrowPathIcon className="animate-spin w-8 h-8 text-red-600" />
+            <Spinner className="w-8 h-8" />
           </div>
         ) : error ? (
           <div className="text-center text-red-600">Error: {error}</div>

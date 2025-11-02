@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { useDispatch } from "react-redux";
 import Link from "next/link";
 import { handleLogin, LOGIN_ENDPOINTS } from "@/lib/api/loginHelpers";
+import { Spinner } from "@/components";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -26,7 +27,10 @@ export default function LoginPage() {
     );
 
     if (result.success) {
-      router.push("/");
+      // Get the redirect URL from the search params
+      const params = new URLSearchParams(window.location.search);
+      const redirectUrl = params.get('redirect') || '/';
+      router.push(redirectUrl);
     } else {
       setError(result.error || "Login failed");
     }
@@ -80,7 +84,14 @@ export default function LoginPage() {
               disabled={loading}
               className="flex-1 rounded-md bg-red-600 hover:bg-red-500 text-white px-4 py-2 text-sm disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              {loading ? "Signing in…" : "Sign in"}
+              {loading ? (
+                <span className="inline-flex items-center">
+                  <Spinner className="h-4 w-4 text-white -ml-1 mr-2" />
+                  Signing in...
+                </span>
+              ) : (
+                "Sign in"
+              )}
             </button>
             <button
               type="button"

@@ -1,9 +1,11 @@
-const API_BASE = process.env.NEXT_PUBLIC_API_BASE ?? process.env.NEXT_PUBLIC_API_BASE_URL ?? "https://wildwosh.kibeezy.com";
+import { AUTH_STORAGE_KEY } from '../auth';
+
+const API_BASE = process.env.NEXT_PUBLIC_API_BASE ?? process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://127.0.0.1:8000";
 
 async function fetchWithAuth(url: string, options: RequestInit = {}) {
   let token = null;
   if (typeof window !== 'undefined') {
-    const authState = localStorage.getItem('wildwash_auth_state');
+    const authState = localStorage.getItem(AUTH_STORAGE_KEY);
     if (authState) {
       try {
         const { token: storedToken } = JSON.parse(authState);
@@ -23,7 +25,7 @@ async function fetchWithAuth(url: string, options: RequestInit = {}) {
   const response = await fetch(`${API_BASE}${url}`, {
     ...options,
     headers,
-    credentials: token ? 'omit' : 'include',
+    credentials: 'same-origin',
   });
 
   if (!response.ok) {
