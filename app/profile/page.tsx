@@ -34,6 +34,15 @@ type UserOffer = {
   is_used: boolean;
 }
 
+type SubscriptionFrequency = 'weekly' | 'bi-weekly' | 'monthly';
+
+type Subscription = {
+  id: number;
+  frequency: SubscriptionFrequency;
+  active: boolean;
+  next_pickup_date: string;
+}
+
 export default function ProfilePage() {
   const router = useRouter();
   const [profile, setProfile] = useState<UserProfile | null>(null);
@@ -45,6 +54,9 @@ export default function ProfilePage() {
   const [userOffers, setUserOffers] = useState<UserOffer[]>([]);
   const [loadingOffers, setLoadingOffers] = useState(false);
   const [offersError, setOffersError] = useState<string | null>(null);
+  const [subscription, setSubscription] = useState<Subscription | null>(null);
+  const [loadingSubscription, setLoadingSubscription] = useState(false);
+  const [subscriptionError, setSubscriptionError] = useState<string | null>(null);
   
   const isAuthenticated = useSelector((state: RootState) => state.auth.isAuthenticated);
 
@@ -56,7 +68,47 @@ export default function ProfilePage() {
 
     fetchProfile();
     fetchUserOffers();
+    fetchSubscription();
   }, [isAuthenticated, router]);
+
+  const fetchSubscription = async () => {
+    setLoadingSubscription(true);
+    setSubscriptionError(null);
+    try {
+      const data = await client.get('/user/me/subscription/');
+      setSubscription(data);
+    } catch (err: any) {
+      setSubscriptionError(err.message || "Failed to load subscription details");
+    } finally {
+      setLoadingSubscription(false);
+    }
+  };
+
+  const handleSubscriptionUpdate = async (frequency: SubscriptionFrequency) => {
+    setLoadingSubscription(true);
+    setSubscriptionError(null);
+    try {
+      const data = await client.post('/user/me/subscription/', { frequency });
+      setSubscription(data);
+    } catch (err: any) {
+      setSubscriptionError(err.message || "Failed to update subscription");
+    } finally {
+      setLoadingSubscription(false);
+    }
+  };
+
+  const handleCancelSubscription = async () => {
+    setLoadingSubscription(true);
+    setSubscriptionError(null);
+    try {
+      await client.delete('/user/me/subscription/');
+      setSubscription(null);
+    } catch (err: any) {
+      setSubscriptionError(err.message || "Failed to cancel subscription");
+    } finally {
+      setLoadingSubscription(false);
+    }
+  };
 
   const fetchUserOffers = async () => {
     setLoadingOffers(true);
@@ -237,6 +289,73 @@ export default function ProfilePage() {
                 )}
               </div>
             </form>
+          </div>
+
+          <div className="mt-8">
+            <div className="rounded-2xl bg-white/80 dark:bg-white/5 p-6 shadow">
+              <h2 className="text-xl font-bold mb-4">Pickup Subscription</h2>
+              
+              {subscriptionError && (
+                <div className="mb-4 text-sm text-red-600 dark:text-red-400">
+                  {subscriptionError}
+                </div>
+              )}
+
+              {loadingSubscription ? (
+                <div className="flex justify-center py-4">
+                  <Spinner className="w-6 h-6" />
+                </div>
+              ) : subscription ? (
+                <div className="space-y-4">
+                  <div className="p-4 rounded-lg border dark:border-slate-700 bg-white dark:bg-slate-800">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <h3 className="font-medium">Current Subscription</h3>
+                        <p className="text-sm text-slate-600 dark:text-slate-400 mt-1">
+                          {subscription.frequency.charAt(0).toUpperCase() + subscription.frequency.slice(1)} pickups
+                        </p>
+                        {subscription.next_pickup_date && (
+                          <p className="text-sm text-slate-600 dark:text-slate-400 mt-1">
+                            Next pickup: {new Date(subscription.next_pickup_date).toLocaleDateString()}
+                          </p>
+                        )}
+                      </div>
+                      <button
+                        onClick={handleCancelSubscription}
+                        disabled={loadingSubscription}
+                        className="px-4 py-2 text-sm rounded-md border border-red-600 text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20"
+                      >
+                        Cancel Subscription
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  <p className="text-sm text-slate-600 dark:text-slate-400">
+                    Subscribe to regular car wash pickups and never worry about scheduling again.
+                  </p>
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    {(['weekly', 'bi-weekly', 'monthly'] as SubscriptionFrequency[]).map((frequency) => (
+                      <button
+                        key={frequency}
+                        onClick={() => handleSubscriptionUpdate(frequency)}
+                        disabled={loadingSubscription}
+                        className="p-4 rounded-lg border-0 bg-red-600 dark:bg-red-600 hover:bg-red-500 dark:hover:bg-red-500 text-left transition-all group hover:-translate-y-0.5"
+                      >
+                        <h3 className="font-medium capitalize text-white">{frequency} Pickup</h3>
+                        <p className="text-sm text-white/90 mt-1">
+                          Regular pickups every {frequency === 'bi-weekly' ? 'two weeks' : frequency.replace('ly', '')}
+                        </p>
+                        <span className="block mt-2 text-sm font-medium text-white group-hover:text-white/90">
+                          Select Plan →
+                        </span>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
           </div>
 
           <div className="mt-8">

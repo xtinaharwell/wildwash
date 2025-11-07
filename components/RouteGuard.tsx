@@ -19,7 +19,17 @@ export default function RouteGuard({ children, requireAdmin = false, requireRide
   const [showError, setShowError] = useState(false);
 
   useEffect(() => {
+    // Debug log
+    console.log('RouteGuard State:', {
+      isAuthenticated,
+      userRole,
+      requireAdmin,
+      requireRider,
+      pathname
+    });
+
     if (!isAuthenticated) {
+      console.log('Not authenticated, redirecting...');
       // For admin routes, redirect to admin login
       if (requireAdmin) {
         router.push(`/admin-login?redirect=${pathname}`);
@@ -31,19 +41,26 @@ export default function RouteGuard({ children, requireAdmin = false, requireRide
       return;
     }
 
-    if ((requireAdmin && userRole !== 'admin') || (requireRider && userRole !== 'rider')) {
-      setShowError(true);
-      // Auto-redirect after showing error message
-      const timer = setTimeout(() => {
-        if (requireRider) {
-          router.push('/rider-login');
-        } else if (requireAdmin) {
-          router.push('/admin-login');
-        } else {
-          router.push('/login');
-        }
-      }, 3000);
-      return () => clearTimeout(timer);
+    // Check if user has the required role
+    const hasRequiredRole = (requireAdmin && userRole === 'admin') || (requireRider && userRole === 'rider');
+    console.log('Role check:', { requireAdmin, requireRider, userRole, hasRequiredRole });
+
+    if (requireAdmin || requireRider) {
+      if (!hasRequiredRole) {
+        console.log('Insufficient permissions, showing error...');
+        setShowError(true);
+        // Auto-redirect after showing error message
+        const timer = setTimeout(() => {
+          if (requireRider) {
+            router.push('/rider-login');
+          } else if (requireAdmin) {
+            router.push('/admin-login');
+          } else {
+            router.push('/login');
+          }
+        }, 3000);
+        return () => clearTimeout(timer);
+      }
     }
   }, [isAuthenticated, userRole, requireAdmin, requireRider, router, pathname]);
 

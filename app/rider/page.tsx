@@ -4,7 +4,7 @@ import React, { useCallback, useEffect, useMemo, useRef, useState } from "react"
 import { RefreshCw, MapPin, Package } from "lucide-react";
 import RouteGuard from "@/components/RouteGuard";
 
-const API_BASE = process.env.NEXT_PUBLIC_API_BASE ?? "http://127.0.0.1:8000";
+const API_BASE = process.env.NEXT_PUBLIC_API_BASE ?? "http://127.0.0.1:8001";
 
 /* --- Types --- */
 type OrderStatus = 'requested' | 'picked' | 'in_progress' | 'ready' | 'delivered' | 'cancelled';

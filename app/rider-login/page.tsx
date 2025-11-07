@@ -36,7 +36,7 @@ export default function RiderLoginPage() {
         throw new Error(data.detail || 'Login failed');
       }
 
-      if (data.user?.is_rider) {
+      if (data.user?.role === 'rider') {
         // Store auth data
         dispatch(setAuth({
           user: data.user,

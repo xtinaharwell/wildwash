@@ -26,7 +26,7 @@ export default function ServicesPage() {
     async function loadServices() {
       try {
         setLoading(true);
-        const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000"}/services/`);
+        const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8001"}/services/`);
         if (!res.ok) throw new Error("Failed to fetch services");
         const data = await res.json();
         setServices(data);

@@ -51,6 +51,20 @@ export default function NavBar() {
       <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16">
           <div className="flex items-center gap-3">
+            <button
+              onClick={() => setMobileOpen((s) => !s)}
+              aria-expanded={mobileOpen}
+              aria-label={mobileOpen ? "Close menu" : "Open menu"}
+              className="md:hidden inline-flex items-center justify-center p-2 rounded-lg hover:bg-slate-100 dark:hover:bg-white/5 focus:outline-none focus-visible:ring-2 focus-visible:ring-red-300"
+            >
+              <svg className={`w-6 h-6 transition-transform ${mobileOpen ? "rotate-90" : "rotate-0"}`} viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                {mobileOpen ? (
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                ) : (
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+                )}
+              </svg>
+            </button>
             <div className="w-12 h-12 rounded-2xl bg-red-500/95 flex items-center justify-center shadow-md shrink-0">
                 <Link
                     href="/"
@@ -106,20 +120,7 @@ export default function NavBar() {
               </Link>
             )}
 
-            <button
-              onClick={() => setMobileOpen((s) => !s)}
-              aria-expanded={mobileOpen}
-              aria-label={mobileOpen ? "Close menu" : "Open menu"}
-              className="md:hidden inline-flex items-center justify-center p-2 rounded-lg hover:bg-slate-100 dark:hover:bg-white/5 focus:outline-none focus-visible:ring-2 focus-visible:ring-red-300"
-            >
-              <svg className={`w-6 h-6 transition-transform ${mobileOpen ? "rotate-90" : "rotate-0"}`} viewBox="0 0 24 24" fill="none" stroke="currentColor">
-                {mobileOpen ? (
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                ) : (
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
-                )}
-              </svg>
-            </button>
+
           </div>
         </div>
       </div>
@@ -138,7 +139,7 @@ export default function NavBar() {
               <Link href="/book" onClick={() => setMobileOpen(false)} className="block text-center rounded-lg bg-red-600 text-white px-4 py-3 font-semibold shadow-md focus:outline-none focus-visible:ring-2 focus-visible:ring-red-300">Book Pickup</Link>
 
               <div className="flex gap-3 mt-2 justify-center">
-                <Link href="/contact" className="text-sm px-3 py-2 rounded-md hover:underline focus:outline-none focus-visible:ring-2 focus-visible:ring-red-300">Contact</Link>
+                <Link href="/rider" className="text-sm px-3 py-2 rounded-md hover:underline focus:outline-none focus-visible:ring-2 focus-visible:ring-red-300">Rider</Link>
                 <Link href="/staff" className="text-sm px-3 py-2 rounded-md hover:underline focus:outline-none focus-visible:ring-2 focus-visible:ring-red-300">Staff</Link>
                 <Link href="/admin" className="text-sm px-3 py-2 rounded-md hover:underline focus:outline-none focus-visible:ring-2 focus-visible:ring-red-300">Admin</Link>
               </div>

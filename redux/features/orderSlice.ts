@@ -121,7 +121,7 @@ export const fetchOrders = createAsyncThunk<
   if (state.query) params.set('search', state.query);
 
   const baseUrl =
-    "http://127.0.0.1:8000/orders/";
+    "http://127.0.0.1:8001/orders/";
   const url = `${baseUrl}?${params.toString()}`;
 
   try {
