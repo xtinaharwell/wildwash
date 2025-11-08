@@ -45,7 +45,7 @@ export default function NavBar() {
   return (
     <header
       className={`fixed top-0 left-0 right-0 z-50 transition-all duration-200 ${
-        scrolled ? "backdrop-blur-md bg-white/60 dark:bg-black/50 shadow-sm" : "bg-transparent"
+        scrolled ? "backdrop-blur-md bg-white/80 dark:bg-[#071025]/90 shadow-sm border-b border-white/10" : "bg-white/60 dark:bg-[#071025]/60 backdrop-blur-sm border-b border-white/5"
       }`}
     >
       <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">

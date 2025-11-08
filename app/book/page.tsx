@@ -1,5 +1,6 @@
 "use client";
 import React, { useEffect, useState } from "react";
+import { getStoredAuthState } from "@/lib/auth";
 
 /**
  * /book page.tsx
@@ -99,7 +100,8 @@ export default function Page() {
       setProgress(40);
 
       const csrf = getCookie("csrftoken");
-
+      const authState = getStoredAuthState();
+      
       const res = await fetch(`${API_BASE}/orders/`, {
         method: "POST",
         mode: "cors",
@@ -107,6 +109,7 @@ export default function Page() {
         headers: {
           "Content-Type": "application/json",
           ...(csrf ? { "X-CSRFToken": csrf } : {}),
+          ...(authState?.token ? { "Authorization": `Token ${authState.token}` } : {}),
         },
         body: JSON.stringify(payload),
       });

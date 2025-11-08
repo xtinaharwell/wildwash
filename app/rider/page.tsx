@@ -12,17 +12,21 @@ type OrderStatus = 'requested' | 'picked' | 'in_progress' | 'ready' | 'delivered
 type Order = {
   id: number;
   code: string;
-  service: any;
+  service: {
+    name: string;
+    package: string;
+  };
   pickup_address: string;
   dropoff_address: string;
   status: OrderStatus;
   urgency: number;
   items: number;
-  weight_kg?: number;
-  price?: number;
+  weight_kg?: number | null;
+  price?: number | null;
   created_at: string;
-  estimated_delivery?: string;
-  user?: any;
+  estimated_delivery?: string | null;
+  delivered_at?: string | null;
+  user?: string;
   pickup_location?: { lat: number; lng: number };
   dropoff_location?: { lat: number; lng: number };
 };
@@ -60,7 +64,7 @@ export default function RiderMapPage(): React.ReactElement {
   const [orders, setOrders] = useState<Order[]>([]);
   const [loadingOrders, setLoadingOrders] = useState(true);
   const [errorOrders, setErrorOrders] = useState<string | null>(null);
-  const [statusFilter, setStatusFilter] = useState<OrderStatus[]>(['picked', 'in_progress']);
+  const [currentStatus, setCurrentStatus] = useState<OrderStatus>('requested');
 
   const [profiles, setProfiles] = useState<RiderProfile[]>([]);
   const [locations, setLocations] = useState<RiderLocation[]>([]);
@@ -69,11 +73,13 @@ export default function RiderMapPage(): React.ReactElement {
   const [errorProfiles, setErrorProfiles] = useState<string | null>(null);
   const [errorLocations, setErrorLocations] = useState<string | null>(null);
 
-  // map refs
+  // map refs - Temporarily commented out
+  /*
   const mapContainerRef = useRef<HTMLDivElement | null>(null);
   const mapInstanceRef = useRef<any | null>(null);
   const markersRef = useRef<any[]>([]);
   const leafletLoadedRef = useRef(false);
+  */
 
   /* --- Data fetchers --- */
   const fetchOrders = useCallback(async () => {
@@ -103,10 +109,13 @@ export default function RiderMapPage(): React.ReactElement {
           const order: Order = {
             id: o.id,
             code: o.code,
-            service: o.service,
+            service: {
+              name: o.service_name,
+              package: o.package
+            },
             pickup_address: o.pickup_address,
             dropoff_address: o.dropoff_address,
-            status: o.status,
+            status: o.status.toLowerCase(),  // Convert 'Requested' to 'requested'
             urgency: o.urgency,
             items: o.items,
             weight_kg: o.weight_kg,
@@ -240,6 +249,78 @@ export default function RiderMapPage(): React.ReactElement {
     await Promise.all([fetchOrders(), fetchProfiles(), fetchLocations()]);
   };
 
+  const handleAssignOrder = async (orderId: number) => {
+    try {
+      const authState = JSON.parse(localStorage.getItem('wildwash_auth_state') || '{}');
+      const token = authState.token;
+      if (!token) {
+        throw new Error('Authentication required');
+      }
+
+      const res = await fetch(`${API_BASE}/orders/rider/`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Token ${token}`,
+        },
+        body: JSON.stringify({
+          order_id: orderId,
+          action: 'accept'
+        })
+      });
+
+      if (!res.ok) {
+        const errorData = await res.json().catch(() => ({}));
+        throw new Error(errorData.error || `Failed to assign order: ${res.status}`);
+      }
+
+      // Refresh the orders list and switch to in_progress page
+      await fetchOrders();
+      setCurrentStatus('in_progress'); // Switch to in_progress page after assignment
+    } catch (err: any) {
+      console.error('Failed to assign order:', err);
+      alert(err.message || 'Failed to assign order. Please try again.');
+    }
+  };
+
+  const handleCompletePickup = async (orderId: number) => {
+    try {
+      const authState = JSON.parse(localStorage.getItem('wildwash_auth_state') || '{}');
+      const token = authState.token;
+      if (!token) {
+        throw new Error('Authentication required');
+      }
+
+      // Show confirmation dialog
+      if (!confirm('Have you completed the pickup? This will mark the order as picked up.')) {
+        return;
+      }
+
+      const res = await fetch(`${API_BASE}/orders/update/?id=${orderId}`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Token ${token}`,
+        },
+        body: JSON.stringify({
+          status: 'picked'
+        })
+      });
+
+      if (!res.ok) {
+        const errorData = await res.json().catch(() => ({}));
+        throw new Error(errorData.error || `Failed to complete pickup: ${res.status}`);
+      }
+
+      // Refresh the orders list and switch to picked page
+      await fetchOrders();
+      setCurrentStatus('picked'); // Switch to picked page after completion
+    } catch (err: any) {
+      console.error('Failed to complete pickup:', err);
+      alert(err.message || 'Failed to complete pickup. Please try again.');
+    }
+  };
+
   // Find latest location for each rider
   const latestLocationByRider = useMemo(() => {
     const m = new Map<string, RiderLocation>();
@@ -255,8 +336,8 @@ export default function RiderMapPage(): React.ReactElement {
 
   // Filter orders by selected status
   const filteredOrders = useMemo(() => {
-    return orders.filter((o) => statusFilter.includes(o.status));
-  }, [orders, statusFilter]);
+    return orders.filter((o) => o.status === currentStatus);
+  }, [orders, currentStatus]);
 
   /* --- Map helpers --- */
   async function injectLeafletCss() {
@@ -330,7 +411,8 @@ export default function RiderMapPage(): React.ReactElement {
     return `<?xml version='1.0' encoding='UTF-8'?><svg xmlns='http://www.w3.org/2000/svg' width='36' height='36' viewBox='0 0 24 24'><path d='M12 2C8 2 5 5 5 9c0 5 7 13 7 13s7-8 7-13c0-4-3-7-7-7z' fill='#105969'/><circle cx='12' cy='9' r='2.5' fill='#fff'/></svg>`;
   }
 
-  /* --- Map initialization & markers --- */
+  /* --- Map initialization & markers --- Temporarily commented out
+  /*
   async function ensureMapAndMarkers() {
     try {
       await injectLeafletCss();
@@ -491,6 +573,7 @@ export default function RiderMapPage(): React.ReactElement {
       leafletLoadedRef.current = false;
     };
   }, []);
+  */
 
   /* --- Render --- */
   return (
@@ -512,28 +595,38 @@ export default function RiderMapPage(): React.ReactElement {
             </button>
           </header>
 
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 gap-6">
             {/* Left: Order list & filters */}
-            <section className="lg:col-span-2 rounded-2xl bg-white/80 dark:bg-white/5 p-4 shadow">
+            <section className="rounded-2xl bg-white/80 dark:bg-white/5 p-4 shadow">
               <div className="flex items-center justify-between mb-4">
                 <div className="flex items-center gap-3">
                   <Package className="w-5 h-5 text-red-600" />
                   <h2 className="text-lg font-semibold">Orders</h2>
                 </div>
-                <div className="flex flex-wrap gap-2">
-                  {(['picked', 'in_progress', 'delivered'] as const).map((status) => (
-                    <button
-                      key={status}
-                      onClick={() => {
-                        setStatusFilter((prev) => (prev.includes(status) ? prev.filter((s) => s !== status) : [...prev, status]));
-                      }}
-                      className={`px-2 py-1 text-xs rounded-full ${
-                        statusFilter.includes(status) ? "bg-red-600 text-white" : "bg-slate-100 dark:bg-slate-800"
-                      }`}
-                    >
-                      {capitalize(status)}
-                    </button>
-                  ))}
+                <div className="flex flex-wrap justify-center gap-2">
+                  {(['requested', 'in_progress', 'picked'] as const).map((status) => {
+                    const count = orders.filter(order => order.status === status).length;
+                    return (
+                      <button
+                        key={status}
+                        onClick={() => setCurrentStatus(status)}
+                        className={`px-4 py-2 text-sm font-medium rounded-lg transition-all flex items-center gap-2 ${
+                          currentStatus === status 
+                            ? "bg-red-600 text-white shadow-md" 
+                            : "bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700 border border-slate-200 dark:border-slate-700"
+                        }`}
+                      >
+                        <span>{capitalize(status)}</span>
+                        <span className={`px-2 py-0.5 rounded-full text-xs ${
+                          currentStatus === status 
+                            ? "bg-red-700 text-white" 
+                            : "bg-slate-100 dark:bg-slate-700"
+                        }`}>
+                          {count}
+                        </span>
+                      </button>
+                    );
+                  })}
                 </div>
               </div>
 
@@ -550,10 +643,10 @@ export default function RiderMapPage(): React.ReactElement {
                       key={order.id}
                       className="flex items-start justify-between gap-3 p-3 rounded-lg border border-slate-100 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-white/5"
                     >
-                      <div>
+                      <div className="flex-grow">
                         <div className="font-semibold">Order {order.code}</div>
                         <div className="text-xs text-slate-500 dark:text-slate-400 mt-1">
-                          Status: {capitalize(order.status)}
+                          Service: {order.service.name}
                           <br />
                           Items: {order.items}
                           {order.weight_kg && ` • ${order.weight_kg}kg`}
@@ -565,13 +658,32 @@ export default function RiderMapPage(): React.ReactElement {
                           <div>To: {order.dropoff_address}</div>
                         </div>
                       </div>
+                      {order.status === 'requested' && (
+                        <button
+                          onClick={() => handleAssignOrder(order.id)}
+                          className="px-3 py-1 text-sm bg-red-600 text-white rounded-full hover:bg-red-700 transition-colors"
+                        >
+                          Assign Me
+                        </button>
+                      )}
+                      {order.status === 'in_progress' && (
+                        <button
+                          onClick={() => handleCompletePickup(order.id)}
+                          className="px-3 py-1 text-sm bg-green-600 text-white rounded-full hover:bg-green-700 transition-colors flex items-center gap-1"
+                        >
+                          <span>Complete Pickup</span>
+                          <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+                            <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                          </svg>
+                        </button>
+                      )}
                     </div>
                   ))}
                 </div>
               )}
             </section>
 
-            {/* Right: Map */}
+            {/* Right: Map - Temporarily commented out
             <aside className="rounded-2xl bg-white/80 dark:bg-white/5 p-4 shadow space-y-4">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
@@ -600,6 +712,7 @@ export default function RiderMapPage(): React.ReactElement {
                 </div>
               </div>
             </aside>
+            */}
           </div>
         </div>
       </div>

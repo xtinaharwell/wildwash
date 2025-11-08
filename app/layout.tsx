@@ -29,12 +29,12 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased`}
+        className={`${geistSans.variable} ${geistMono.variable} antialiased min-h-screen bg-gradient-to-b from-white via-[#f8fafc] to-[#eef2ff] dark:from-[#071025] dark:via-[#041022] dark:to-[#011018]`}
       >
         <CustomProvider>
           <AuthInitializer />
           <NavBar />
-          <main className="pt-8">
+          <main className="min-h-[calc(100vh-80px)] pt-20">
             {children}
           </main>
           <WhatsAppButton />         

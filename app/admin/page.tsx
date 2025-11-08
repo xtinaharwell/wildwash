@@ -61,6 +61,9 @@ export default function AdminPage(): React.ReactElement {
   const [statusFilter, setStatusFilter] = useState<string>('');
   const [riderFilter, setRiderFilter] = useState<string>('');
   const [searchQuery, setSearchQuery] = useState<string>('');
+  const [startDate, setStartDate] = useState<string>('');
+  const [endDate, setEndDate] = useState<string>('');
+  const [dateFilter, setDateFilter] = useState<'today' | 'week' | 'month' | 'custom'>('week');
 
   const [loadingOrders, setLoadingOrders] = useState<boolean>(true);
   const [loadingLocations, setLoadingLocations] = useState<boolean>(true);
@@ -186,6 +189,40 @@ export default function AdminPage(): React.ReactElement {
   const availableStatuses = Array.from(new Set(orders.map(o => (o.status ?? '').toString()))).filter(Boolean);
   const availableRiders = Array.from(new Set(orders.map(o => (o.rider ?? '').toString()))).filter(Boolean);
 
+  const getDateRange = useCallback(() => {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    
+    switch (dateFilter) {
+      case 'today':
+        return {
+          start: today.toISOString().split('T')[0],
+          end: new Date().toISOString().split('T')[0]
+        };
+      case 'week':
+        const weekStart = new Date(today);
+        weekStart.setDate(today.getDate() - 7);
+        return {
+          start: weekStart.toISOString().split('T')[0],
+          end: new Date().toISOString().split('T')[0]
+        };
+      case 'month':
+        const monthStart = new Date(today);
+        monthStart.setMonth(today.getMonth() - 1);
+        return {
+          start: monthStart.toISOString().split('T')[0],
+          end: new Date().toISOString().split('T')[0]
+        };
+      case 'custom':
+        return {
+          start: startDate,
+          end: endDate
+        };
+      default:
+        return { start: '', end: '' };
+    }
+  }, [dateFilter, startDate, endDate]);
+
   const filteredOrders = orders.filter(o => {
     if (statusFilter && String(o.status ?? '').toLowerCase() !== statusFilter.toLowerCase()) return false;
     if (riderFilter && String(o.rider ?? '').toLowerCase() !== riderFilter.toLowerCase()) return false;
@@ -195,6 +232,14 @@ export default function AdminPage(): React.ReactElement {
       const matchesRider = String(o.rider ?? '').toLowerCase().includes(q);
       if (!matchesCode && !matchesRider) return false;
     }
+
+    // Date filtering
+    const { start, end } = getDateRange();
+    if (start && end) {
+      const orderDate = o.created_at?.split('T')[0];
+      if (!orderDate || orderDate < start || orderDate > end) return false;
+    }
+
     return true;
   });
 
@@ -220,41 +265,17 @@ export default function AdminPage(): React.ReactElement {
       <div>
         {/* Summary */}
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 gap-4 mb-6">
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 mb-6">
           <StatCard icon={<Users />} label="Total Orders" value={String(totalOrders)} />
           <StatCard icon={<Loader2 />} label="In Progress" value={String(inProgress)} />
           <StatCard icon={<CheckCircle />} label="Completed" value={String(completed)} />
           <StatCard icon={<DollarSign />} label="Revenue" value={`KSh ${totalRevenue.toLocaleString()}`} />
-          <StatCard icon={<Truck />} label="Active Riders (orders)" value={String(new Set(orders.map(o => o.rider)).size)} />
-          <StatCard icon={<MapPin />} label="Riders (locations)" value={String(riderCount)} />
+          <StatCard icon={<Truck />} label="Active Riders" value={String(new Set(orders.map(o => o.rider)).size)} />
+          <StatCard icon={<MapPin />} label="Total Riders" value={String(riderCount)} />
         </div>
 
-        {/* Charts */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
-          <ChartCard title="Orders per Day">
-            <BarChart data={dailyStats}>
-              <CartesianGrid strokeDasharray="3 3" />
-              <XAxis dataKey="date" />
-              <YAxis />
-              <Tooltip />
-              <Bar dataKey="orders" fill="#10b981" radius={[6, 6, 0, 0]} />
-            </BarChart>
-          </ChartCard>
-
-          <ChartCard title="Revenue Trend">
-            <LineChart data={dailyStats}>
-              <CartesianGrid strokeDasharray="3 3" />
-              <XAxis dataKey="date" />
-              <YAxis />
-              <Tooltip />
-              <Line type="monotone" dataKey="revenue" stroke="#059669" strokeWidth={3} dot={{ r: 5 }} />
-            </LineChart>
-          </ChartCard>
-        </div>
-
-        {/* Tables */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
-          {/* Recent Orders */}
+        {/* Recent Orders */}
+        <div className="mb-8">
           <div className="rounded-2xl bg-white/80 dark:bg-slate-900/50 backdrop-blur-sm p-6 shadow-lg shadow-slate-200/20 dark:shadow-slate-900/30 border border-slate-200/50 dark:border-slate-700/50">
             <h2 className="text-xl font-semibold mb-4 text-slate-900 dark:text-white">Recent Orders</h2>
             <div className="mb-4 flex flex-wrap items-center gap-3">
@@ -289,18 +310,55 @@ export default function AdminPage(): React.ReactElement {
                 />
               </div>
 
+              <div className="flex flex-wrap items-center gap-3">
+                <select 
+                  value={dateFilter} 
+                  onChange={(e) => setDateFilter(e.target.value as any)} 
+                  className="rounded-lg border border-slate-200 bg-white/50 backdrop-blur-sm dark:border-slate-800 dark:bg-slate-900/50 px-3 py-2 text-sm"
+                >
+                  <option value="week">Last 7 days</option>
+                  <option value="today">Today</option>
+                  <option value="month">Last 30 days</option>
+                  <option value="custom">Custom range</option>
+                </select>
+
+                {dateFilter === 'custom' && (
+                  <>
+                    <input
+                      type="date"
+                      value={startDate}
+                      onChange={(e) => setStartDate(e.target.value)}
+                      className="rounded-lg border border-slate-200 bg-white/50 backdrop-blur-sm dark:border-slate-800 dark:bg-slate-900/50 px-3 py-2 text-sm"
+                    />
+                    <input
+                      type="date"
+                      value={endDate}
+                      onChange={(e) => setEndDate(e.target.value)}
+                      className="rounded-lg border border-slate-200 bg-white/50 backdrop-blur-sm dark:border-slate-800 dark:bg-slate-900/50 px-3 py-2 text-sm"
+                    />
+                  </>
+                )}
+              </div>
+
               <button 
-                onClick={() => { setStatusFilter(''); setRiderFilter(''); setSearchQuery(''); }} 
+                onClick={() => { 
+                  setStatusFilter(''); 
+                  setRiderFilter(''); 
+                  setSearchQuery(''); 
+                  setDateFilter('week');
+                  setStartDate('');
+                  setEndDate('');
+                }} 
                 className="text-sm px-3 py-2 text-slate-500 hover:text-slate-900 dark:hover:text-slate-300 transition-colors duration-200 flex items-center gap-2"
               >
                 <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="animate-spin-once">
                   <path d="M21 12a9 9 0 1 1-9-9c2.52 0 4.93 1 6.74 2.74L21 8" />
                 </svg>
-                Reset filters
+                Reset all filters
               </button>
             </div>
 
-            <div className="overflow-x-auto">
+            <div className="overflow-x-auto overflow-y-auto max-h-[500px] scrollbar-thin scrollbar-thumb-gray-400 scrollbar-track-gray-100 dark:scrollbar-thumb-gray-600 dark:scrollbar-track-gray-800">
               <table className="min-w-full text-sm divide-y divide-slate-200/50 dark:divide-slate-800/50">
                 <thead className="text-slate-600 dark:text-slate-400">
                   <tr>
@@ -352,36 +410,61 @@ export default function AdminPage(): React.ReactElement {
               </table>
             </div>
           </div>
+        </div>
 
-          {/* Rider Locations */}
-          <div className="rounded-2xl bg-white/80 dark:bg-white/5 p-4 shadow">
-            <div className="flex items-center justify-between">
-              <h2 className="text-lg font-semibold">Rider Locations (latest)</h2>
-              <div className="text-xs text-slate-500">{latestTimeSummary(latestLocationByRider)}</div>
+        {/* Charts and Statistics */}
+        <div className="grid grid-cols-1 xl:grid-cols-2 gap-8 mb-8">
+          {/* Orders per Day Chart */}
+          <ChartCard title="Orders per Day">
+            <BarChart data={dailyStats}>
+              <CartesianGrid strokeDasharray="3 3" />
+              <XAxis dataKey="date" />
+              <YAxis />
+              <Tooltip />
+              <Bar dataKey="orders" fill="#10b981" radius={[6, 6, 0, 0]} />
+            </BarChart>
+          </ChartCard>
+
+          {/* Rider Order Statistics */}
+          <div className="rounded-2xl bg-white/80 dark:bg-white/5 p-6 shadow">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-lg font-semibold">Rider Statistics</h2>
             </div>
 
-            <div className="overflow-x-auto mt-3">
+            <div className="overflow-x-auto">
               <table className="min-w-full text-sm">
                 <thead className="border-b border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-400">
                   <tr>
-                    <th className="text-left py-2 px-3">Rider</th>
-                    <th className="text-left py-2 px-3">Last seen</th>
-                    <th className="text-left py-2 px-3">Lat, Lon</th>
-                    <th className="text-left py-2 px-3">Accuracy (m)</th>
-                    <th className="text-left py-2 px-3">Speed (m/s)</th>
+                    <th className="text-left py-3 px-4">Rider</th>
+                    <th className="text-center py-3 px-4">Total Orders</th>
+                    <th className="text-center py-3 px-4">Completed</th>
+                    <th className="text-center py-3 px-4">In Progress</th>
+                    <th className="text-center py-3 px-4">Success Rate</th>
                   </tr>
                 </thead>
                 <tbody>
-                  {latestLocationByRider.map((r) => (
-                    <tr key={r.riderKey} className="border-b border-slate-100 dark:border-slate-800">
-                      <td className="py-2 px-3 font-medium">{r.rider_display ?? String(r.riderKey)}</td>
-                      <td className="py-2 px-3">{formatDateTime(r.recorded_at)}</td>
-                      <td className="py-2 px-3">{r.latitude ?? "—"}, {r.longitude ?? "—"}</td>
-                      <td className="py-2 px-3">{r.accuracy ?? "—"}</td>
-                      <td className="py-2 px-3">{r.speed ?? "—"}</td>
+                  {availableRiders.map((rider) => {
+                    const riderOrders = orders.filter(o => String(o.rider) === rider);
+                    const completed = riderOrders.filter(o => String(o.status).toLowerCase() === 'delivered').length;
+                    const inProgress = riderOrders.filter(o => !['delivered', 'cancelled'].includes(String(o.status).toLowerCase())).length;
+                    const total = riderOrders.length;
+                    const successRate = total > 0 ? ((completed / total) * 100).toFixed(1) : '0';
+                    
+                    return (
+                      <tr key={rider} className="border-b border-slate-100 dark:border-slate-800 hover:bg-slate-50/50 dark:hover:bg-slate-800/50">
+                        <td className="py-3 px-4 font-medium">{rider}</td>
+                        <td className="py-3 px-4 text-center">{total}</td>
+                        <td className="py-3 px-4 text-center text-green-600">{completed}</td>
+                        <td className="py-3 px-4 text-center text-blue-600">{inProgress}</td>
+                        <td className="py-3 px-4 text-center font-medium">{successRate}%</td>
+                      </tr>
+                    );
+                  })}
+                  {availableRiders.length === 0 && (
+                    <tr>
+                      <td colSpan={5} className="py-8 text-center text-slate-500">No riders found.</td>
                     </tr>
-                  ))}
-                  {latestLocationByRider.length === 0 && <tr><td colSpan={5} className="py-6 text-center text-slate-500">No rider locations available.</td></tr>}
+                  )}
                 </tbody>
               </table>
             </div>
@@ -398,7 +481,6 @@ export default function AdminPage(): React.ReactElement {
           <header className="mb-6 flex items-start justify-between gap-4">
             <div>
               <h1 className="text-3xl font-extrabold">Admin — Orders & Riders</h1>
-              <p className="mt-2 text-sm text-slate-600 dark:text-slate-300">Live overview of orders and rider locations (public riders endpoint).</p>
             </div>
 
             <div className="flex gap-3 items-center">
@@ -445,9 +527,12 @@ function latestTimeSummary(arr: Array<any>) {
 
 function StatCard({ icon, label, value }: { icon: React.ReactNode; label: string; value: string }) {
   return (
-    <div className="rounded-2xl bg-white/80 dark:bg-slate-900/50 backdrop-blur-sm p-5 shadow-lg shadow-slate-200/20 dark:shadow-slate-900/30 border border-slate-200/50 dark:border-slate-700/50 flex flex-col gap-2 transition-all duration-300 hover:shadow-xl hover:scale-[1.02]">
-      <div className="flex items-center gap-2 text-red-600">{icon}<span className="font-medium text-slate-600 dark:text-slate-300">{label}</span></div>
-      <div className="text-2xl font-bold text-slate-900 dark:text-white">{value}</div>
+    <div className="rounded-xl bg-white/80 dark:bg-slate-900/50 backdrop-blur-sm p-3 sm:p-4 shadow-lg shadow-slate-200/20 dark:shadow-slate-900/30 border border-slate-200/50 dark:border-slate-700/50 flex flex-col gap-1 sm:gap-2 transition-all duration-300 hover:shadow-xl hover:scale-[1.02]">
+      <div className="flex items-center gap-1.5 text-red-600">
+        <span className="w-4 h-4 sm:w-5 sm:h-5">{icon}</span>
+        <span className="font-medium text-slate-600 dark:text-slate-300 text-xs sm:text-sm truncate">{label}</span>
+      </div>
+      <div className="text-lg sm:text-2xl font-bold text-slate-900 dark:text-white">{value}</div>
     </div>
   );
 }
