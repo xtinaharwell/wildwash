@@ -60,6 +60,7 @@ export default function AdminPage(): React.ReactElement {
   const [locations, setLocations] = useState<RiderLocation[]>([]);
   const [statusFilter, setStatusFilter] = useState<string>('');
   const [riderFilter, setRiderFilter] = useState<string>('');
+  const [locationFilter, setLocationFilter] = useState<string>('');
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [startDate, setStartDate] = useState<string>('');
   const [endDate, setEndDate] = useState<string>('');
@@ -188,6 +189,7 @@ export default function AdminPage(): React.ReactElement {
   // filter helpers
   const availableStatuses = Array.from(new Set(orders.map(o => (o.status ?? '').toString()))).filter(Boolean);
   const availableRiders = Array.from(new Set(orders.map(o => (o.rider ?? '').toString()))).filter(Boolean);
+  const availableLocations = Array.from(new Set(orders.map(o => (o.raw?.user?.location || '').toString()))).filter(Boolean);
 
   const getDateRange = useCallback(() => {
     const today = new Date();
@@ -226,6 +228,10 @@ export default function AdminPage(): React.ReactElement {
   const filteredOrders = orders.filter(o => {
     if (statusFilter && String(o.status ?? '').toLowerCase() !== statusFilter.toLowerCase()) return false;
     if (riderFilter && String(o.rider ?? '').toLowerCase() !== riderFilter.toLowerCase()) return false;
+    if (locationFilter) {
+      const customerLocation = (o.raw?.user?.location || '').toLowerCase();
+      if (customerLocation !== locationFilter.toLowerCase()) return false;
+    }
     if (searchQuery) {
       const q = searchQuery.toLowerCase();
       const matchesCode = String(o.code ?? '').toLowerCase().includes(q);
@@ -300,6 +306,17 @@ export default function AdminPage(): React.ReactElement {
                   {availableRiders.map(r => <option key={r} value={r}>{r}</option>)}
                 </select>
               </div>
+              
+              <div className="flex-1 min-w-[200px]">
+                <select 
+                  value={locationFilter} 
+                  onChange={(e) => setLocationFilter(e.target.value)}
+                  className="w-full rounded-lg border border-slate-200 bg-white/50 backdrop-blur-sm dark:border-slate-800 dark:bg-slate-900/50 px-3 py-2 text-sm transition-shadow duration-200 hover:bg-white dark:hover:bg-slate-900 focus:outline-none focus:ring-2 focus:ring-red-500/20"
+                >
+                  <option value="">All locations</option>
+                  {availableLocations.map(l => <option key={l} value={l}>{l}</option>)}
+                </select>
+              </div>
 
               <div className="flex-1 min-w-[200px]">
                 <input 
@@ -344,6 +361,7 @@ export default function AdminPage(): React.ReactElement {
                 onClick={() => { 
                   setStatusFilter(''); 
                   setRiderFilter(''); 
+                  setLocationFilter('');
                   setSearchQuery(''); 
                   setDateFilter('week');
                   setStartDate('');
@@ -364,6 +382,7 @@ export default function AdminPage(): React.ReactElement {
                   <tr>
                     <th className="text-left py-3 px-4 font-medium">Code</th>
                     <th className="text-left py-3 px-4 font-medium">Status</th>
+                    <th className="text-left py-3 px-4 font-medium">Location</th>
                     <th className="text-left py-3 px-4 font-medium">Rider</th>
                     <th className="text-right py-3 px-4 font-medium">Price (KSh)</th>
                     <th className="text-right py-3 px-4 font-medium">Date</th>
@@ -386,6 +405,7 @@ export default function AdminPage(): React.ReactElement {
                           {o.status}
                         </span>
                       </td>
+                      <td className="py-3 px-4">{o.raw?.user?.location || "—"}</td>
                       <td className="py-3 px-4">{o.rider ?? "—"}</td>
                       <td className="py-3 px-4 text-right font-medium">{Number(o.price ?? 0).toLocaleString()}</td>
                       <td className="py-3 px-4 text-right text-slate-500">{o.created_at?.split?.("T")?.[0] ?? "—"}</td>
@@ -436,6 +456,7 @@ export default function AdminPage(): React.ReactElement {
                 <thead className="border-b border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-400">
                   <tr>
                     <th className="text-left py-3 px-4">Rider</th>
+                    <th className="text-left py-3 px-4">Location</th>
                     <th className="text-center py-3 px-4">Total Orders</th>
                     <th className="text-center py-3 px-4">Completed</th>
                     <th className="text-center py-3 px-4">In Progress</th>
@@ -453,6 +474,7 @@ export default function AdminPage(): React.ReactElement {
                     return (
                       <tr key={rider} className="border-b border-slate-100 dark:border-slate-800 hover:bg-slate-50/50 dark:hover:bg-slate-800/50">
                         <td className="py-3 px-4 font-medium">{rider}</td>
+                        <td className="py-3 px-4">{riderOrders[0]?.raw?.rider?.service_location?.name || "—"}</td>
                         <td className="py-3 px-4 text-center">{total}</td>
                         <td className="py-3 px-4 text-center text-green-600">{completed}</td>
                         <td className="py-3 px-4 text-center text-blue-600">{inProgress}</td>

@@ -123,8 +123,15 @@ export default function StaffDashboard(): React.ReactElement {
     <div className="max-w-7xl mx-auto px-4 py-8">
       <header className="mb-6">
         <h1 className="text-2xl font-bold">Staff Dashboard</h1>
-        <p className="mt-1 text-sm text-slate-600">Showing orders for your assigned location: {profile?.service_location_display ?? profile?.service_location ?? 'Unknown'}</p>
-        <div className="mt-3 flex flex-wrap items-center gap-3">
+        <div className="mt-2 space-y-1">
+          <p className="text-sm text-slate-600">
+            <span className="font-semibold">Staff Name:</span> {profile?.first_name ? `${profile.first_name} ${profile.last_name}` : profile?.username}
+          </p>
+          <p className="text-sm text-slate-600">
+            <span className="font-semibold">Location:</span> {profile?.service_location_display ?? profile?.service_location?.name ?? 'Not assigned'}
+          </p>
+        </div>
+        <div className="mt-4 flex flex-wrap items-center gap-3">
           <select
             value={statusFilter}
             onChange={(e) => setStatusFilter(e.target.value)}
