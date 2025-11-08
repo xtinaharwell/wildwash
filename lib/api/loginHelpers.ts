@@ -48,5 +48,5 @@ export const handleLogin = async (
 export const LOGIN_ENDPOINTS = {
   USER: '/users/login/',
   ADMIN: '/users/admin/login/',
-  STAFF: '/users/staff/login/',
+  STAFF: '/users/staff/login/',  // matches the Django URL configuration
 };
