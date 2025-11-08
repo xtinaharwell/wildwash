@@ -92,7 +92,9 @@ export default function AdminPage(): React.ReactElement {
           created_at: o.created_at,
           price: o.price ?? o.price_display ?? 0,
           status: o.status ?? o.status_code ?? o.state ?? "unknown",
-          rider: (o.rider && (o.rider.name || o.rider.username)) ?? o.rider ?? o.user ?? null,
+          rider: typeof o.rider === 'object' 
+            ? (o.rider?.username || o.rider?.first_name || o.rider?.name || null)
+            : o.rider ?? o.user ?? null,
           raw: o,
         }))
       );

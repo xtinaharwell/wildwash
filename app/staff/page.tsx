@@ -214,7 +214,11 @@ export default function StaffDashboard(): React.ReactElement {
                       onUpdate={fetchOrders}
                     />
                   </td>
-                  <td className="py-2 px-3 text-slate-900 dark:text-slate-300">{(o.rider && (o.rider.name || o.rider.username)) ?? o.rider ?? o.user ?? '—'}</td>
+                  <td className="py-2 px-3 text-slate-900 dark:text-slate-300">
+                    {typeof o.rider === 'object' 
+                      ? (o.rider?.username || o.rider?.first_name || o.rider?.name || '—')
+                      : o.rider ?? o.user ?? '—'}
+                  </td>
                   <td className="py-2 px-3 text-right text-slate-900 dark:text-slate-300">{Number(o.price ?? o.price_display ?? 0).toLocaleString()}</td>
                   <td className="py-2 px-3 text-right text-slate-600 dark:text-slate-400">{o.created_at?.split?.('T')?.[0] ?? '—'}</td>
                 </tr>
