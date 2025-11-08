@@ -87,16 +87,24 @@ export default function StaffDashboard(): React.ReactElement {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <Spinner className="w-8 h-8" />
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-b from-white via-slate-50 to-slate-100 dark:from-slate-900 dark:via-slate-800 dark:to-slate-900">
+        <div className="rounded-lg bg-white dark:bg-slate-800 p-8 shadow-lg border border-slate-200 dark:border-slate-700">
+          <Spinner className="w-8 h-8 text-red-600 dark:text-red-400" />
+          <div className="mt-4 text-slate-600 dark:text-slate-400 text-sm">Loading dashboard...</div>
+        </div>
       </div>
     );
   }
 
   if (error) {
     return (
-      <div className="max-w-4xl mx-auto px-4 py-8">
-        <div className="text-red-600">Error: {error}</div>
+      <div className="min-h-screen bg-gradient-to-b from-white via-slate-50 to-slate-100 dark:from-slate-900 dark:via-slate-800 dark:to-slate-900">
+        <div className="max-w-4xl mx-auto px-4 py-8">
+          <div className="rounded-lg bg-red-50 dark:bg-red-900/20 border border-red-100 dark:border-red-800 p-4 text-red-600 dark:text-red-400">
+            <div className="font-semibold">Error</div>
+            <div className="mt-1 text-sm">{error}</div>
+          </div>
+        </div>
       </div>
     );
   }
@@ -120,60 +128,66 @@ export default function StaffDashboard(): React.ReactElement {
   });
 
   return (
-    <div className="max-w-7xl mx-auto px-4 py-8">
-      <header className="mb-6">
-        <h1 className="text-2xl font-bold">Staff Dashboard</h1>
-        <div className="mt-2 space-y-1">
-          <p className="text-sm text-slate-600">
-            <span className="font-semibold">Staff Name:</span> {profile?.first_name ? `${profile.first_name} ${profile.last_name}` : profile?.username}
-          </p>
-          <p className="text-sm text-slate-600">
-            <span className="font-semibold">Location:</span> {profile?.service_location_display ?? profile?.service_location?.name ?? 'Not assigned'}
-          </p>
-        </div>
-        <div className="mt-4 flex flex-wrap items-center gap-3">
-          <select
-            value={statusFilter}
-            onChange={(e) => setStatusFilter(e.target.value)}
-            className="rounded-md border px-2 py-1 text-sm"
-          >
-            <option value="">All statuses</option>
-            {availableStatuses.map(s => (
-              <option key={s} value={s}>{s}</option>
-            ))}
-          </select>
+    <div className="min-h-screen bg-gradient-to-b from-white via-slate-50 to-slate-100 dark:from-slate-900 dark:via-slate-800 dark:to-slate-900">
+      <div className="max-w-7xl mx-auto px-4 py-8">
+        <header className="mb-6">
+          <h1 className="text-2xl font-bold text-slate-900 dark:text-slate-100">Staff Dashboard</h1>
+          <div className="mt-2 space-y-1">
+            <p className="text-sm text-slate-600 dark:text-slate-400">
+              <span className="font-semibold">Staff Name:</span> {profile?.first_name ? `${profile.first_name} ${profile.last_name}` : profile?.username}
+            </p>
+            <p className="text-sm text-slate-600 dark:text-slate-400">
+              <span className="font-semibold">Location:</span> {profile?.service_location_display ?? profile?.service_location?.name ?? 'Not assigned'}
+            </p>
+          </div>
+          <div className="mt-4 flex flex-wrap items-center gap-3">
+            <select
+              value={statusFilter}
+              onChange={(e) => setStatusFilter(e.target.value)}
+              className="rounded-md border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-700 px-2 py-1 text-sm text-slate-900 dark:text-slate-100"
+            >
+              <option value="">All statuses</option>
+              {availableStatuses.map(s => (
+                <option key={s} value={s}>{s}</option>
+              ))}
+            </select>
 
-          <select
-            value={riderFilter}
-            onChange={(e) => setRiderFilter(e.target.value)}
-            className="rounded-md border px-2 py-1 text-sm"
-          >
-            <option value="">All riders</option>
-            {availableRiders.map(r => (
-              <option key={r} value={r}>{r}</option>
-            ))}
-          </select>
+            <select
+              value={riderFilter}
+              onChange={(e) => setRiderFilter(e.target.value)}
+              className="rounded-md border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-700 px-2 py-1 text-sm text-slate-900 dark:text-slate-100"
+            >
+              <option value="">All riders</option>
+              {availableRiders.map(r => (
+                <option key={r} value={r}>{r}</option>
+              ))}
+            </select>
 
-          <input
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            placeholder="Search code or rider"
-            className="rounded-md border px-2 py-1 text-sm"
-          />
+            <input
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder="Search code or rider"
+              className="rounded-md border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-700 px-2 py-1 text-sm text-slate-900 dark:text-slate-100 placeholder-slate-400 dark:placeholder-slate-500"
+            />
 
-          <button onClick={() => { setStatusFilter(''); setRiderFilter(''); setSearchQuery(''); }} className="text-sm text-slate-500">Reset</button>
-        </div>
-      </header>
+            <button 
+              onClick={() => { setStatusFilter(''); setRiderFilter(''); setSearchQuery(''); }} 
+              className="text-sm text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-300"
+            >
+              Reset
+            </button>
+          </div>
+        </header>
 
       <div className="mb-6">
         <div className="inline-flex items-center gap-4">
-          <div className="text-sm text-slate-500">Total orders for location</div>
-          <div className="text-2xl font-bold">{total}</div>
+          <div className="text-sm text-slate-500 dark:text-slate-400">Total orders for location</div>
+          <div className="text-2xl font-bold text-slate-900 dark:text-slate-100">{total}</div>
         </div>
       </div>
 
-      <div className="rounded-lg bg-white dark:bg-gray-800 p-4 shadow">
-        <h2 className="text-lg font-semibold mb-3">Recent Orders</h2>
+      <div className="rounded-lg bg-white dark:bg-slate-800 p-4 shadow-lg border border-slate-200 dark:border-slate-700">
+        <h2 className="text-lg font-semibold mb-3 text-slate-900 dark:text-slate-100">Recent Orders</h2>
         <div className="overflow-x-auto">
           <table className="min-w-full text-sm">
             <thead className="border-b border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-400">
@@ -187,9 +201,9 @@ export default function StaffDashboard(): React.ReactElement {
             </thead>
             <tbody>
               {filteredOrders.slice(0, 200).map((o) => (
-                <tr key={o.id ?? o.code} className="border-b border-slate-100 dark:border-slate-800">
+                <tr key={o.id ?? o.code} className="border-b border-slate-100 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700/50">
                   <td className="py-2 px-3 font-mono">
-                    <Link href={`/orders/${o.code}`} className="text-indigo-600 hover:underline">
+                    <Link href={`/orders/${o.code}`} className="text-indigo-600 dark:text-indigo-400 hover:underline">
                       {o.code}
                     </Link>
                   </td>
@@ -200,16 +214,23 @@ export default function StaffDashboard(): React.ReactElement {
                       onUpdate={fetchOrders}
                     />
                   </td>
-                  <td className="py-2 px-3">{(o.rider && (o.rider.name || o.rider.username)) ?? o.rider ?? o.user ?? '—'}</td>
-                  <td className="py-2 px-3 text-right">{Number(o.price ?? o.price_display ?? 0).toLocaleString()}</td>
-                  <td className="py-2 px-3 text-right">{o.created_at?.split?.('T')?.[0] ?? '—'}</td>
+                  <td className="py-2 px-3 text-slate-900 dark:text-slate-300">{(o.rider && (o.rider.name || o.rider.username)) ?? o.rider ?? o.user ?? '—'}</td>
+                  <td className="py-2 px-3 text-right text-slate-900 dark:text-slate-300">{Number(o.price ?? o.price_display ?? 0).toLocaleString()}</td>
+                  <td className="py-2 px-3 text-right text-slate-600 dark:text-slate-400">{o.created_at?.split?.('T')?.[0] ?? '—'}</td>
                 </tr>
               ))}
-              {filteredOrders.length === 0 && <tr><td colSpan={5} className="py-6 text-center text-slate-500">No orders found for your location.</td></tr>}
+              {filteredOrders.length === 0 && (
+                <tr>
+                  <td colSpan={5} className="py-6 text-center text-slate-500 dark:text-slate-400">
+                    No orders found for your location.
+                  </td>
+                </tr>
+              )}
             </tbody>
           </table>
         </div>
       </div>
+    </div>
     </div>
   );
 }

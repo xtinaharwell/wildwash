@@ -34,7 +34,7 @@ export default function Footer() {
 
           <div className="mt-6 text-sm text-gray-600 dark:text-gray-400">
             <div>Phone: <a href="tel:+254705415948" className="font-medium text-gray-900 hover:text-red-600 dark:text-gray-100 dark:hover:text-red-500 transition-colors duration-200">+254 705 415948</a></div>
-            <div className="mt-1">Email: <a href="mailto:hello@wildwash.co" className="font-medium text-gray-900 hover:text-red-600 dark:text-gray-100 dark:hover:text-red-500 transition-colors duration-200">hello@wildwash.co</a></div>
+            <div className="mt-1">Email: <a href="mailto:contact@wildwash.co.ke" className="font-medium text-gray-900 hover:text-red-600 dark:text-gray-100 dark:hover:text-red-500 transition-colors duration-200">hello@wildwash.co</a></div>
             {/* <div className="mt-2">Service hours: Mon–Sat 7:00–19:00 · Sun 8:00–14:00</div> */}
           </div>
 
@@ -68,7 +68,7 @@ export default function Footer() {
               type="email" 
               value={email} 
               onChange={(e) => setEmail(e.target.value)} 
-              placeholder="you@domain.com" 
+              placeholder="contact@wildwash.co.ke" 
               className="flex-1 rounded-md border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 px-3 py-2 text-sm text-gray-900 dark:text-gray-100 placeholder:text-gray-500 dark:placeholder:text-gray-400 focus:outline-none focus-visible:ring-2 focus-visible:ring-red-500 dark:focus-visible:ring-red-400" 
             />
             <button 
@@ -83,7 +83,7 @@ export default function Footer() {
           <div className="mt-6 text-xs text-gray-500 dark:text-gray-400">
             © {new Date().getFullYear()} Wild Wash · 
             <a href="/" className="hover:text-red-600 dark:hover:text-red-500 transition-colors duration-200 underline ml-1">
-              wildwash.co
+              wildwash.co.ke
             </a>
           </div>
         </div>

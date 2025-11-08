@@ -52,7 +52,7 @@ type RiderLocation = {
 };
 
 /* --- Config --- */
-const API_BASE = process.env.NEXT_PUBLIC_API_BASE ?? "https://wildwosh.kibeezy.com";
+const API_BASE = process.env.NEXT_PUBLIC_API_BASE ?? "http://127.0.0.1:8001";
 
 /* --- Component --- */
 export default function AdminPage(): React.ReactElement {

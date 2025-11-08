@@ -26,7 +26,7 @@ export default function ServicesPage() {
     async function loadServices() {
       try {
         setLoading(true);
-        const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "https://wildwosh.kibeezy.com"}/services/`);
+        const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8001"}/services/`);
         if (!res.ok) throw new Error("Failed to fetch services");
         const data = await res.json();
         setServices(data);
@@ -131,7 +131,7 @@ export default function ServicesPage() {
             <BellIcon className="w-5 h-5 text-red-600" /> Rider notifications & outputs
           </h3>
           <p className="mt-2 text-sm text-slate-600 dark:text-slate-300">
-            When a pickup or delivery is requested, Wild Wash generates the following outputs and notifies the rider.
+            When a pickup or delivery is requested, Wild Wash generates the following outputs and then notifies the rider.
           </p>
 
           <div className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -141,45 +141,14 @@ export default function ServicesPage() {
                 <li>Order receipt (PDF)</li>
                 <li>Tracking code</li>
                 <li>ETA & status updates</li>
-                <li>Photos & audit log</li>
-                <li>Service certificate (if applicable)</li>
               </ul>
             </div>
 
             <div>
-              <h4 className="font-semibold">Notify rider via</h4>
-              <div className="mt-2 flex flex-col gap-2">
-                {["push", "sms", "email"].map((type) => (
-                  <label key={type} className="inline-flex items-center gap-3">
-                    <input
-                      type="checkbox"
-                      checked={notif[type as keyof typeof notif]}
-                      onChange={() =>
-                        setNotif((s) => ({ ...s, [type]: !s[type as keyof typeof s] }))
-                      }
-                      className="w-4 h-4"
-                    />
-                    <span className="text-sm capitalize">{type}</span>
-                  </label>
-                ))}
-
-                <div className="mt-3 flex items-center gap-3">
-                  <button
-                    onClick={simulateNotify}
-                    className="rounded-md bg-red-600 text-white px-4 py-2"
-                  >
-                    Simulate notify
-                  </button>
-                  {sent && <div className="text-sm text-slate-600">{sent}</div>}
-                </div>
-              </div>
             </div>
           </div>
         </section>
 
-        <footer className="mt-8 text-sm text-slate-600 dark:text-slate-400">
-          Tip: Use the Request button to start a booking.
-        </footer>
       </div>
     </div>
   );

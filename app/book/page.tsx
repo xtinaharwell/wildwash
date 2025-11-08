@@ -13,16 +13,11 @@ import { getStoredAuthState } from "@/lib/auth";
  */
 function getCookie(name: string) {
   if (typeof document === "undefined") return null;
-  const match = document.cookie.match(new RegExp("(^| )" + name + "=([^;]+)"));
-  return match ? decodeURIComponent(match[2]) : null;
+  const value = `; ${document.cookie}`;
+  const parts = value.split(`; ${name}=`);
+  if (parts.length === 2) return parts.pop()?.split(';').shift() ?? null;
+  return null;
 }
-
-// near top of file
-const PACKAGE_MAP: Record<string, number> = {
-  basic: 1,
-  standard: 2,
-  premium: 3,
-};
 
 const API_BASE = process.env.NEXT_PUBLIC_API_BASE ?? ""; // empty = same origin
 
@@ -31,12 +26,11 @@ import RouteGuard from "../../components/RouteGuard";
 export default function Page() {
   const [pickupBuilding, setPickupBuilding] = useState("");
   const [pickupContact, setPickupContact] = useState("");
-  // serviceId is number | null
-  const [serviceId, setServiceId] = useState<number | null>(null);
+  const [selectedServices, setSelectedServices] = useState<number[]>([]);
   const [services, setServices] = useState<Array<{ id: number; name: string }>>([]);
   const [dropoffAddress, setDropoffAddress] = useState("");
-
-  const [packageType, setPackageType] = useState("standard");
+  const [sameAsPickup, setSameAsPickup] = useState(false);
+  const [userProfile, setUserProfile] = useState<any>(null);
   const [urgency, setUrgency] = useState(2); // 1 = Normal, 2 = Fast, 3 = Express
   const [progress, setProgress] = useState(0);
   const [sending, setSending] = useState(false);
@@ -49,6 +43,30 @@ export default function Page() {
       console.warn("CSRF warmup failed", e);
     });
   }, []);
+
+  // Fetch user profile
+  useEffect(() => {
+    const authState = getStoredAuthState();
+    if (!authState?.token) return;
+
+    fetch(`${API_BASE}/users/me/`, {
+      credentials: "include",
+      headers: {
+        "Authorization": `Token ${authState.token}`
+      }
+    })
+    .then(res => res.json())
+    .then(data => {
+      setUserProfile(data);
+      // Prefill phone number if available
+      if (data?.phone && !pickupContact) {
+        setPickupContact(data.phone);
+      }
+    })
+    .catch(err => {
+      console.warn("Could not fetch user profile:", err);
+    });
+  }, []); // Run once on mount
   
   useEffect(() => {
     let mounted = true;
@@ -61,17 +79,7 @@ export default function Page() {
         if (!mounted) return;
         if (Array.isArray(data)) {
           // Normalize ids to numbers (defensive)
-          const norm = data.map((s) => ({ ...s, id: Number(s.id) }));
-          setServices(norm);
-          // set default service id only if not already set
-          setServiceId((prev) => {
-            if (prev != null) return prev;
-            if (norm.length) {
-              const v = Number(norm[0].id);
-              return Number.isFinite(v) ? v : null;
-            }
-            return null;
-          });
+          setServices(data.map((s) => ({ ...s, id: Number(s.id) })));
         }
       })
       .catch((err) => {
@@ -87,8 +95,10 @@ export default function Page() {
     setServerErrors(null);
   }
 
-  const canRequestPickup = !!pickupBuilding.trim() && !!pickupContact.trim() && serviceId != null;
-  const canRequestDropoff = !!dropoffAddress.trim() && serviceId != null;
+  const canSubmitOrder = !!pickupBuilding.trim() && 
+    !!pickupContact.trim() && 
+    selectedServices.length > 0 && 
+    (sameAsPickup || !!dropoffAddress.trim());
 
   async function postOrder(payload: Record<string, any>) {
     resetMessage();
@@ -144,53 +154,58 @@ export default function Page() {
     }
   }
 
-  async function handleRequestPickup() {
-    if (!canRequestPickup) {
-      setMessage("Please fill pickup building, contact and choose a service.");
+  async function handleSubmitOrder() {
+    if (!canSubmitOrder) {
+      setMessage("Please fill all required fields and select at least one service.");
       return;
     }
 
-    const payload = {
-      service: Number(serviceId),
-      pickup_address: pickupBuilding + (pickupContact ? ` (contact: ${pickupContact})` : ""),
-      dropoff_address: dropoffAddress || null,
-      urgency: Number(urgency),
-      items: 1,
-      package: PACKAGE_MAP[packageType], // <-- send integer here
-      weight_kg: null,
-      price: null,
-      estimated_delivery: null,
-    };
+    // Create an order for each selected service
+    try {
+      setMessage(null);
+      setSending(true);
+      
+      const results = await Promise.all(selectedServices.map(async (serviceId) => {
+        const payload = {
+          service: Number(serviceId),
+          pickup_address: pickupBuilding + (pickupContact ? ` (contact: ${pickupContact})` : ""),
+          dropoff_address: sameAsPickup ? pickupBuilding : dropoffAddress,
+          urgency: Number(urgency),
+          items: 1,
+          weight_kg: null,
+          price: null,
+          estimated_delivery: null,
+        };
 
-    await postOrder(payload);
-  }
+        return postOrder(payload);
+      }));
 
-  async function handleRequestDropoff() {
-    if (!canRequestDropoff) {
-      setMessage("Please add a dropoff address before checking out.");
-      return;
+      const successful = results.filter(r => r.ok).length;
+      if (successful === results.length) {
+        setMessage(`Successfully created ${successful} order(s)`);
+        // Clear form on success
+        setPickupBuilding("");
+        setPickupContact("");
+        setSelectedServices([]);
+        setDropoffAddress("");
+        setSameAsPickup(false);
+        setUrgency(2);
+      } else {
+        setMessage(`Created ${successful} out of ${results.length} orders`);
+      }
+    } catch (error) {
+      console.error('Error submitting orders:', error);
+      setMessage('Failed to submit orders. Please try again.');
+    } finally {
+      setSending(false);
     }
-
-    const payload = {
-      service: Number(serviceId),
-      pickup_address: pickupBuilding || null,
-      dropoff_address: dropoffAddress,
-      urgency: Number(urgency),
-      items: 1,
-      package: packageType,
-      weight_kg: null,
-      price: null,
-      estimated_delivery: null,
-    };
-
-    await postOrder(payload);
   }
 
   return (
     <RouteGuard>
-      <main className="min-h-screen bg-gradient-to-b from-white via-[#f8fafc] to-[#eef2ff] dark:from-[#071025] dark:via-[#041022] dark:to-[#011018] text-slate-900 dark:text-slate-100 py-12 px-4">
-        <div className="mx-auto max-w-4xl rounded-2xl bg-white/80 dark:bg-white/5 shadow-xl overflow-hidden">
-        <div className="md:flex">
+      <main className="min-h-screen bg-gradient-to-b from-white via-slate-50 to-slate-100 dark:from-slate-900 dark:via-slate-800 dark:to-slate-900 py-12 px-4">
+        <div className="mx-auto max-w-4xl rounded-2xl bg-white dark:bg-slate-800 shadow-xl overflow-hidden">
+          <div className="md:flex">
           <section className="w-full md:w-2/3 p-6 md:p-8">
             <header className="flex items-start justify-between">
               <div>
@@ -208,191 +223,191 @@ export default function Page() {
               </div>
             </header>
 
-            <form className="mt-6 space-y-6" onSubmit={(e) => e.preventDefault()}>
-              <fieldset className="space-y-3">
-                <legend className="text-sm font-semibold text-slate-700 dark:text-slate-200">Pickup Address</legend>
+            <div className="mt-6 space-y-6">
+              <div className="space-y-3">
+                <div className="text-sm font-semibold text-slate-700">Pickup Address</div>
                 <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                   <div>
-                    <label className="block text-xs text-slate-500 dark:text-slate-400 mb-1">Building / Street</label>
-                    <input value={pickupBuilding} onChange={(e) => setPickupBuilding(e.target.value)} placeholder="e.g. Olive Towers, 4th floor" className="w-full rounded-lg border border-slate-200 dark:border-slate-700 p-3 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-red-500 dark:focus:ring-red-600 bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100" />
+                    <label htmlFor="pickup-building" className="block text-xs text-slate-500 mb-1">Building / Street</label>
+                    <input 
+                      id="pickup-building"
+                      type="text"
+                      value={pickupBuilding} 
+                      onChange={(e) => setPickupBuilding(e.target.value)} 
+                      placeholder="e.g. Olive Towers, 4th floor" 
+                      className="w-full rounded-lg border border-slate-200 dark:border-slate-600 p-3 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-red-500 bg-white dark:bg-slate-700 text-slate-900 dark:text-slate-100 placeholder-slate-400 dark:placeholder-slate-500" 
+                    />
                   </div>
                   <div>
-                    <label className="block text-xs text-slate-500 mb-1">Contact (phone)</label>
-                    <input value={pickupContact} onChange={(e) => setPickupContact(e.target.value)} placeholder="e.g. +254 7xx xxx xxx" className="w-full rounded-lg border border-slate-200 p-3 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-sky-300" />
+                    <label htmlFor="pickup-contact" className="block text-xs text-slate-500 dark:text-slate-400 mb-1">Contact (phone)</label>
+                    <input 
+                      id="pickup-contact"
+                      type="tel"
+                      value={pickupContact} 
+                      onChange={(e) => setPickupContact(e.target.value)} 
+                      placeholder="e.g. +254 7xx xxx xxx" 
+                      className="w-full rounded-lg border border-slate-200 dark:border-slate-600 p-3 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-sky-300 bg-white dark:bg-slate-700 text-slate-900 dark:text-slate-100 placeholder-slate-400 dark:placeholder-slate-500" 
+                    />
                   </div>
                 </div>
 
                 <div>
-                  <label className="block text-xs text-slate-500 mb-1">Service</label>
-                  {services.length ? (
-                    <select
-                      value={serviceId ?? ""}
-                      onChange={(e) => {
-                        const n = Number(e.target.value);
-                        setServiceId(Number.isFinite(n) ? n : null);
-                      }}
-                      className="w-full rounded-lg border border-slate-200 p-3 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-sky-300"
-                    >
-                      {services.map((s) => (
-                        <option key={s.id} value={s.id}>
-                          {s.name}
-                        </option>
-                      ))}
-                    </select>
-                  ) : (
+                  <div className="block text-xs text-slate-500 dark:text-slate-400 mb-1">Select Services</div>
+                  <div className="space-y-2" role="group" aria-label="Available services">
+                    {services.map((service) => (
+                      <label key={service.id} className="flex items-center space-x-2">
+                        <input
+                          type="checkbox"
+                          id={`service-${service.id}`}
+                          checked={selectedServices.includes(service.id)}
+                          onChange={(e) => {
+                            setSelectedServices(prev => 
+                              e.target.checked 
+                                ? [...prev, service.id]
+                                : prev.filter(id => id !== service.id)
+                            );
+                          }}
+                          className="rounded border-slate-300 dark:border-slate-600 dark:bg-slate-700 dark:checked:bg-red-500"
+                        />
+                        <span className="text-sm text-slate-700 dark:text-slate-300">{service.name}</span>
+                      </label>
+                    ))}
+                  </div>
+                </div>
+
+
+              </div>
+
+              <div className="space-y-3">
+                <div className="text-sm font-semibold text-slate-700 dark:text-slate-200">Dropoff Address</div>
+                <div className="space-y-2">
+                  <label className="flex items-center space-x-2">
                     <input
-                      // ensure we never hand NaN to `value`
-                      value={Number.isFinite(serviceId as number) ? String(serviceId) : ""}
+                      type="checkbox"
+                      id="same-as-pickup"
+                      checked={sameAsPickup}
                       onChange={(e) => {
-                        const raw = e.target.value.trim();
-                        if (raw === "") {
-                          setServiceId(null);
-                          return;
+                        setSameAsPickup(e.target.checked);
+                        if (e.target.checked) {
+                          setDropoffAddress(pickupBuilding);
                         }
-                        const n = Number(raw);
-                        setServiceId(Number.isFinite(n) ? n : null);
                       }}
-                      placeholder="Service ID (e.g. 1)"
-                      className="w-full rounded-lg border border-slate-200 p-3 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-sky-300"
+                      className="rounded border-slate-300 dark:border-slate-600 dark:bg-slate-700 dark:checked:bg-red-500"
                     />
+                    <span className="text-sm text-slate-700 dark:text-slate-300">Same as Pickup address</span>
+                  </label>
+                  {!sameAsPickup && (
+                    <div>
+                      <label htmlFor="dropoff-address" className="sr-only">Dropoff Address</label>
+                      <input 
+                        id="dropoff-address"
+                        type="text"
+                        value={dropoffAddress} 
+                        onChange={(e) => setDropoffAddress(e.target.value)} 
+                        placeholder="e.g. Home / Office address for dropoff" 
+                        className="w-full rounded-lg border border-slate-200 dark:border-slate-600 p-3 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-sky-300 bg-white dark:bg-slate-700 text-slate-900 dark:text-slate-100 placeholder-slate-400 dark:placeholder-slate-500" 
+                      />
+                    </div>
                   )}
                 </div>
+              </div>
 
-                <div className="flex items-center gap-3 pt-2">
-                  <button
-                    type="button"
-                    onClick={handleRequestPickup}
-                    disabled={!canRequestPickup || sending}
-                    className={`inline-flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-medium transition-shadow disabled:opacity-50 disabled:cursor-not-allowed shadow-md ${
-                      canRequestPickup && !sending ? "bg-red-500 text-white hover:brightness-95" : "bg-slate-100 text-slate-600"
-                    }`}
-                  >
-                    Request Pickup
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setPickupBuilding("");
-                      setPickupContact("");
-                      setServiceId(services.length ? Number(services[0].id) : null);
-                    }}
-                    className="inline-flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium bg-slate-50 border border-slate-200 text-slate-700"
-                  >
-                    Clear
-                  </button>
-                </div>
-              </fieldset>
-
-              <fieldset className="space-y-3">
-                <legend className="text-sm font-semibold text-slate-700">Dropoff Address</legend>
-                <div>
-                  <label className="block text-xs text-slate-500 mb-1">Dropoff address</label>
-                  <input value={dropoffAddress} onChange={(e) => setDropoffAddress(e.target.value)} placeholder="e.g. Home / Office address for dropoff" className="w-full rounded-lg border border-slate-200 p-3 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-sky-300" />
-                </div>
-                <div className="flex items-center gap-3 pt-2">
-                  <button
-                    type="button"
-                    onClick={handleRequestDropoff}
-                    disabled={!canRequestDropoff || sending}
-                    className={`inline-flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-medium transition-shadow disabled:opacity-50 disabled:cursor-not-allowed shadow-md ${
-                      canRequestDropoff && !sending ? "bg-sky-600 text-white hover:brightness-95" : "bg-slate-100 text-slate-600"
-                    }`}
-                  >
-                    Request Dropoff / Checkout
-                  </button>
-                  <button type="button" onClick={() => setDropoffAddress("")} className="inline-flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium bg-slate-50 border border-slate-200 text-slate-700">
-                    Clear
-                  </button>
-                </div>
-              </fieldset>
-
-              <fieldset className="space-y-3">
-                <legend className="text-sm font-semibold text-slate-700">Pick Package</legend>
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                  {[{ id: "basic", title: "Basic", price: "KSh 300" }, { id: "standard", title: "Standard", price: "KSh 500" }, { id: "premium", title: "Premium", price: "KSh 900" }].map((p) => (
-                    <label key={p.id} className={`group block cursor-pointer rounded-xl border p-3 text-sm shadow-sm transition-transform hover:-translate-y-0.5 ${packageType === p.id ? "border-red-400 bg-red-50 dark:bg-red-900/30" : "border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800"}`}>
-                      <input type="radio" name="package" value={p.id} checked={packageType === p.id} onChange={() => setPackageType(p.id)} className="hidden" />
-                      <div className="flex items-center justify-between">
-                        <div>
-                          <div className="font-semibold text-slate-800 dark:text-slate-100">{p.title}</div>
-                          <div className="text-xs text-slate-500 dark:text-slate-400 mt-1">{p.id === "basic" ? "Quick wash" : p.id === "standard" ? "Wash + Dry" : "Priority handling"}</div>
-                        </div>
-                        <div className="text-sm font-semibold">{p.price}</div>
-                      </div>
-                    </label>
-                  ))}
-                </div>
-              </fieldset>
-
-              <fieldset className="space-y-3">
-                <legend className="text-sm font-semibold text-slate-700">Urgency</legend>
+              <div className="space-y-3">
+                <div className="text-sm font-semibold text-slate-700 dark:text-slate-200">Urgency</div>
                 <div className="flex items-center gap-3">
                   <div className="flex-1">
-                    <input type="range" min={1} max={3} value={urgency} onChange={(e) => setUrgency(Number(e.target.value))} className="w-full" />
-                    <div className="mt-2 text-xs text-slate-500 flex items-center justify-between">
-                      <span>Normal (48h)</span>
-                      <span>Fast (24h)</span>
-                      <span>Express (4-6h)</span>
+                    <label htmlFor="urgency-slider" className="sr-only">Urgency Level</label>
+                    <input 
+                      id="urgency-slider"
+                      type="range" 
+                      min={1} 
+                      max={3} 
+                      value={urgency} 
+                      onChange={(e) => setUrgency(Number(e.target.value))} 
+                      className="w-full accent-red-500 dark:accent-red-400" 
+                    />
+                    <div className="mt-2 text-xs text-slate-500 dark:text-slate-400 flex items-center justify-between">
+                      <span>(48h)</span>
+                      <span>(24h)</span>
+                      <span>(4-6h)</span>
                     </div>
                   </div>
                   <div className="w-28 text-right">
-                    <div className="text-xs text-slate-500">Selected</div>
-                    <div className="mt-1 font-medium text-slate-800">{urgency === 1 ? "Normal" : urgency === 2 ? "Fast" : "Express"}</div>
+                    <div className="text-xs text-slate-500 dark:text-slate-400">Selected</div>
+                    <div className="mt-1 font-medium text-slate-800 dark:text-slate-200">{urgency === 1 ? "Normal" : urgency === 2 ? "Fast" : "Express"}</div>
                   </div>
                 </div>
-              </fieldset>
+              </div>
 
-              <div className="pt-2">
-                {message && <div className="rounded-md bg-amber-50 border border-amber-100 p-3 text-sm text-amber-800">{message}</div>}
+                <div className="pt-2">
+                {message && (
+                  <div className="rounded-md bg-amber-50 dark:bg-amber-900/20 border border-amber-100 dark:border-amber-800 p-3 text-sm text-amber-800 dark:text-amber-200">
+                    {message}
+                  </div>
+                )}
                 {serverErrors && (
-                  <div className="mt-2 text-xs text-red-700">
+                  <div className="mt-2 text-xs text-red-700 dark:text-red-400">
                     <div className="font-semibold">Server validation errors:</div>
                     <pre className="whitespace-pre-wrap">{JSON.stringify(serverErrors, null, 2)}</pre>
                   </div>
                 )}
               </div>
-            </form>
-          </section>
-
-          <aside className="w-full md:w-1/3 bg-gradient-to-b from-slate-50 to-white dark:from-white/5 dark:to-transparent p-6 md:p-8 border-l border-slate-100 dark:border-slate-800">
+            </div>
+          </section>          <aside className="w-full md:w-1/3 bg-gradient-to-b from-slate-50 to-white dark:from-slate-800 dark:to-slate-900 p-6 md:p-8 border-l border-slate-100 dark:border-slate-700">
             <div className="sticky top-6">
-              <h3 className="text-sm font-semibold text-slate-700 dark:text-slate-200">Summary</h3>
-              <div className="mt-3 space-y-3 text-sm text-slate-600 dark:text-slate-300">
+              <h3 className="text-sm font-semibold text-slate-700 dark:text-slate-200">Order Summary</h3>
+              <div className="mt-3 space-y-3 text-sm text-slate-600 dark:text-slate-400">
                 <div>
-                  <div className="text-xs text-slate-500">Pickup</div>
-                  <div className="mt-1 font-medium text-slate-800">{pickupBuilding || "—"}</div>
-                  <div className="text-xs text-slate-500">{pickupContact || "no contact"}</div>
+                  <div className="text-xs text-slate-500 dark:text-slate-500">Pickup Location</div>
+                  <div className="mt-1 font-medium text-slate-800 dark:text-slate-100">{pickupBuilding || "—"}</div>
+                  <div className="text-xs text-slate-500 dark:text-slate-500">{pickupContact || "No contact provided"}</div>
                 </div>
                 <div>
-                  <div className="text-xs text-slate-500">Dropoff</div>
-                  <div className="mt-1 font-medium text-slate-800">{dropoffAddress || "—"}</div>
+                  <div className="text-xs text-slate-500 dark:text-slate-500">Dropoff Location</div>
+                  <div className="mt-1 font-medium text-slate-800 dark:text-slate-100">
+                    {sameAsPickup ? "(Same as pickup)" : dropoffAddress || "—"}
+                  </div>
                 </div>
                 <div>
-                  <div className="text-xs text-slate-500">Package</div>
-                  <div className="mt-1 font-medium text-slate-800">{packageType}</div>
+                  <div className="text-xs text-slate-500 dark:text-slate-500">Selected Services</div>
+                  <div className="mt-1 font-medium text-slate-800 dark:text-slate-100">
+                    {selectedServices.map(id => services.find(s => s.id === id)?.name).filter(Boolean).join(", ") || "No services selected"}
+                  </div>
                 </div>
                 <div>
-                  <div className="text-xs text-slate-500">Urgency</div>
-                  <div className="mt-1 font-medium text-slate-800">{urgency === 1 ? "Normal" : urgency === 2 ? "Fast" : "Express"}</div>
-                </div>
-                <div>
-                  <div className="text-xs text-slate-500">Service</div>
-                  <div className="mt-1 font-medium text-slate-800">{services.find((s) => s.id === serviceId)?.name ?? (serviceId ? `ID ${serviceId}` : "—")}</div>
+                  <div className="text-xs text-slate-500 dark:text-slate-500">Delivery Speed</div>
+                  <div className="mt-1 font-medium text-slate-800 dark:text-slate-100">{urgency === 1 ? "Normal (48h)" : urgency === 2 ? "Fast (24h)" : "Express (4-6h)"}</div>
                 </div>
               </div>
 
-              <div className="mt-6 text-xs text-slate-400">Tip: Save preferred addresses in your account for faster bookings.</div>
+              <div className="mt-6 text-xs text-slate-500 dark:text-slate-500">
+                Save preferred addresses in your account for faster future orders.
+              </div>
             </div>
           </aside>
         </div>
 
-        <footer className="md:hidden border-t border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 p-3 sticky bottom-0">
-          <div className="flex gap-2">
-            <button onClick={handleRequestPickup} disabled={!canRequestPickup || sending} className="flex-1 rounded-lg bg-red-600 text-white py-2 text-sm font-medium disabled:opacity-50 hover:bg-red-700">
-              Request Pickup
+        <footer className="border-t border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 p-6 sticky bottom-0">
+          <div className="flex items-center justify-between gap-4 max-w-4xl mx-auto">
+            <button 
+              onClick={() => {
+                setPickupBuilding("");
+                setPickupContact("");
+                setSelectedServices([]);
+                setDropoffAddress("");
+                setSameAsPickup(false);
+                setUrgency(2);
+              }} 
+              className="px-4 py-2 text-sm text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200"
+            >
+              Clear All
             </button>
-            <button onClick={handleRequestDropoff} disabled={!canRequestDropoff || sending} className="flex-1 rounded-lg bg-red-600 text-white py-2 text-sm font-medium disabled:opacity-50 hover:bg-red-700">
-              Request Dropoff
+            <button 
+              onClick={handleSubmitOrder} 
+              disabled={!canSubmitOrder || sending} 
+              className="flex-1 max-w-md rounded-lg bg-red-600 text-white py-3 text-sm font-medium disabled:opacity-50 hover:bg-red-700 dark:hover:bg-red-500"
+            >
+              {sending ? "Processing..." : "Submit Order"}
             </button>
           </div>
         </footer>

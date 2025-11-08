@@ -55,28 +55,6 @@ export default function FinancingPage() {
 
           {/* BNPL Card */}
           <div className="rounded-2xl bg-white/90 dark:bg-white/5 p-4 shadow hover:shadow-md transition-shadow">
-            <div className="flex items-center gap-2 text-red-600 mb-3">
-              <div className="p-1.5 bg-red-50 dark:bg-red-900/30 rounded-lg">
-                <Calendar className="w-5 h-5" />
-              </div>
-              <h2 className="font-semibold text-lg text-slate-900 dark:text-slate-100">Buy Now, Pay Later</h2>
-            </div>
-            <p className="text-sm text-slate-600 dark:text-slate-300 mb-3">
-              Split your payments into manageable installments with flexible terms.
-            </p>
-            <ul className="space-y-2 mb-4">
-              <li className="flex items-center gap-2 text-sm text-slate-700 dark:text-slate-300">
-                <ArrowRight className="w-4 h-4 text-red-600 flex-shrink-0" />
-                No interest charges
-              </li>
-              <li className="flex items-center gap-2 text-sm text-slate-700 dark:text-slate-300">
-                <ArrowRight className="w-4 h-4 text-red-600 flex-shrink-0" />
-                Quick approval process
-              </li>
-            </ul>
-            <button className="w-full bg-red-600/10 text-red-600 px-3 py-1.5 rounded-lg text-sm font-medium hover:bg-red-600/20 transition-colors">
-              Learn About BNPL
-            </button>
             <div className="mt-4">
               <BNPLManager />
             </div>
