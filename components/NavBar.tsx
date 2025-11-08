@@ -139,9 +139,9 @@ export default function NavBar() {
               <Link href="/book" onClick={() => setMobileOpen(false)} className="block text-center rounded-lg bg-red-600 text-white px-4 py-3 font-semibold shadow-md focus:outline-none focus-visible:ring-2 focus-visible:ring-red-300">Book Pickup</Link>
 
               <div className="flex gap-3 mt-2 justify-center">
-                <Link href="/rider" className="text-sm px-3 py-2 rounded-md hover:underline focus:outline-none focus-visible:ring-2 focus-visible:ring-red-300">Rider</Link>
-                <Link href="/staff" className="text-sm px-3 py-2 rounded-md hover:underline focus:outline-none focus-visible:ring-2 focus-visible:ring-red-300">Staff</Link>
-                <Link href="/admin" className="text-sm px-3 py-2 rounded-md hover:underline focus:outline-none focus-visible:ring-2 focus-visible:ring-red-300">Admin</Link>
+                <Link href="/rider" onClick={() => setMobileOpen(false)} className="text-sm px-3 py-2 rounded-md hover:underline focus:outline-none focus-visible:ring-2 focus-visible:ring-red-300">Rider</Link>
+                <Link href="/staff" onClick={() => setMobileOpen(false)} className="text-sm px-3 py-2 rounded-md hover:underline focus:outline-none focus-visible:ring-2 focus-visible:ring-red-300">Staff</Link>
+                <Link href="/admin" onClick={() => setMobileOpen(false)} className="text-sm px-3 py-2 rounded-md hover:underline focus:outline-none focus-visible:ring-2 focus-visible:ring-red-300">Admin</Link>
               </div>
             </div>
           </div>
