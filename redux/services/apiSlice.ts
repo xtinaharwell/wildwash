@@ -20,7 +20,7 @@ export type Order = {
 export const apiSlice = createApi({
   reducerPath: 'api',
   baseQuery: fetchBaseQuery({
-  baseUrl: process.env.NEXT_PUBLIC_API_BASE || process.env.NEXT_PUBLIC_API_BASE_URL || 'http://127.0.0.1:8001',
+  baseUrl: process.env.NEXT_PUBLIC_API_BASE || process.env.NEXT_PUBLIC_API_BASE_URL || 'https://wildwosh.kibeezy.com',
     prepareHeaders: (headers) => {
       const token = typeof window !== 'undefined' ? localStorage.getItem('access_token') : null;
       if (token) headers.set('authorization', `Bearer ${token}`);
@@ -30,7 +30,7 @@ export const apiSlice = createApi({
   }),
   endpoints: (builder) => ({
     getOrders: builder.query<Order[], void>({
-      query: () => '/orders', // GET http://127.0.0.1:8001/orders
+      query: () => '/orders', // GET https://wildwosh.kibeezy.com/orders
       // optional: transformResponse, providesTags etc.
     }),
     getOrderByCode: builder.query<Order, string>({
