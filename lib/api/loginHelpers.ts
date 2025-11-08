@@ -19,7 +19,14 @@ export const handleLogin = async (
   try {
     const response = await axios.post<LoginResponse>(
       `${API_BASE}${endpoint}`,
-      credentials
+      credentials,
+      {
+        withCredentials: true,
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+        }
+      }
     );
 
     const { token, user } = response.data;
