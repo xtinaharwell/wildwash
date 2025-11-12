@@ -1,16 +1,9 @@
-"use client";
-import React, { useEffect, useState } from "react";
+'use client';
+import React, { useEffect, useState, useMemo } from "react";
 import { getStoredAuthState } from "@/lib/auth";
+import { useAppSelector } from "@/redux/hooks";
+import { selectCartItems } from "@/redux/features/cartSlice";
 
-/**
- * /book page.tsx
- * - Uses relative API paths so it's same-origin by default (avoids CORS during dev).
- * - Sends credentials (cookies) and X-CSRFToken if present.
- * - Shows server validation errors (400) clearly in the UI.
- *
- * Set NEXT_PUBLIC_API_BASE if your API is on a different origin:
- *   NEXT_PUBLIC_API_BASE=https://api.example.com
- */
 function getCookie(name: string) {
   if (typeof document === "undefined") return null;
   const value = `; ${document.cookie}`;
@@ -26,8 +19,6 @@ import RouteGuard from "../../components/RouteGuard";
 export default function Page() {
   const [pickupBuilding, setPickupBuilding] = useState("");
   const [pickupContact, setPickupContact] = useState("");
-  const [selectedServices, setSelectedServices] = useState<number[]>([]);
-  const [services, setServices] = useState<Array<{ id: number; name: string }>>([]);
   const [dropoffAddress, setDropoffAddress] = useState("");
   const [sameAsPickup, setSameAsPickup] = useState(false);
   const [userProfile, setUserProfile] = useState<any>(null);
@@ -36,6 +27,9 @@ export default function Page() {
   const [sending, setSending] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
   const [serverErrors, setServerErrors] = useState<any | null>(null);
+
+  const cartItems = useAppSelector(selectCartItems);
+  const cartServiceIds = useMemo(() => cartItems.map(item => item.id), [cartItems]);
 
   useEffect(() => {
     // warm the csrf cookie for cross-domain SPA
@@ -67,45 +61,23 @@ export default function Page() {
       console.warn("Could not fetch user profile:", err);
     });
   }, []); // Run once on mount
-  
-  useEffect(() => {
-    let mounted = true;
-    fetch(`${API_BASE}/services/`, { credentials: "include" })
-      .then((r) => {
-        if (!r.ok) throw new Error("Failed to load services");
-        return r.json();
-      })
-      .then((data) => {
-        if (!mounted) return;
-        if (Array.isArray(data)) {
-          // Normalize ids to numbers (defensive)
-          setServices(data.map((s) => ({ ...s, id: Number(s.id) })));
-        }
-      })
-      .catch((err) => {
-        console.warn("Could not fetch services:", err);
-      });
-    return () => {
-      mounted = false;
-    };
-  }, []); // run once
 
   function resetMessage() {
     setMessage(null);
     setServerErrors(null);
   }
 
-  const canSubmitOrder = !!pickupBuilding.trim() && 
+  const canSubmitBooking = !!pickupBuilding.trim() && 
     !!pickupContact.trim() && 
-    selectedServices.length > 0 && 
+    cartItems.length > 0 && 
     (sameAsPickup || !!dropoffAddress.trim());
 
-  async function postOrder(payload: Record<string, any>) {
+  async function postBooking(payload: Record<string, any>) {
     resetMessage();
     setSending(true);
     setProgress(10);
     try {
-      console.log("Posting order payload:", payload);
+      console.log("Posting booking payload:", payload);
       await new Promise((r) => setTimeout(r, 250));
       setProgress(40);
 
@@ -132,7 +104,7 @@ export default function Page() {
       }
 
       if (!res.ok) {
-        console.error("Orders POST failed", res.status, data);
+        console.error("Booking POST failed", res.status, data);
         setServerErrors(data || { non_field_errors: ["Server returned an error"] });
         setMessage(`Server error: ${res.status} ${res.statusText}`);
         setProgress(0);
@@ -140,7 +112,7 @@ export default function Page() {
       }
 
       setProgress(100);
-      setMessage(data?.code ? `Order ${data.code} created` : "Order created");
+      setMessage(data?.code ? `Booking ${data.code} created` : "Booking created");
       return { ok: true, data };
     } catch (err: any) {
       console.error("Network/fetch error:", err);
@@ -154,50 +126,38 @@ export default function Page() {
     }
   }
 
-  async function handleSubmitOrder() {
-    if (!canSubmitOrder) {
-      setMessage("Please fill all required fields and select at least one service.");
+  async function handleBookPickup() {
+    if (!canSubmitBooking) {
+      setMessage("Please fill all required fields.");
       return;
     }
 
-    // Create an order for each selected service
-    try {
-      setMessage(null);
-      setSending(true);
-      
-      const results = await Promise.all(selectedServices.map(async (serviceId) => {
-        const payload = {
-          service: Number(serviceId),
-          pickup_address: pickupBuilding + (pickupContact ? ` (contact: ${pickupContact})` : ""),
-          dropoff_address: sameAsPickup ? pickupBuilding : dropoffAddress,
-          urgency: Number(urgency),
-          items: 1,
-          weight_kg: null,
-          price: null,
-          estimated_delivery: null,
-        };
+    const payload = {
+        services: cartServiceIds,
+        pickup_address: pickupBuilding + (pickupContact ? ` (contact: ${pickupContact})` : ""),
+        dropoff_address: sameAsPickup ? pickupBuilding : dropoffAddress,
+        urgency: Number(urgency),
+        // These fields might not be needed for a 'booking' vs an 'order'
+        items: cartItems.length,
+        weight_kg: null, // To be determined at pickup
+        price: null, // To be determined at pickup
+        estimated_delivery: null, // To be set by backend
+    };
 
-        return postOrder(payload);
-      }));
+    const result = await postBooking(payload);
 
-      const successful = results.filter(r => r.ok).length;
-      if (successful === results.length) {
-        setMessage(`Successfully created ${successful} order(s)`);
+    if (result.ok) {
+        setMessage(`Successfully created booking!`);
         // Clear form on success
         setPickupBuilding("");
         setPickupContact("");
-        setSelectedServices([]);
         setDropoffAddress("");
         setSameAsPickup(false);
         setUrgency(2);
-      } else {
-        setMessage(`Created ${successful} out of ${results.length} orders`);
-      }
-    } catch (error) {
-      console.error('Error submitting orders:', error);
-      setMessage('Failed to submit orders. Please try again.');
-    } finally {
-      setSending(false);
+        // Optionally, you can clear the cart here
+        // dispatch(clearCart());
+    } else {
+        setMessage('Failed to create booking. Please try again.');
     }
   }
 
@@ -209,8 +169,8 @@ export default function Page() {
           <section className="w-full md:w-2/3 p-6 md:p-8">
             <header className="flex items-start justify-between">
               <div>
-                <h1 className="text-2xl md:text-3xl font-extrabold tracking-tight text-slate-800 dark:text-slate-100">Wild Wash</h1>
-                <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">Laundry & Cleaning — Pickup and Dropoff</p>
+                <h1 className="text-2xl md:text-3xl font-extrabold tracking-tight text-slate-800 dark:text-slate-100">Book a Pick Up</h1>
+                <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">Confirm details for your laundry & cleaning pickup.</p>
               </div>
               <div className="hidden md:block text-right">
                 <div className="text-xs text-slate-500 dark:text-slate-400">Progress</div>
@@ -252,27 +212,15 @@ export default function Page() {
                 </div>
 
                 <div>
-                  <div className="block text-xs text-slate-500 dark:text-slate-400 mb-1">Select Services</div>
-                  <div className="space-y-2" role="group" aria-label="Available services">
-                    {services.map((service) => (
-                      <label key={service.id} className="flex items-center space-x-2">
-                        <input
-                          type="checkbox"
-                          id={`service-${service.id}`}
-                          checked={selectedServices.includes(service.id)}
-                          onChange={(e) => {
-                            setSelectedServices(prev => 
-                              e.target.checked 
-                                ? [...prev, service.id]
-                                : prev.filter(id => id !== service.id)
-                            );
-                          }}
-                          className="rounded border-slate-300 dark:border-slate-600 dark:bg-slate-700 dark:checked:bg-red-500"
-                        />
-                        <span className="text-sm text-slate-700 dark:text-slate-300">{service.name}</span>
-                      </label>
-                    ))}
-                  </div>
+                  <div className="block text-xs text-slate-500 dark:text-slate-400 mb-1">Services to be picked up</div>
+                    <ul className="space-y-2" role="list">
+                        {cartItems.map((item) => (
+                            <li key={item.id} className="flex items-center justify-between p-2 bg-slate-50 dark:bg-slate-700/50 rounded-md">
+                                <span className="text-sm text-slate-700 dark:text-slate-300">{item.name}</span>
+                                <span className="text-sm font-medium text-slate-800 dark:text-slate-200">KSh {item.price}</span>
+                            </li>
+                        ))}
+                    </ul>
                 </div>
 
 
@@ -353,9 +301,10 @@ export default function Page() {
                 )}
               </div>
             </div>
-          </section>          <aside className="w-full md:w-1/3 bg-gradient-to-b from-slate-50 to-white dark:from-slate-800 dark:to-slate-900 p-6 md:p-8 border-l border-slate-100 dark:border-slate-700">
+          </section>
+          <aside className="w-full md:w-1/3 bg-gradient-to-b from-slate-50 to-white dark:from-slate-800 dark:to-slate-900 p-6 md:p-8 border-l border-slate-100 dark:border-slate-700">
             <div className="sticky top-6">
-              <h3 className="text-sm font-semibold text-slate-700 dark:text-slate-200">Order Summary</h3>
+              <h3 className="text-sm font-semibold text-slate-700 dark:text-slate-200">Booking Summary</h3>
               <div className="mt-3 space-y-3 text-sm text-slate-600 dark:text-slate-400">
                 <div>
                   <div className="text-xs text-slate-500 dark:text-slate-500">Pickup Location</div>
@@ -371,7 +320,7 @@ export default function Page() {
                 <div>
                   <div className="text-xs text-slate-500 dark:text-slate-500">Selected Services</div>
                   <div className="mt-1 font-medium text-slate-800 dark:text-slate-100">
-                    {selectedServices.map(id => services.find(s => s.id === id)?.name).filter(Boolean).join(", ") || "No services selected"}
+                    {cartItems.map(item => item.name).join(", ") || "No services selected"}
                   </div>
                 </div>
                 <div>
@@ -381,7 +330,7 @@ export default function Page() {
               </div>
 
               <div className="mt-6 text-xs text-slate-500 dark:text-slate-500">
-                Save preferred addresses in your account for faster future orders.
+                You will be able to checkout and pay on the orders page after pickup confirmation.
               </div>
             </div>
           </aside>
@@ -393,7 +342,6 @@ export default function Page() {
               onClick={() => {
                 setPickupBuilding("");
                 setPickupContact("");
-                setSelectedServices([]);
                 setDropoffAddress("");
                 setSameAsPickup(false);
                 setUrgency(2);
@@ -403,11 +351,11 @@ export default function Page() {
               Clear All
             </button>
             <button 
-              onClick={handleSubmitOrder} 
-              disabled={!canSubmitOrder || sending} 
+              onClick={handleBookPickup} 
+              disabled={!canSubmitBooking || sending} 
               className="flex-1 max-w-md rounded-lg bg-red-600 text-white py-3 text-sm font-medium disabled:opacity-50 hover:bg-red-700 dark:hover:bg-red-500"
             >
-              {sending ? "Processing..." : "Submit Order"}
+              {sending ? "Processing..." : "Book Pick Up"}
             </button>
           </div>
         </footer>
