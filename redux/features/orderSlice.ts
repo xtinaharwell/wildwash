@@ -121,7 +121,7 @@ export const fetchOrders = createAsyncThunk<
   if (state.query) params.set('search', state.query);
 
   const baseUrl =
-    "https://wildwosh.kibeezy.com/orders/";
+    "https://8000-firebase-wild-wash-apigit-1760697854679.cluster-lu4mup47g5gm4rtyvhzpwbfadi.cloudworkstations.dev/orders/";
   const url = `${baseUrl}?${params.toString()}`;
 
   try {

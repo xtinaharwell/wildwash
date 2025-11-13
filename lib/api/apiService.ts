@@ -1,6 +1,6 @@
 import axios from 'axios';
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'https://wildwosh.kibeezy.com';
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'https://8000-firebase-wild-wash-apigit-1760697854679.cluster-lu4mup47g5gm4rtyvhzpwbfadi.cloudworkstations.dev';
 
 export const apiService = axios.create({
   baseURL: API_BASE_URL,

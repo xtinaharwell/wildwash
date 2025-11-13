@@ -4,7 +4,7 @@ import { AppDispatch } from '@/redux/store';
 import { setAuth } from '@/redux/features/authSlice';
 import { AUTH_STORAGE_KEY } from '../auth';
 
-const API_BASE = process.env.NEXT_PUBLIC_API_BASE ?? process.env.NEXT_PUBLIC_API_BASE_URL ?? "https://wildwosh.kibeezy.com";
+const API_BASE = process.env.NEXT_PUBLIC_API_BASE ?? process.env.NEXT_PUBLIC_API_BASE_URL ?? "https://8000-firebase-wild-wash-apigit-1760697854679.cluster-lu4mup47g5gm4rtyvhzpwbfadi.cloudworkstations.dev";
 
 interface LoginResponse {
   token: string;

@@ -4,7 +4,7 @@ import React, { useCallback, useEffect, useMemo, useRef, useState } from "react"
 import { RefreshCw, MapPin, Package } from "lucide-react";
 import RouteGuard from "@/components/RouteGuard";
 
-const API_BASE = process.env.NEXT_PUBLIC_API_BASE ?? "https://wildwosh.kibeezy.com";
+const API_BASE = process.env.NEXT_PUBLIC_API_BASE ?? "https://8000-firebase-wild-wash-apigit-1760697854679.cluster-lu4mup47g5gm4rtyvhzpwbfadi.cloudworkstations.dev";
 
 /* --- Types --- */
 type OrderStatus = 'requested' | 'picked' | 'in_progress' | 'ready' | 'delivered' | 'cancelled';

@@ -26,7 +26,7 @@ export default function ServicesPage() {
     async function loadServices() {
       try {
         setLoading(true);
-        const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "https://wildwosh.kibeezy.com"}/services/`);
+        const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "https://8000-firebase-wild-wash-apigit-1760697854679.cluster-lu4mup47g5gm4rtyvhzpwbfadi.cloudworkstations.dev"}/services/`);
         if (!res.ok) throw new Error("Failed to fetch services");
         const data = await res.json();
         setServices(data);
