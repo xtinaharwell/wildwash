@@ -102,7 +102,12 @@ export default function HomePage() {
   }, []);
 
   const handleAddToCart = (service: Service) => {
-    dispatch(addToCart(service));
+    // Convert price to string for cart
+    const cartService = {
+      ...service,
+      price: String(service.price)
+    };
+    dispatch(addToCart(cartService));
     console.log(`${service.name} added to cart`);
   };
 
