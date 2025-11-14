@@ -18,6 +18,8 @@ interface Service {
   price: number | string;
   description?: string;
   icon?: React.ComponentType<{ className: string }>;
+  image_url?: string | null;
+  image?: string | null;
 }
 
 const API_BASE = process.env.NEXT_PUBLIC_API_BASE ?? "";
@@ -81,7 +83,9 @@ export default function HomePage() {
           category: s.category || 'other',
           price: s.price || 0,
           description: s.description || '',
-          icon: getIconForCategory(s.category || 'other')
+          icon: getIconForCategory(s.category || 'other'),
+          image_url: s.image_url || null,
+          image: s.image || null
         }));
 
         setServices(fetchedServices);
@@ -158,13 +162,24 @@ export default function HomePage() {
                   {list.map((s) => (
                     <article
                       key={s.id}
-                      className="rounded-2xl bg-white/70 dark:bg-slate-800/60 backdrop-blur-sm shadow-lg hover:shadow-xl transition-shadow duration-300"
+                      className="rounded-2xl bg-white/70 dark:bg-slate-800/60 backdrop-blur-sm shadow-lg hover:shadow-xl transition-shadow duration-300 overflow-hidden"
                     >
+                      {s.image_url && (
+                        <div className="relative w-full h-40 bg-gradient-to-br from-slate-200 to-slate-300 dark:from-slate-700 dark:to-slate-800 overflow-hidden">
+                          <img
+                            src={s.image_url}
+                            alt={s.name}
+                            className="w-full h-full object-cover"
+                          />
+                        </div>
+                      )}
                       <div className="p-5">
-                          <div className="flex items-center gap-5">
-                              <div className="flex-shrink-0">
-                                  <s.icon className="w-12 h-12 text-red-500" />
-                              </div>
+                          <div className="flex items-start gap-4">
+                              {!s.image_url && (
+                                <div className="flex-shrink-0">
+                                    <s.icon className="w-12 h-12 text-red-500" />
+                                </div>
+                              )}
                               <div className="flex-1">
                                   <h3 className="text-lg font-bold text-slate-900 dark:text-slate-50">{s.name}</h3>
                                   <p className="text-sm text-slate-500 dark:text-slate-400">

@@ -1,5 +1,6 @@
 'use client';
 import React, { useEffect, useState, useMemo } from "react";
+import { useRouter } from "next/navigation";
 import { getStoredAuthState } from "@/lib/auth";
 import { useAppSelector } from "@/redux/hooks";
 import { selectCartItems } from "@/redux/features/cartSlice";
@@ -17,6 +18,7 @@ const API_BASE = process.env.NEXT_PUBLIC_API_BASE ?? ""; // empty = same origin
 import RouteGuard from "../../components/RouteGuard";
 
 export default function Page() {
+  const router = useRouter();
   const [pickupBuilding, setPickupBuilding] = useState("");
   const [pickupContact, setPickupContact] = useState("");
   const [dropoffAddress, setDropoffAddress] = useState("");
@@ -158,6 +160,12 @@ export default function Page() {
         setDropoffAddress("");
         setSameAsPickup(false);
         setUrgency(2);
+        
+        // Redirect to orders page after a short delay
+        setTimeout(() => {
+          router.push("/orders");
+        }, 1500);
+        
         // Optionally, you can clear the cart here
         // dispatch(clearCart());
     } else {
