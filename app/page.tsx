@@ -181,7 +181,7 @@ export default function HomePage() {
                       )}
                       <div className="p-5">
                           <div className="flex items-start gap-4">
-                              {!s.image_url && (
+                              {!s.image_url && s.icon && (
                                 <div className="flex-shrink-0">
                                     <s.icon className="w-12 h-12 text-red-500" />
                                 </div>
