@@ -220,8 +220,9 @@ export default function HomePage() {
 /* --- Helpers --- */
 function groupByCategory(services: Service[]) {
   return services.reduce((acc, s) => {
-    acc[s.category] = acc[s.category] || [];
-    acc[s.category].push(s);
+    const category = s.category || 'other';
+    acc[category] = acc[category] || [];
+    acc[category].push(s);
     return acc;
   }, {} as Record<string, Service[]>);
 }
