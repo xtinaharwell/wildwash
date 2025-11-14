@@ -114,8 +114,8 @@ export default function HomePage() {
 
   const filteredServices = services.filter((service) =>
     service.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    service.category.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    service.description.toLowerCase().includes(searchTerm.toLowerCase())
+    service.category?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    service.description?.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   const grouped = groupByCategory(filteredServices);
@@ -226,7 +226,7 @@ function groupByCategory(services: Service[]) {
   }, {} as Record<string, Service[]>);
 }
 
-function categoryLabel(key: string) {
+function categoryLabel(key: string | undefined) {
   switch (key) {
     case "laundry":
       return "Laundry";
@@ -241,11 +241,11 @@ function categoryLabel(key: string) {
     case "installation":
       return "TV Mounting & Hot Shower Installation";
     default:
-      return key;
+      return key || "Other";
   }
 }
 
-function getBlurb(key: string) {
+function getBlurb(key: string | undefined) {
   switch (key) {
     case "laundry":
       return "Wash, dry, fold, and special-care options for everyday clothes.";
@@ -264,7 +264,7 @@ function getBlurb(key: string) {
   }
 }
 
-function getETA(key: string) {
+function getETA(key: string | undefined) {
   switch (key) {
     case "laundry":
       return "24–48h";
