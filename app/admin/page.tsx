@@ -333,7 +333,7 @@ export default function AdminPage(): React.ReactElement {
                 <select 
                   value={dateFilter} 
                   onChange={(e) => setDateFilter(e.target.value as any)} 
-                  className="rounded-lg border border-slate-200 bg-white/50 backdrop-blur-sm dark:border-slate-800 dark:bg-slate-900/50 px-3 py-2 text-sm"
+                  className="rounded-lg border border-slate-200 bg-white/50 backdrop-blur-sm dark:border-slate-800 dark:bg-slate-900/50 px-3 py-2 text-sm transition-shadow duration-200 hover:bg-white dark:hover:bg-slate-900 focus:outline-none focus:ring-2 focus:ring-red-500/20"
                 >
                   <option value="week">Last 7 days</option>
                   <option value="today">Today</option>
@@ -347,13 +347,13 @@ export default function AdminPage(): React.ReactElement {
                       type="date"
                       value={startDate}
                       onChange={(e) => setStartDate(e.target.value)}
-                      className="rounded-lg border border-slate-200 bg-white/50 backdrop-blur-sm dark:border-slate-800 dark:bg-slate-900/50 px-3 py-2 text-sm"
+                      className="rounded-lg border border-slate-200 bg-white/50 backdrop-blur-sm dark:border-slate-800 dark:bg-slate-900/50 px-3 py-2 text-sm transition-shadow duration-200 hover:bg-white dark:hover:bg-slate-900 focus:outline-none focus:ring-2 focus:ring-red-500/20"
                     />
                     <input
                       type="date"
                       value={endDate}
                       onChange={(e) => setEndDate(e.target.value)}
-                      className="rounded-lg border border-slate-200 bg-white/50 backdrop-blur-sm dark:border-slate-800 dark:bg-slate-900/50 px-3 py-2 text-sm"
+                      className="rounded-lg border border-slate-200 bg-white/50 backdrop-blur-sm dark:border-slate-800 dark:bg-slate-900/50 px-3 py-2 text-sm transition-shadow duration-200 hover:bg-white dark:hover:bg-slate-900 focus:outline-none focus:ring-2 focus:ring-red-500/20"
                     />
                   </>
                 )}
