@@ -89,7 +89,7 @@ export default function RiderMapPage(): React.ReactElement {
   const token = authState.token || null;
 
   // Use background polling for orders - silent updates without page reload
-  const backgroundOrders = useBackgroundOrderPolling(token, true, 60000);
+  const backgroundOrders = useBackgroundOrderPolling(token, true, 15000);
   const orders = backgroundOrders;
   const refreshOrders = useOrderPollingRefresh();
 
@@ -228,7 +228,7 @@ export default function RiderMapPage(): React.ReactElement {
   }, []);
 
   // Set up notifications with sound for new orders
-  useRiderNotifications(token, true, 60000); // Poll notifications every 1 minute
+  useRiderNotifications(token, true, 15000); // Poll notifications every 15 seconds
 
   // Request notification permission on component mount
   useEffect(() => {
