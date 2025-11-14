@@ -255,15 +255,15 @@ export default function RiderMapPage(): React.ReactElement {
     typeof window !== 'undefined' ? localStorage.getItem('wildwash_auth_state') || '{}' : '{}'
   );
   const token = authState.token || null;
-  useRiderNotifications(token, true, 5000);
+  useRiderNotifications(token, true, 60000); // Poll notifications every 1 minute
 
-  // Poll for new orders every 3 seconds to ensure real-time updates
+  // Poll for new orders every 1 minute
   useEffect(() => {
     if (!token) return;
 
     const pollInterval = setInterval(() => {
       fetchOrders().catch(err => console.error('Auto-poll orders error:', err));
-    }, 3000); // Poll every 3 seconds
+    }, 60000); // Poll every 1 minute (60,000 ms)
 
     return () => clearInterval(pollInterval);
   }, [token, fetchOrders]);
