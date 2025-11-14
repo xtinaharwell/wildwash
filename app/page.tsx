@@ -102,10 +102,11 @@ export default function HomePage() {
   }, []);
 
   const handleAddToCart = (service: Service) => {
-    // Convert price to string for cart
+    // Convert price to string and ensure description is defined for cart
     const cartService = {
       ...service,
-      price: String(service.price)
+      price: String(service.price),
+      description: service.description || ''
     };
     dispatch(addToCart(cartService));
     console.log(`${service.name} added to cart`);
