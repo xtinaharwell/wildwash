@@ -46,6 +46,12 @@ interface Service {
   [key: string]: any;
 }
 
+interface DashboardData {
+  orders?: Order[];
+  notifications?: Notification[];
+  profile?: any;
+}
+
 export function OrdersPageOptimized() {
   const [page, setPage] = useState(1);
 
@@ -129,7 +135,7 @@ export function RiderDashboardOptimized() {
       key: cacheKeys.userProfile(),
       fetcher: () => client.get('/users/me/'),
     },
-  }, { ttl: 3 * 60 * 1000 });
+  }, { ttl: 3 * 60 * 1000 }) as { data: DashboardData | null; loading: boolean; error: any };
 
   // Keep orders fresh with polling
   const { data: freshOrders } = usePrefetchPolling(
@@ -153,10 +159,10 @@ export function RiderDashboardOptimized() {
 
       <div>
         <h2>Profile</h2>
-        {dashboardData.profile && <ProfileCard profile={dashboardData.profile} />}
+        {dashboardData && dashboardData.profile && <ProfileCard profile={dashboardData.profile} />}
 
         <h2>Notifications</h2>
-        {dashboardData.notifications?.map((notif: Notification) => (
+        {dashboardData && dashboardData.notifications && dashboardData.notifications.map((notif: Notification) => (
           <NotificationItem key={notif.id} notification={notif} />
         ))}
       </div>
