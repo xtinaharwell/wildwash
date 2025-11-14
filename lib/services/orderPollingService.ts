@@ -180,6 +180,9 @@ class OrderPollingService {
       // Play notification sound
       this.playNotificationSound();
 
+      // Trigger vibration on mobile
+      this.triggerVibration();
+
       // Show browser notification
       if ('Notification' in window && Notification.permission === 'granted') {
         const service = order.service?.name || 'New Service';
@@ -197,43 +200,71 @@ class OrderPollingService {
   }
 
   /**
-   * Play notification sound
+   * Trigger vibration on mobile devices
+   */
+  private triggerVibration(): void {
+    if ('vibrate' in navigator) {
+      try {
+        // Vibration pattern: [vibrate, pause, vibrate, pause, vibrate]
+        navigator.vibrate([200, 100, 200, 100, 200]);
+      } catch (err) {
+        console.warn('Vibration not supported:', err);
+      }
+    }
+  }
+
+  /**
+   * Play notification sound - LOUD version for noisy environments
    */
   private playNotificationSound(): void {
     try {
-      // Create a simple beep sound using Web Audio API
+      // Create audio context
       const audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
-      const oscillator = audioContext.createOscillator();
-      const gainNode = audioContext.createGain();
+      
+      // Create a master gain node with higher volume
+      const masterGain = audioContext.createGain();
+      masterGain.connect(audioContext.destination);
+      masterGain.gain.setValueAtTime(0.8, audioContext.currentTime); // 80% volume (loud but safe)
 
-      oscillator.connect(gainNode);
-      gainNode.connect(audioContext.destination);
+      // Create compressor for even louder perceived volume
+      const compressor = audioContext.createDynamicsCompressor();
+      compressor.connect(masterGain);
+      compressor.threshold.setValueAtTime(-30, audioContext.currentTime);
+      compressor.knee.setValueAtTime(40, audioContext.currentTime);
+      compressor.ratio.setValueAtTime(12, audioContext.currentTime);
+      compressor.attack.setValueAtTime(0.003, audioContext.currentTime);
+      compressor.release.setValueAtTime(0.25, audioContext.currentTime);
 
-      // Set up the sound (3 beeps)
-      oscillator.frequency.value = 800; // 800 Hz
-      oscillator.type = 'sine';
+      const now = audioContext.currentTime;
+      const beepDuration = 0.15;
+      const pauseDuration = 0.1;
 
-      gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
-      gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.1);
+      // Helper function to create a beep
+      const createBeep = (frequency: number, startTime: number) => {
+        const osc = audioContext.createOscillator();
+        const gainEnv = audioContext.createGain();
 
-      oscillator.start(audioContext.currentTime);
-      oscillator.stop(audioContext.currentTime + 0.1);
+        osc.connect(gainEnv);
+        gainEnv.connect(compressor);
 
-      // Second beep
-      const osc2 = audioContext.createOscillator();
-      osc2.connect(gainNode);
-      osc2.frequency.value = 1000;
-      osc2.type = 'sine';
-      osc2.start(audioContext.currentTime + 0.15);
-      osc2.stop(audioContext.currentTime + 0.25);
+        osc.frequency.value = frequency;
+        osc.type = 'sine';
 
-      // Third beep
-      const osc3 = audioContext.createOscillator();
-      osc3.connect(gainNode);
-      osc3.frequency.value = 1200;
-      osc3.type = 'sine';
-      osc3.start(audioContext.currentTime + 0.3);
-      osc3.stop(audioContext.currentTime + 0.4);
+        // LOUD attack and hold
+        gainEnv.gain.setValueAtTime(0.7, startTime);
+        gainEnv.gain.linearRampToValueAtTime(0.7, startTime + beepDuration - 0.05);
+        gainEnv.gain.linearRampToValueAtTime(0, startTime + beepDuration);
+
+        osc.start(startTime);
+        osc.stop(startTime + beepDuration);
+      };
+
+      // Create 5 loud beeps in ascending frequency for attention-grabbing sound
+      createBeep(600, now);
+      createBeep(800, now + beepDuration + pauseDuration);
+      createBeep(1000, now + (beepDuration + pauseDuration) * 2);
+      createBeep(1200, now + (beepDuration + pauseDuration) * 3);
+      createBeep(1400, now + (beepDuration + pauseDuration) * 4);
     } catch (err) {
       console.warn('Could not play notification sound:', err);
     }
