@@ -15,6 +15,37 @@ import React, { useState } from 'react';
 import { usePrefetch, usePrefetchBackground, cacheKeys } from '@/lib/prefetch/usePrefetch';
 import { client } from '@/lib/api/client';
 
+// Type definitions
+interface Order {
+  id: number;
+  code: string;
+  status: string;
+  [key: string]: any;
+}
+
+interface OrderResponse {
+  results: Order[];
+  count: number;
+}
+
+interface Rider {
+  id: number;
+  display_name?: string;
+  [key: string]: any;
+}
+
+interface Notification {
+  id: number;
+  message: string;
+  [key: string]: any;
+}
+
+interface Service {
+  id: number;
+  name: string;
+  [key: string]: any;
+}
+
 export function OrdersPageOptimized() {
   const [page, setPage] = useState(1);
 
@@ -48,7 +79,7 @@ export function OrdersPageOptimized() {
         </div>
       )}
 
-      {orders.map(order => (
+      {orders.map((order: Order) => (
         <div key={order.id} className="border p-4 rounded">
           <div>{order.code}</div>
           <div>{order.status}</div>
@@ -115,7 +146,7 @@ export function RiderDashboardOptimized() {
     <div className="grid grid-cols-3 gap-4">
       <div className="col-span-2">
         <h2>Active Orders ({freshOrders?.length || 0})</h2>
-        {freshOrders?.map(order => (
+        {freshOrders?.map((order: Order) => (
           <OrderCard key={order.id} order={order} />
         ))}
       </div>
@@ -125,7 +156,7 @@ export function RiderDashboardOptimized() {
         {dashboardData.profile && <ProfileCard profile={dashboardData.profile} />}
 
         <h2>Notifications</h2>
-        {dashboardData.notifications?.map(notif => (
+        {dashboardData.notifications?.map((notif: Notification) => (
           <NotificationItem key={notif.id} notification={notif} />
         ))}
       </div>
@@ -320,7 +351,7 @@ export function ServiceListingOptimized() {
 
   return (
     <div className="grid grid-cols-4 gap-4">
-      {services?.map(service => (
+      {services?.map((service: Service) => (
         <ServiceCard key={service.id} service={service} />
       ))}
     </div>
@@ -330,38 +361,38 @@ export function ServiceListingOptimized() {
 /**
  * Helper components (stubs)
  */
-function OrderCard({ order }: any) {
+function OrderCard({ order }: { order: Order }) {
   return <div className="border p-2">{order.code}</div>;
 }
 
-function ProfileCard({ profile }: any) {
+function ProfileCard({ profile }: { profile: any }) {
   return <div className="border p-2">{profile.first_name}</div>;
 }
 
-function NotificationItem({ notification }: any) {
+function NotificationItem({ notification }: { notification: Notification }) {
   return <div className="border p-2">{notification.message}</div>;
 }
 
-function OrdersWidget({ orders }: any) {
+function OrdersWidget({ orders }: { orders?: Order[] }) {
   return <div>Orders: {orders?.length}</div>;
 }
 
-function RidersWidget({ riders }: any) {
+function RidersWidget({ riders }: { riders?: Rider[] }) {
   return <div>Riders: {riders?.length}</div>;
 }
 
-function MapWidget({ locations }: any) {
+function MapWidget({ locations }: { locations?: any[] }) {
   return <div>Map: {locations?.length} locations</div>;
 }
 
-function Map({ locations }: any) {
+function Map({ locations }: { locations?: any[] }) {
   return <div>Map rendering {locations?.length} riders</div>;
 }
 
-function OrderList({ orders, onRefresh }: any) {
+function OrderList({ orders, onRefresh }: { orders?: Order[]; onRefresh?: () => void }) {
   return <div>Orders: {orders?.length}</div>;
 }
 
-function ServiceCard({ service }: any) {
+function ServiceCard({ service }: { service: Service }) {
   return <div className="border p-4">{service.name}</div>;
 }
