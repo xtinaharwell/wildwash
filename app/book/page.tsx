@@ -56,6 +56,10 @@ export default function Page() {
       if (data?.phone && !pickupContact) {
         setPickupContact(data.phone);
       }
+      // Prefill pickup address if available
+      if (data?.pickup_address && !pickupBuilding) {
+        setPickupBuilding(data.pickup_address);
+      }
     })
     .catch(err => {
       console.warn("Could not fetch user profile:", err);
@@ -326,6 +330,15 @@ export default function Page() {
                 <div>
                   <div className="text-xs text-slate-500 dark:text-slate-500">Delivery Speed</div>
                   <div className="mt-1 font-medium text-slate-800 dark:text-slate-100">{urgency === 1 ? "Normal (48h)" : urgency === 2 ? "Fast (24h)" : "Express (4-6h)"}</div>
+                </div>
+              </div>
+
+              <div className="mt-6 pt-4 border-t border-slate-200 dark:border-slate-700">
+                <div className="flex justify-between items-center">
+                  <div className="text-xs font-semibold text-slate-700 dark:text-slate-200">Total Cost:</div>
+                  <div className="text-lg font-bold text-red-600 dark:text-red-400">
+                    KSh {cartItems.reduce((acc, item) => acc + Number(item.price), 0).toFixed(2)}
+                  </div>
                 </div>
               </div>
 

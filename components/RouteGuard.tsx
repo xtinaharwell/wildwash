@@ -15,6 +15,7 @@ export default function RouteGuard({ children, requireAdmin = false, requireRide
   const router = useRouter();
   const pathname = usePathname();
   const isAuthenticated = useSelector((state: RootState) => state.auth.isAuthenticated);
+  const isLoading = useSelector((state: RootState) => state.auth.isLoading);
   const userRole = useSelector((state: RootState) => state.auth.user?.role);
   const [showError, setShowError] = useState(false);
 
@@ -22,11 +23,18 @@ export default function RouteGuard({ children, requireAdmin = false, requireRide
     // Debug log
     console.log('RouteGuard State:', {
       isAuthenticated,
+      isLoading,
       userRole,
       requireAdmin,
       requireRider,
       pathname
     });
+
+    // Don't redirect while still loading auth state
+    if (isLoading) {
+      console.log('Still loading auth state, waiting...');
+      return;
+    }
 
     if (!isAuthenticated) {
       console.log('Not authenticated, redirecting...');
@@ -62,7 +70,11 @@ export default function RouteGuard({ children, requireAdmin = false, requireRide
         return () => clearTimeout(timer);
       }
     }
-  }, [isAuthenticated, userRole, requireAdmin, requireRider, router, pathname]);
+  }, [isAuthenticated, isLoading, userRole, requireAdmin, requireRider, router, pathname]);
+
+  if (isLoading) {
+    return null; // Return null while loading to avoid showing login page temporarily
+  }
 
   if (!isAuthenticated) {
     return null;

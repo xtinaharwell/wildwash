@@ -7,16 +7,20 @@ import { useDispatch, useSelector } from 'react-redux';
 import { logout } from '@/redux/features/authSlice';
 import type { RootState } from '@/redux/store';
 import { selectCartTotalItems } from '@/redux/features/cartSlice';
+import { useRiderOrderNotifications } from '@/lib/hooks/useRiderOrderNotifications';
 
 export default function NavBar() {
   const router = useRouter();
   const dispatch = useDispatch();
   const isAuthenticated = useSelector((state: RootState) => state.auth.isAuthenticated);
+  const userRole = useSelector((state: RootState) => state.auth.user?.role);
   const totalCartItems = useSelector(selectCartTotalItems);
+  const { availableOrdersCount } = useRiderOrderNotifications();
   const [mobileOpen, setMobileOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
   const [profileOpen, setProfileOpen] = useState(false);
   const profileRef = useRef<HTMLDivElement>(null);
+  const isRider = userRole === 'rider';
 
   const handleLogout = () => {
     localStorage.removeItem('access_token');
@@ -124,6 +128,33 @@ export default function NavBar() {
                 </span>
               )}
             </Link>
+
+            {/* Rider Orders Notification Dot */}
+            {isRider && isAuthenticated && (
+              <Link
+                href="/rider"
+                className="relative p-2 rounded-full hover:bg-slate-100 dark:hover:bg-white/5 focus:outline-none focus-visible:ring-2 focus-visible:ring-red-300"
+                title="Available orders">
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  strokeWidth={1.5}
+                  stroke="currentColor"
+                  className="w-6 h-6">
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    d="M9 12h3.75M9 15h3.75M9 18h3.75m3 .75H18a2.25 2.25 0 002.25-2.25V6.108c0-1.135-.845-2.098-1.976-2.192a48.424 48.424 0 00-1.123-.08m-5.801 0c-.065.21-.148.408-.24.603a23.996 23.996 0 003.183.803a23.997 23.997 0 003.183-.803 23.997 23.997 0 00-.241-.603m-3.72 0a45.422 45.422 0 015.05.5c1.54.213 2.9 1.22 3.405 2.544m-4.604-6.817a23.987 23.987 0 00-5.050-.5c-1.54.213-2.9 1.22-3.405 2.544M6.75 7.5a3 3 0 11-6 0 3 3 0 016 0z"
+                  />
+                </svg>
+                {availableOrdersCount > 0 && (
+                  <span className="absolute -top-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full bg-orange-500 text-xs font-bold text-white animate-pulse">
+                    {availableOrdersCount > 99 ? '99+' : availableOrdersCount}
+                  </span>
+                )}
+              </Link>
+            )}
 
             {isAuthenticated ? (
               <div className="relative" ref={profileRef}>

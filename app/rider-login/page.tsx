@@ -1,11 +1,12 @@
 "use client";
 
-import React, { useState } from 'react';
-import { useRouter } from 'next/navigation';
+import React, { useState, useEffect } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import Image from 'next/image';
-import { useDispatch } from 'react-redux';
+import { useDispatch, useSelector } from 'react-redux';
 import { setAuth } from '@/redux/features/authSlice';
+import type { RootState } from '@/redux/store';
 
 export default function RiderLoginPage() {
   const [username, setUsername] = useState('');
@@ -15,6 +16,34 @@ export default function RiderLoginPage() {
 
   const router = useRouter();
   const dispatch = useDispatch();
+  
+  const isAuthenticated = useSelector((state: RootState) => state.auth.isAuthenticated);
+  const isLoading = useSelector((state: RootState) => state.auth.isLoading);
+  const userRole = useSelector((state: RootState) => state.auth.user?.role);
+
+  // If already authenticated as rider, redirect
+  useEffect(() => {
+    if (!isLoading && isAuthenticated && userRole === 'rider') {
+      router.push('/rider');
+    }
+  }, [isAuthenticated, isLoading, userRole, router]);
+
+  // Show loading state while auth is initializing
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-gradient-to-b from-white via-[#f8fafc] to-[#eef2ff] dark:from-[#071025] dark:via-[#041022] dark:to-[#011018] flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-red-600 mx-auto"></div>
+          <p className="mt-4 text-slate-600 dark:text-slate-300">Loading...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // If authenticated as rider, show nothing (redirect is happening)
+  if (isAuthenticated && userRole === 'rider') {
+    return null;
+  }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();

@@ -121,7 +121,7 @@ export const fetchOrders = createAsyncThunk<
   if (state.query) params.set('search', state.query);
 
   const baseUrl =
-    "https://8000-firebase-wild-wash-apigit-1760697854679.cluster-lu4mup47g5gm4rtyvhzpwbfadi.cloudworkstations.dev/orders/";
+    "http://127.0.0.1:8000/orders/";
   const url = `${baseUrl}?${params.toString()}`;
 
   try {

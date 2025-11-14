@@ -1,11 +1,12 @@
 "use client";
 
-import { useState, Suspense } from "react";
+import { useState, Suspense, useEffect } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { useDispatch } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
 import Loading from "./loading";
 import { handleLogin, LOGIN_ENDPOINTS } from "@/lib/api/loginHelpers";
 import { Spinner } from "@/components";
+import type { RootState } from "@/redux/store";
 
 export default function AdminLoginPage() {
   return (
@@ -25,6 +26,27 @@ function AdminLoginContent() {
   const dispatch = useDispatch();
   const searchParams = useSearchParams();
   const redirect = searchParams.get("redirect") || "/admin";
+  
+  const isAuthenticated = useSelector((state: RootState) => state.auth.isAuthenticated);
+  const isLoading = useSelector((state: RootState) => state.auth.isLoading);
+  const userRole = useSelector((state: RootState) => state.auth.user?.role);
+
+  // If already authenticated as admin, redirect
+  useEffect(() => {
+    if (!isLoading && isAuthenticated && userRole === 'admin') {
+      router.push(redirect);
+    }
+  }, [isAuthenticated, isLoading, userRole, router, redirect]);
+
+  // Show loading state while auth is initializing
+  if (isLoading) {
+    return <Loading />;
+  }
+
+  // If authenticated as admin, show nothing (redirect is happening)
+  if (isAuthenticated && userRole === 'admin') {
+    return null;
+  }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();

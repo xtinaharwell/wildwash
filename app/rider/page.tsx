@@ -3,8 +3,10 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { RefreshCw, MapPin, Package } from "lucide-react";
 import RouteGuard from "@/components/RouteGuard";
+import { useRiderNotifications } from "@/lib/hooks/useRiderNotifications";
+import { useRiderOrderNotifications } from "@/lib/hooks/useRiderOrderNotifications";
 
-const API_BASE = process.env.NEXT_PUBLIC_API_BASE ?? "https://8000-firebase-wild-wash-apigit-1760697854679.cluster-lu4mup47g5gm4rtyvhzpwbfadi.cloudworkstations.dev";
+const API_BASE = process.env.NEXT_PUBLIC_API_BASE ?? "http://127.0.0.1:8000";
 
 /* --- Types --- */
 type OrderStatus = 'requested' | 'picked' | 'in_progress' | 'ready' | 'delivered' | 'cancelled';
@@ -72,6 +74,9 @@ export default function RiderMapPage(): React.ReactElement {
   const [loadingLocations, setLoadingLocations] = useState<boolean>(true);
   const [errorProfiles, setErrorProfiles] = useState<string | null>(null);
   const [errorLocations, setErrorLocations] = useState<string | null>(null);
+
+  // Get the order notification hook
+  const { decrementCount: decrementOrderCount, setAvailableOrdersCount: setOrdersCount, fetchAndUpdateOrdersCount } = useRiderOrderNotifications();
 
   // map refs - Temporarily commented out
   /*
@@ -243,7 +248,16 @@ export default function RiderMapPage(): React.ReactElement {
     fetchOrders();
     fetchProfiles();
     fetchLocations();
-  }, [fetchOrders, fetchProfiles, fetchLocations]);
+    // Initialize order notification count on page load
+    fetchAndUpdateOrdersCount();
+  }, []);
+
+  // Set up notifications with sound for new orders
+  const authState = JSON.parse(
+    typeof window !== 'undefined' ? localStorage.getItem('wildwash_auth_state') || '{}' : '{}'
+  );
+  const token = authState.token || null;
+  useRiderNotifications(token, true, 5000);
 
   const refresh = async () => {
     await Promise.all([fetchOrders(), fetchProfiles(), fetchLocations()]);
@@ -273,6 +287,9 @@ export default function RiderMapPage(): React.ReactElement {
         const errorData = await res.json().catch(() => ({}));
         throw new Error(errorData.error || `Failed to assign order: ${res.status}`);
       }
+
+      // Decrement the available orders count in navbar
+      decrementOrderCount(1);
 
       // Refresh the orders list and switch to in_progress page
       await fetchOrders();

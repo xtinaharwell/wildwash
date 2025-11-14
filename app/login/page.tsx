@@ -1,11 +1,12 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { useDispatch } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
 import Link from "next/link";
 import { handleLogin, LOGIN_ENDPOINTS } from "@/lib/api/loginHelpers";
 import { Spinner } from "@/components";
+import type { RootState } from "@/redux/store";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -14,6 +15,31 @@ export default function LoginPage() {
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const isAuthenticated = useSelector((state: RootState) => state.auth.isAuthenticated);
+  const isLoading = useSelector((state: RootState) => state.auth.isLoading);
+
+  // If already authenticated, redirect to home or the redirect URL
+  useEffect(() => {
+    if (!isLoading && isAuthenticated) {
+      const params = new URLSearchParams(window.location.search);
+      const redirectUrl = params.get('redirect') || '/';
+      router.push(redirectUrl);
+    }
+  }, [isAuthenticated, isLoading, router]);
+
+  // Show loading state while auth is initializing
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-gradient-to-b from-white via-[#f8fafc] to-[#eef2ff] dark:from-[#071025] dark:via-[#041022] dark:to-[#011018] flex items-center justify-center">
+        <Spinner className="w-8 h-8" />
+      </div>
+    );
+  }
+
+  // If authenticated, show nothing (redirect is happening)
+  if (isAuthenticated) {
+    return null;
+  }
 
   async function handleSubmit(e?: React.FormEvent) {
     e?.preventDefault();

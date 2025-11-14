@@ -4,7 +4,7 @@ import { AppDispatch } from '@/redux/store';
 import { setAuth } from '@/redux/features/authSlice';
 import { AUTH_STORAGE_KEY } from '../auth';
 
-const API_BASE = process.env.NEXT_PUBLIC_API_BASE ?? process.env.NEXT_PUBLIC_API_BASE_URL ?? "https://8000-firebase-wild-wash-apigit-1760697854679.cluster-lu4mup47g5gm4rtyvhzpwbfadi.cloudworkstations.dev";
+const API_BASE = process.env.NEXT_PUBLIC_API_BASE ?? process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://127.0.0.1:8000";
 
 interface LoginResponse {
   token: string;

@@ -3,7 +3,7 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { RefreshCw, MapPin, User, Phone, Truck, Star } from "lucide-react";
 
-const API_BASE = process.env.NEXT_PUBLIC_API_BASE ?? "https://8000-firebase-wild-wash-apigit-1760697854679.cluster-lu4mup47g5gm4rtyvhzpwbfadi.cloudworkstations.dev";
+const API_BASE = process.env.NEXT_PUBLIC_API_BASE ?? "http://127.0.0.1:8000";
 
 /* --- Types --- */
 type RawProfile = Record<string, any>;

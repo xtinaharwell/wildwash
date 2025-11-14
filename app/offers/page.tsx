@@ -27,7 +27,7 @@ export default function OffersPage() {
   const [query, setQuery] = useState("");
   const [subscribed, setSubscribed] = useState(false);
 
-  const API_BASE = process.env.NEXT_PUBLIC_API_BASE ?? "https://8000-firebase-wild-wash-apigit-1760697854679.cluster-lu4mup47g5gm4rtyvhzpwbfadi.cloudworkstations.dev";
+  const API_BASE = process.env.NEXT_PUBLIC_API_BASE ?? "http://127.0.0.1:8000";
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {

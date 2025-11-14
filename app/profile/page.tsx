@@ -15,6 +15,7 @@ type UserProfile = {
   first_name: string;
   last_name: string;
   location: string;
+  pickup_address?: string;
 }
 
 type Offer = {
@@ -246,6 +247,20 @@ export default function ProfilePage() {
                     disabled={!editMode}
                     className="w-full rounded-md border dark:border-slate-800 bg-white dark:bg-slate-900 px-3 py-2 text-sm disabled:opacity-60 disabled:cursor-not-allowed"
                   />
+                </div>
+
+                <div className="md:col-span-2">
+                  <label className="block text-xs text-slate-500 mb-1">Default Pickup Address</label>
+                  <textarea
+                    name="pickup_address"
+                    value={formData.pickup_address || ""}
+                    onChange={(e) => setFormData(prev => ({ ...prev, pickup_address: e.target.value }))}
+                    disabled={!editMode}
+                    placeholder="e.g., Olive Towers, 4th floor, Nairobi"
+                    rows={3}
+                    className="w-full rounded-md border dark:border-slate-800 bg-white dark:bg-slate-900 px-3 py-2 text-sm disabled:opacity-60 disabled:cursor-not-allowed resize-none"
+                  />
+                  <p className="text-xs text-slate-400 mt-1">This address will be pre-filled when you book a pickup, but you can change it anytime.</p>
                 </div>
               </div>
 
