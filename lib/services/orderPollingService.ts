@@ -23,6 +23,7 @@ class OrderPollingService {
   private cachedOrders: Order[] = [];
   private isPolling: boolean = false;
   private apiBase: string = process.env.NEXT_PUBLIC_API_BASE ?? 'http://127.0.0.1:8000';
+  private lastOrderIds: Set<number> = new Set(); // Track seen order IDs
 
   private constructor() {}
 
@@ -141,6 +142,19 @@ class OrderPollingService {
         dropoff_location: o.dropoff_location,
       }));
 
+      // Check for new orders (only for 'requested' status orders)
+      const newOrders = orders.filter(o => 
+        o.status === 'requested' && !this.lastOrderIds.has(o.id)
+      );
+
+      // Notify about new orders
+      if (newOrders.length > 0) {
+        this.notifyNewOrders(newOrders);
+      }
+
+      // Update lastOrderIds with all current order IDs
+      orders.forEach(o => this.lastOrderIds.add(o.id));
+
       // Update cache
       this.cachedOrders = orders;
 
@@ -155,6 +169,73 @@ class OrderPollingService {
 
     } catch (err) {
       console.error('Background order fetch error:', err);
+    }
+  }
+
+  /**
+   * Show browser notification and play sound for new orders
+   */
+  private notifyNewOrders(newOrders: Order[]): void {
+    newOrders.forEach(order => {
+      // Play notification sound
+      this.playNotificationSound();
+
+      // Show browser notification
+      if ('Notification' in window && Notification.permission === 'granted') {
+        const service = order.service?.name || 'New Service';
+        const message = `${order.code} - ${service}`;
+        
+        new Notification('🎉 New Order Available!', {
+          body: message,
+          icon: '/icon.png',
+          tag: `order-${order.id}`,
+          requireInteraction: true, // Keep notification visible until user interacts
+          badge: '/icon.png',
+        });
+      }
+    });
+  }
+
+  /**
+   * Play notification sound
+   */
+  private playNotificationSound(): void {
+    try {
+      // Create a simple beep sound using Web Audio API
+      const audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
+      const oscillator = audioContext.createOscillator();
+      const gainNode = audioContext.createGain();
+
+      oscillator.connect(gainNode);
+      gainNode.connect(audioContext.destination);
+
+      // Set up the sound (3 beeps)
+      oscillator.frequency.value = 800; // 800 Hz
+      oscillator.type = 'sine';
+
+      gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
+      gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.1);
+
+      oscillator.start(audioContext.currentTime);
+      oscillator.stop(audioContext.currentTime + 0.1);
+
+      // Second beep
+      const osc2 = audioContext.createOscillator();
+      osc2.connect(gainNode);
+      osc2.frequency.value = 1000;
+      osc2.type = 'sine';
+      osc2.start(audioContext.currentTime + 0.15);
+      osc2.stop(audioContext.currentTime + 0.25);
+
+      // Third beep
+      const osc3 = audioContext.createOscillator();
+      osc3.connect(gainNode);
+      osc3.frequency.value = 1200;
+      osc3.type = 'sine';
+      osc3.start(audioContext.currentTime + 0.3);
+      osc3.stop(audioContext.currentTime + 0.4);
+    } catch (err) {
+      console.warn('Could not play notification sound:', err);
     }
   }
 

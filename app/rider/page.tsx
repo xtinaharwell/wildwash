@@ -230,6 +230,13 @@ export default function RiderMapPage(): React.ReactElement {
   // Set up notifications with sound for new orders
   useRiderNotifications(token, true, 60000); // Poll notifications every 1 minute
 
+  // Request notification permission on component mount
+  useEffect(() => {
+    if ('Notification' in window && Notification.permission === 'default') {
+      Notification.requestPermission();
+    }
+  }, []);
+
   const refresh = async () => {
     await Promise.all([fetchOrders(), fetchProfiles(), fetchLocations()]);
   };
