@@ -130,14 +130,12 @@ export default function RiderMapPage(): React.ReactElement {
             user: o.user,
           };
 
-          // Geocode addresses (optional; consider moving to backend)
-          try {
-            const pickup = await geocodeAddress(o.pickup_address);
-            if (pickup) order.pickup_location = pickup;
-            const dropoff = await geocodeAddress(o.dropoff_address);
-            if (dropoff) order.dropoff_location = dropoff;
-          } catch (err) {
-            console.warn("Geocoding error for order", o.id, err);
+          // Use coordinates from backend if available, skip client-side geocoding
+          if (o.pickup_location) {
+            order.pickup_location = o.pickup_location;
+          }
+          if (o.dropoff_location) {
+            order.dropoff_location = o.dropoff_location;
           }
 
           return order;
@@ -259,6 +257,17 @@ export default function RiderMapPage(): React.ReactElement {
   const token = authState.token || null;
   useRiderNotifications(token, true, 5000);
 
+  // Poll for new orders every 3 seconds to ensure real-time updates
+  useEffect(() => {
+    if (!token) return;
+
+    const pollInterval = setInterval(() => {
+      fetchOrders().catch(err => console.error('Auto-poll orders error:', err));
+    }, 3000); // Poll every 3 seconds
+
+    return () => clearInterval(pollInterval);
+  }, [token, fetchOrders]);
+
   const refresh = async () => {
     await Promise.all([fetchOrders(), fetchProfiles(), fetchLocations()]);
   };
@@ -367,21 +376,11 @@ export default function RiderMapPage(): React.ReactElement {
     document.head.appendChild(link);
   }
 
-  // Geocode address to coordinates (consider moving this server-side)
+  // Geocode address to coordinates (MOVED TO BACKEND - disabled client-side to avoid CORS and rate limiting)
+  // If you need this on the frontend, use a backend endpoint instead of calling Nominatim directly
   async function geocodeAddress(address: string): Promise<{ lat: number; lng: number } | null> {
-    if (!address) return null;
-    try {
-      const response = await fetch(
-        `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(address)}`,
-        { headers: { "Accept-Language": "en" } } // optional
-      );
-      const data = await response.json();
-      if (data && data[0]) {
-        return { lat: parseFloat(data[0].lat), lng: parseFloat(data[0].lon) };
-      }
-    } catch (err) {
-      console.warn("Geocoding failed for address:", address, err);
-    }
+    // DISABLED: Client-side geocoding causes CORS issues and rate limiting
+    // Instead, coordinates should be provided by the backend
     return null;
   }
 
