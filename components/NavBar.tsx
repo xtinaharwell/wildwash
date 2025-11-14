@@ -14,6 +14,7 @@ export default function NavBar() {
   const dispatch = useDispatch();
   const isAuthenticated = useSelector((state: RootState) => state.auth.isAuthenticated);
   const userRole = useSelector((state: RootState) => state.auth.user?.role);
+  const userName = useSelector((state: RootState) => state.auth.user?.username);
   const totalCartItems = useSelector(selectCartTotalItems);
   const { availableOrdersCount } = useRiderOrderNotifications();
   const [mobileOpen, setMobileOpen] = useState(false);
@@ -198,7 +199,11 @@ export default function NavBar() {
                   </svg>
                 </button>
                 {profileOpen && (
-                  <div className="absolute right-0 mt-2 w-48 rounded-xl bg-white dark:bg-slate-800 shadow-lg ring-1 ring-black ring-opacity-5">
+                  <div className="absolute right-0 mt-2 w-56 rounded-xl bg-white dark:bg-slate-800 shadow-lg ring-1 ring-black ring-opacity-5">
+                    <div className="border-b border-slate-200 dark:border-slate-700 px-4 py-3">
+                      <div className="text-sm font-semibold text-slate-900 dark:text-slate-100">{userName || 'User'}</div>
+                      <div className="text-xs text-slate-500 dark:text-slate-400 capitalize mt-0.5">{userRole || 'customer'}</div>
+                    </div>
                     <div className="py-1">
                       <Link
                         href="/profile"
