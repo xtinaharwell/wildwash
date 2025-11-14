@@ -14,88 +14,15 @@ import { addToCart } from "@/redux/features/cartSlice";
 interface Service {
   id: number;
   name: string;
-  category: string;
-  price: string;
-  description: string;
-  icon: React.ComponentType<{ className: string }>;
+  category?: string;
+  price: number | string;
+  description?: string;
+  icon?: React.ComponentType<{ className: string }>;
 }
 
 const API_BASE = process.env.NEXT_PUBLIC_API_BASE ?? "";
 
-const fallbackServices: Service[] = [
-  {
-    id: 7,
-    name: "CARPET CLEANING",
-    category: "carpet",
-    price: "19.00",
-    description: "LEAVE YOUR FLOORS SMELLING FRESH AND WELL CLEANED",
-    icon: HomeModernIcon,
-  },
-  {
-    id: 2,
-    name: "Duvet Washing",
-    category: "duvet",
-    price: "500.00",
-    description: "Get your duvet spotless clean and smelling fresh",
-    icon: CubeTransparentIcon,
-  },
-  {
-    id: 4,
-    name: "BEDSITTER FUMIGATION",
-    category: "fumigation",
-    price: "1497.00",
-    description: "PEACEFUL LIVING SPACES /BUG FREE",
-    icon: BugAntIcon,
-  },
-  {
-    id: 5,
-    name: "ONE BEDROOM FUMIGATION",
-    category: "fumigation",
-    price: "2800.00",
-    description: "ELIMINATE BUGS AND ROACHES AND CREATE HEALTHY LIVING SPACE AROUND YOU AND YOUR LOVED ONES",
-    icon: BugAntIcon,
-  },
-  {
-    id: 3,
-    name: "BEDSITTER CLEANING SERVICES",
-    category: "house",
-    price: "600.00",
-    description: "restore your living spaces",
-    icon: HomeModernIcon,
-  },
-  {
-    id: 9,
-    name: "DIRTY MATTRESS CLEANING SERVICES",
-    category: "house",
-    price: "1500.00",
-    description: "HEALTHY SLEEPING SPACES JUST FOR YOU.....EXPERINCE THE MAGIC OF GOOD SLEEP ONCE AGAIN",
-    icon: HomeModernIcon,
-  },
-  {
-    id: 8,
-    name: "DIRTY SOFA CLEANING",
-    category: "house",
-    price: "499.00",
-    description: "PER SEATER COUCH CLEANING\r\n......revive your sofa's appearance and eliminate the stains and bad odour",
-    icon: HomeModernIcon,
-  },
-  {
-    id: 6,
-    name: "LAUNDRY CLEANING",
-    category: "laundry",
-    price: "51.00",
-    description: "FREE UP YOUR DAYS AND LOOK GOOD WITHOUT LIFTING A FINGER@WILDWASH LAUNDRY",
-    icon: SparklesIcon,
-  },
-  {
-    id: 1,
-    name: "One Shoe",
-    category: "laundry",
-    price: "70.00",
-    description: "One foam cleaning",
-    icon: SparklesIcon,
-  }
-];
+const fallbackServices: Service[] = [];
 
 function getIconForCategory(category: string) {
     switch (category) {
@@ -116,27 +43,57 @@ function getIconForCategory(category: string) {
 export default function HomePage() {
   const dispatch = useAppDispatch();
   const [searchTerm, setSearchTerm] = useState("");
-  const [services, setServices] = useState<Service[]>(fallbackServices);
+  const [services, setServices] = useState<Service[]>([]);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     let mounted = true;
-    fetch(`${API_BASE}/services/`, { credentials: "include" })
-      .then((r) => {
-        if (!r.ok) throw new Error("Failed to load services");
-        return r.json();
-      })
-      .then((data) => {
-        if (!mounted || !Array.isArray(data)) return;
-        const fetchedServices = data.map((s: any) => ({ 
-            ...s, 
-            id: Number(s.id), 
-            icon: getIconForCategory(s.category)
+    const fetchServices = async () => {
+      try {
+        setLoading(true);
+        const response = await fetch(`${API_BASE}/services/`, { 
+          credentials: "include",
+          headers: {
+            'Accept': 'application/json',
+          }
+        });
+        
+        if (!response.ok) {
+          throw new Error(`Failed to load services: ${response.status}`);
+        }
+
+        const data = await response.json();
+        
+        if (!mounted) return;
+
+        // Handle both array and paginated response
+        const servicesList = Array.isArray(data) ? data : (Array.isArray(data?.results) ? data.results : []);
+        
+        if (servicesList.length === 0) {
+          console.warn("No services returned from backend");
+          setServices([]);
+          return;
+        }
+
+        const fetchedServices = servicesList.map((s: any) => ({
+          id: Number(s.id),
+          name: s.name || '',
+          category: s.category || 'other',
+          price: s.price || 0,
+          description: s.description || '',
+          icon: getIconForCategory(s.category || 'other')
         }));
+
         setServices(fetchedServices);
-      })
-      .catch((err) => {
-        console.warn("Could not fetch services, using fallback data:", err);
-      });
+      } catch (err) {
+        console.error("Error fetching services:", err);
+        setServices([]);
+      } finally {
+        if (mounted) setLoading(false);
+      }
+    };
+
+    fetchServices();
     return () => { mounted = false; };
   }, []);
 
@@ -172,7 +129,19 @@ export default function HomePage() {
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-          {Object.entries(grouped).map(([category, list]) => (
+          {loading && (
+            <div className="col-span-full text-center py-12">
+              <p className="text-slate-500 dark:text-slate-400">Loading services...</p>
+            </div>
+          )}
+          {!loading && filteredServices.length === 0 && (
+            <div className="col-span-full text-center py-12">
+              <p className="text-slate-500 dark:text-slate-400">
+                {searchTerm ? "No services match your search" : "No services available"}
+              </p>
+            </div>
+          )}
+          {!loading && Object.entries(grouped).map(([category, list]) => (
             <section
               key={category}
               className="rounded-3xl bg-white/50 dark:bg-slate-900/30 backdrop-blur-xl shadow-xl border border-white/20 dark:border-slate-800/50 overflow-hidden"

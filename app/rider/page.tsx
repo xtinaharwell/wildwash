@@ -5,6 +5,7 @@ import { RefreshCw, MapPin, Package } from "lucide-react";
 import RouteGuard from "@/components/RouteGuard";
 import { useRiderNotifications } from "@/lib/hooks/useRiderNotifications";
 import { useRiderOrderNotifications } from "@/lib/hooks/useRiderOrderNotifications";
+import { useBackgroundOrderPolling, useOrderPollingRefresh } from "@/lib/hooks/useBackgroundOrderPolling";
 
 const API_BASE = process.env.NEXT_PUBLIC_API_BASE ?? "http://127.0.0.1:8000";
 
@@ -63,7 +64,6 @@ type RiderLocation = {
 
 /* --- Component --- */
 export default function RiderMapPage(): React.ReactElement {
-  const [orders, setOrders] = useState<Order[]>([]);
   const [loadingOrders, setLoadingOrders] = useState(true);
   const [errorOrders, setErrorOrders] = useState<string | null>(null);
   const [currentStatus, setCurrentStatus] = useState<OrderStatus>('requested');
@@ -78,6 +78,24 @@ export default function RiderMapPage(): React.ReactElement {
   // Get the order notification hook
   const { decrementCount: decrementOrderCount, setAvailableOrdersCount: setOrdersCount, fetchAndUpdateOrdersCount } = useRiderOrderNotifications();
 
+  // Get authentication token
+  const authState = JSON.parse(
+    typeof window !== 'undefined' ? localStorage.getItem('wildwash_auth_state') || '{}' : '{}'
+  );
+  const token = authState.token || null;
+
+  // Use background polling for orders - silent updates without page reload
+  const backgroundOrders = useBackgroundOrderPolling(token, true, 60000);
+  const orders = backgroundOrders;
+  const refreshOrders = useOrderPollingRefresh();
+
+  // Update loading state when orders arrive
+  useEffect(() => {
+    if (backgroundOrders.length > 0 && loadingOrders) {
+      setLoadingOrders(false);
+    }
+  }, [backgroundOrders, loadingOrders]);
+
   // map refs - Temporarily commented out
   /*
   const mapContainerRef = useRef<HTMLDivElement | null>(null);
@@ -87,70 +105,16 @@ export default function RiderMapPage(): React.ReactElement {
   */
 
   /* --- Data fetchers --- */
+  // fetchOrders is now handled by background polling service
   const fetchOrders = useCallback(async () => {
-    setLoadingOrders(true);
-    setErrorOrders(null);
+    if (!token) return;
     try {
-      // Get the authentication token from localStorage
-      const authState = JSON.parse(localStorage.getItem('wildwash_auth_state') || '{}');
-      const token = authState.token;
-      if (!token) {
-        throw new Error('Authentication required');
-      }
-
-      const res = await fetch(`${API_BASE}/orders/rider/`, {
-        method: "GET",
-        headers: { 
-          'Accept': "application/json",
-          'Authorization': `Token ${token}`
-        },
-      });
-      if (!res.ok) throw new Error(`Orders fetch failed: ${res.status} ${res.statusText}`);
-      const data = await res.json().catch(() => null);
-      const list: any[] = Array.isArray(data) ? data : Array.isArray(data?.results) ? data.results : [];
-
-      const orders = await Promise.all(
-        list.map(async (o: any) => {
-          const order: Order = {
-            id: o.id,
-            code: o.code,
-            service: {
-              name: o.service_name,
-              package: o.package
-            },
-            pickup_address: o.pickup_address,
-            dropoff_address: o.dropoff_address,
-            status: o.status.toLowerCase(),  // Convert 'Requested' to 'requested'
-            urgency: o.urgency,
-            items: o.items,
-            weight_kg: o.weight_kg,
-            price: o.price,
-            created_at: o.created_at,
-            estimated_delivery: o.estimated_delivery,
-            user: o.user,
-          };
-
-          // Use coordinates from backend if available, skip client-side geocoding
-          if (o.pickup_location) {
-            order.pickup_location = o.pickup_location;
-          }
-          if (o.dropoff_location) {
-            order.dropoff_location = o.dropoff_location;
-          }
-
-          return order;
-        })
-      );
-
-      setOrders(orders);
+      await refreshOrders(token);
     } catch (err: any) {
-      console.error("fetchOrders error:", err);
-      setErrorOrders(err?.message ?? "Failed to load orders");
-      setOrders([]);
-    } finally {
-      setLoadingOrders(false);
+      console.error("Manual orders refresh error:", err);
+      setErrorOrders(err?.message ?? "Failed to refresh orders");
     }
-  }, []);
+  }, [token, refreshOrders]);
 
   const fetchProfiles = useCallback(async () => {
     setLoadingProfiles(true);
@@ -251,22 +215,7 @@ export default function RiderMapPage(): React.ReactElement {
   }, []);
 
   // Set up notifications with sound for new orders
-  const authState = JSON.parse(
-    typeof window !== 'undefined' ? localStorage.getItem('wildwash_auth_state') || '{}' : '{}'
-  );
-  const token = authState.token || null;
   useRiderNotifications(token, true, 60000); // Poll notifications every 1 minute
-
-  // Poll for new orders every 1 minute
-  useEffect(() => {
-    if (!token) return;
-
-    const pollInterval = setInterval(() => {
-      fetchOrders().catch(err => console.error('Auto-poll orders error:', err));
-    }, 60000); // Poll every 1 minute (60,000 ms)
-
-    return () => clearInterval(pollInterval);
-  }, [token, fetchOrders]);
 
   const refresh = async () => {
     await Promise.all([fetchOrders(), fetchProfiles(), fetchLocations()]);
