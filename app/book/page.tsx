@@ -22,7 +22,7 @@ export default function Page() {
   const [pickupBuilding, setPickupBuilding] = useState("");
   const [pickupContact, setPickupContact] = useState("");
   const [dropoffAddress, setDropoffAddress] = useState("");
-  const [sameAsPickup, setSameAsPickup] = useState(false);
+  const [sameAsPickup, setSameAsPickup] = useState(true);
   const [userProfile, setUserProfile] = useState<any>(null);
   const [urgency, setUrgency] = useState(2); // 1 = Normal, 2 = Fast, 3 = Express
   const [progress, setProgress] = useState(0);
@@ -254,7 +254,7 @@ export default function Page() {
                       }}
                       className="rounded border-slate-300 dark:border-slate-600 dark:bg-slate-700 dark:checked:bg-red-500"
                     />
-                    <span className="text-sm text-slate-700 dark:text-slate-300">Same as Pickup address</span>
+                    <span className="text-sm text-slate-700 dark:text-slate-300">Dropoff same as pickup location</span>
                   </label>
                   {!sameAsPickup && (
                     <div>
