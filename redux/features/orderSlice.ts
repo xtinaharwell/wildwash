@@ -120,8 +120,13 @@ export const fetchOrders = createAsyncThunk<
   }
   if (state.query) params.set('search', state.query);
 
-  const baseUrl =
-    "http://127.0.0.1:8000/orders/";
+  // Use public env var when available (deployed host). Fall back to relative
+  // path so production builds that proxy API requests work and local dev
+  // without env var doesn't accidentally call localhost on hosted sites.
+  const API_BASE = process.env.NEXT_PUBLIC_API_BASE ?? "";
+  const baseUrl = API_BASE
+    ? `${API_BASE.replace(/\/+$/g, "")}/orders/`
+    : "/orders/";
   const url = `${baseUrl}?${params.toString()}`;
 
   try {
