@@ -32,6 +32,22 @@ type Order = {
   user?: string;
   pickup_location?: { lat: number; lng: number };
   dropoff_location?: { lat: number; lng: number };
+  service_location?: { id: number; name: string } | null;
+  quantity?: number | null;
+  description?: string | null;
+};
+
+type OrderDetails = {
+  quantity?: number;
+  weight_kg?: number;
+  description?: string;
+};
+
+type OrderUpdatePayload = {
+  status?: OrderStatus;
+  quantity?: number;
+  weight_kg?: number;
+  description?: string;
 };
 
 type RiderProfile = {
@@ -66,7 +82,7 @@ type RiderLocation = {
 export default function RiderMapPage(): React.ReactElement {
   const [loadingOrders, setLoadingOrders] = useState(true);
   const [errorOrders, setErrorOrders] = useState<string | null>(null);
-  const [currentStatus, setCurrentStatus] = useState<OrderStatus>('requested');
+  const [currentStatus, setCurrentStatus] = useState<OrderStatus>('in_progress');
 
   const [profiles, setProfiles] = useState<RiderProfile[]>([]);
   const [locations, setLocations] = useState<RiderLocation[]>([]);
@@ -77,7 +93,16 @@ export default function RiderMapPage(): React.ReactElement {
 
   // Confirmation state for action buttons (orderId -> timestamp)
   const [confirmingOrderId, setConfirmingOrderId] = useState<number | null>(null);
+  const [processingOrderId, setProcessingOrderId] = useState<number | null>(null);
   const confirmTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+
+  // Order details form state
+  const [detailsOrderId, setDetailsOrderId] = useState<number | null>(null);
+  const [orderDetails, setOrderDetails] = useState<OrderDetails>({
+    quantity: undefined,
+    weight_kg: undefined,
+    description: '',
+  });
 
   // Get the order notification hook
   const { decrementCount: decrementOrderCount, setAvailableOrdersCount: setOrdersCount, fetchAndUpdateOrdersCount } = useRiderOrderNotifications();
@@ -241,7 +266,26 @@ export default function RiderMapPage(): React.ReactElement {
     await Promise.all([fetchOrders(), fetchProfiles(), fetchLocations()]);
   };
 
-  const handleAssignOrder = async (orderId: number) => {
+  const handleOpenDetailsForm = (order: Order) => {
+    setDetailsOrderId(order.id);
+    // Pre-fill with existing values if they exist
+    setOrderDetails({
+      quantity: order.items || undefined,
+      weight_kg: order.weight_kg ? Number(order.weight_kg) : undefined,
+      description: order.description || '',
+    });
+  };
+
+  const handleCloseDetailsForm = () => {
+    setDetailsOrderId(null);
+    setOrderDetails({
+      quantity: undefined,
+      weight_kg: undefined,
+      description: '',
+    });
+  };
+
+  const handleSaveOrderDetails = async () => {
     try {
       const authState = JSON.parse(localStorage.getItem('wildwash_auth_state') || '{}');
       const token = authState.token;
@@ -249,32 +293,46 @@ export default function RiderMapPage(): React.ReactElement {
         throw new Error('Authentication required');
       }
 
-      const res = await fetch(`${API_BASE}/orders/rider/`, {
-        method: 'POST',
+      setProcessingOrderId(detailsOrderId);
+
+      const payload: OrderUpdatePayload = {
+        status: 'picked'
+      };
+
+      // Only include fields that have been filled
+      if (orderDetails.quantity !== undefined && orderDetails.quantity > 0) {
+        payload.quantity = orderDetails.quantity;
+      }
+      if (orderDetails.weight_kg !== undefined && orderDetails.weight_kg > 0) {
+        payload.weight_kg = orderDetails.weight_kg;
+      }
+      if (orderDetails.description && orderDetails.description.trim()) {
+        payload.description = orderDetails.description.trim();
+      }
+
+      const res = await fetch(`${API_BASE}/orders/update/?id=${detailsOrderId}`, {
+        method: 'PATCH',
         headers: {
           'Content-Type': 'application/json',
           'Authorization': `Token ${token}`,
         },
-        body: JSON.stringify({
-          order_id: orderId,
-          action: 'accept'
-        })
+        body: JSON.stringify(payload)
       });
 
       if (!res.ok) {
         const errorData = await res.json().catch(() => ({}));
-        throw new Error(errorData.error || `Failed to assign order: ${res.status}`);
+        throw new Error(errorData.error || `Failed to update order: ${res.status}`);
       }
 
-      // Decrement the available orders count in navbar
-      decrementOrderCount(1);
-
-      // Refresh the orders list and switch to in_progress page
-      await fetchOrders();
-      setCurrentStatus('in_progress'); // Switch to in_progress page after assignment
+      // Close form and refresh
+      handleCloseDetailsForm();
+      await refreshOrders(token);
+      setCurrentStatus('picked');
     } catch (err: any) {
-      console.error('Failed to assign order:', err);
-      alert(err.message || 'Failed to assign order. Please try again.');
+      console.error('Failed to save order details:', err);
+      alert(err.message || 'Failed to save order details. Please try again.');
+    } finally {
+      setProcessingOrderId(null);
     }
   };
 
@@ -302,6 +360,9 @@ export default function RiderMapPage(): React.ReactElement {
       setConfirmingOrderId(null);
       if (confirmTimeoutRef.current) clearTimeout(confirmTimeoutRef.current);
 
+      // Set loading state
+      setProcessingOrderId(orderId);
+
       const res = await fetch(`${API_BASE}/orders/update/?id=${orderId}`, {
         method: 'PATCH',
         headers: {
@@ -324,6 +385,9 @@ export default function RiderMapPage(): React.ReactElement {
     } catch (err: any) {
       console.error('Failed to complete pickup:', err);
       alert(err.message || 'Failed to complete pickup. Please try again.');
+    } finally {
+      // Clear loading state
+      setProcessingOrderId(null);
     }
   };
 
@@ -600,7 +664,7 @@ export default function RiderMapPage(): React.ReactElement {
                   <h2 className="text-lg font-semibold">Orders</h2>
                 </div>
                 <div className="flex flex-wrap justify-center gap-2">
-                  {(['requested', 'in_progress', 'picked'] as const).map((status) => {
+                  {(['in_progress', 'picked'] as const).map((status) => {
                     const count = orders.filter(order => order.status === status).length;
                     return (
                       <button
@@ -642,40 +706,25 @@ export default function RiderMapPage(): React.ReactElement {
                       <div className="flex-grow">
                         <div className="font-semibold">Order {order.code}</div>
                         <div className="text-xs text-slate-500 dark:text-slate-400 mt-1">
-                          Service: {order.service.name}
-                          <br />
-                          Items: {order.items}
-                          {order.weight_kg && ` • ${order.weight_kg}kg`}
-                          <br />
-                          Created: {formatDateTime(order.created_at)}
+                          <div className="font-medium text-slate-700 dark:text-slate-200">
+                            {order.service.name} {order.service.package && `- ${order.service.package}`}
+                          </div>
+                          <div className="mt-1">Items: {order.items}{order.weight_kg && ` • ${order.weight_kg}kg`}</div>
+                          <div className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">Created: {formatDateTime(order.created_at)}</div>
                         </div>
                         <div className="text-xs text-slate-600 dark:text-slate-300 mt-2">
                           <div>From: {order.pickup_address}</div>
                           <div>To: {order.dropoff_address}</div>
                         </div>
                       </div>
-                      {order.status === 'requested' && (
-                        <button
-                          onClick={() => handleAssignOrder(order.id)}
-                          className="px-3 py-1 text-sm bg-red-600 text-white rounded-full hover:bg-red-700 transition-colors"
-                        >
-                          Assign Me
-                        </button>
-                      )}
                       {order.status === 'in_progress' && (
                         <button
-                          onClick={() => handleCompletePickup(order.id)}
-                          className={`px-3 py-1 text-sm rounded-full transition-all flex items-center gap-1 ${
-                            confirmingOrderId === order.id
-                              ? 'bg-orange-600 hover:bg-orange-700 animate-pulse'
-                              : 'bg-green-600 hover:bg-green-700'
-                          } text-white`}
+                          onClick={() => handleOpenDetailsForm(order as any)}
+                          className="px-3 py-1 text-sm rounded-full transition-all flex items-center gap-1 bg-green-600 hover:bg-green-700 text-white"
                         >
-                          <span>
-                            {confirmingOrderId === order.id ? 'Click again to confirm' : 'Complete Pickup'}
-                          </span>
+                          <span>Add Details</span>
                           <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
-                            <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                            <path fillRule="evenodd" d="M10.293 3.293a1 1 0 011.414 0l6 6a1 1 0 010 1.414l-6 6a1 1 0 01-1.414-1.414L14.586 11H3a1 1 0 110-2h11.586l-4.293-4.293a1 1 0 010-1.414z" clipRule="evenodd" />
                           </svg>
                         </button>
                       )}
@@ -716,6 +765,138 @@ export default function RiderMapPage(): React.ReactElement {
             </aside>
             */}
           </div>
+
+          {/* Details Modal - Mobile Friendly Bottom Sheet */}
+          {detailsOrderId !== null && (
+            <div className="fixed inset-0 bg-black bg-opacity-50 z-40" onClick={handleCloseDetailsForm}>
+              <div 
+                className="fixed bottom-0 left-0 right-0 bg-white dark:bg-slate-800 rounded-t-2xl p-6 max-h-[90vh] overflow-y-auto z-50 animate-in slide-in-from-bottom-5"
+                onClick={(e) => e.stopPropagation()}
+              >
+                {/* Header */}
+                <div className="flex items-center justify-between mb-6">
+                  <h3 className="text-xl font-bold">Add Order Details</h3>
+                  <button
+                    onClick={handleCloseDetailsForm}
+                    className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200"
+                  >
+                    <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                  </button>
+                </div>
+
+                {/* Order Info */}
+                <div className="bg-slate-100 dark:bg-slate-700 rounded-lg p-4 mb-6">
+                  <div className="font-semibold text-slate-900 dark:text-white">Order Information</div>
+                  <div className="text-sm text-slate-600 dark:text-slate-300 mt-2">
+                    {orders.find(o => o.id === detailsOrderId) && (
+                      <>
+                        <div>Code: {orders.find(o => o.id === detailsOrderId)?.code}</div>
+                        <div>From: {orders.find(o => o.id === detailsOrderId)?.pickup_address}</div>
+                        <div>To: {orders.find(o => o.id === detailsOrderId)?.dropoff_address}</div>
+                      </>
+                    )}
+                  </div>
+                </div>
+
+                {/* Form Fields */}
+                <div className="space-y-5 mb-6">
+                  {/* Quantity Field */}
+                  <div>
+                    <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
+                      Quantity (items)
+                      <span className="text-slate-400 ml-1">Optional</span>
+                    </label>
+                    <input
+                      type="number"
+                      min="1"
+                      placeholder="Enter number of items"
+                      value={orderDetails.quantity || ''}
+                      onChange={(e) => setOrderDetails(prev => ({
+                        ...prev,
+                        quantity: e.target.value ? parseInt(e.target.value) : undefined
+                      }))}
+                      className="w-full px-4 py-3 rounded-lg border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-green-500"
+                    />
+                    <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">Total number of items to pick up</p>
+                  </div>
+
+                  {/* Weight Field */}
+                  <div>
+                    <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
+                      Weight (kg)
+                      <span className="text-slate-400 ml-1">Optional</span>
+                    </label>
+                    <input
+                      type="number"
+                      min="0"
+                      step="0.1"
+                      placeholder="Enter weight in kilograms"
+                      value={orderDetails.weight_kg || ''}
+                      onChange={(e) => setOrderDetails(prev => ({
+                        ...prev,
+                        weight_kg: e.target.value ? parseFloat(e.target.value) : undefined
+                      }))}
+                      className="w-full px-4 py-3 rounded-lg border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-green-500"
+                    />
+                    <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">Total weight of all items</p>
+                  </div>
+
+                  {/* Description Field */}
+                  <div>
+                    <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
+                      Additional Details
+                      <span className="text-slate-400 ml-1">Optional</span>
+                    </label>
+                    <textarea
+                      placeholder="Add any notes (fragile items, special handling, etc.)"
+                      value={orderDetails.description}
+                      onChange={(e) => setOrderDetails(prev => ({
+                        ...prev,
+                        description: e.target.value
+                      }))}
+                      rows={4}
+                      className="w-full px-4 py-3 rounded-lg border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-green-500 resize-none"
+                    />
+                    <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">Max 500 characters</p>
+                  </div>
+                </div>
+
+                {/* Action Buttons */}
+                <div className="flex gap-3 pb-4">
+                  <button
+                    onClick={handleCloseDetailsForm}
+                    className="flex-1 px-4 py-3 rounded-lg border border-slate-200 dark:border-slate-600 text-slate-700 dark:text-slate-300 font-medium hover:bg-slate-50 dark:hover:bg-slate-700 transition-all"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    onClick={handleSaveOrderDetails}
+                    disabled={processingOrderId === detailsOrderId}
+                    className="flex-1 px-4 py-3 rounded-lg bg-green-600 hover:bg-green-700 disabled:bg-green-400 text-white font-medium transition-all flex items-center justify-center gap-2"
+                  >
+                    {processingOrderId === detailsOrderId ? (
+                      <>
+                        <svg className="animate-spin h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                        </svg>
+                        <span>Saving...</span>
+                      </>
+                    ) : (
+                      <>
+                        <span>Complete Pickup</span>
+                        <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+                          <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                        </svg>
+                      </>
+                    )}
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
         </div>
       </div>
     </RouteGuard>
