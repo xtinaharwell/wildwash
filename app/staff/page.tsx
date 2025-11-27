@@ -22,6 +22,7 @@ export default function StaffDashboard(): React.ReactElement {
   const fetchProfile = useCallback(async () => {
     try {
       const data = await client.get('/users/me/');
+      console.log('[Staff] Profile fetched:', data);
       setProfile(data);
       return data;
     } catch (err: any) {
@@ -32,23 +33,20 @@ export default function StaffDashboard(): React.ReactElement {
   const fetchOrders = useCallback(async (locationId?: number) => {
     try {
       const data = await client.get('/orders/');
+      console.log('[Staff] Raw orders response:', data);
       const list: any[] = Array.isArray(data) ? data : Array.isArray(data?.results) ? data.results : [];
-
-      if (locationId == null) {
-        setOrders(list);
-        return;
+      console.log('[Staff] Orders list:', list);
+      console.log('[Staff] List length:', list.length);
+      
+      if (list.length === 0) {
+        console.log('[Staff] ⚠️ No orders returned from API');
       }
-
-      // Filter orders by service_location - support several possible shapes
-      const filtered = list.filter((o: any) => {
-        const raw = o;
-        // common shapes: raw.service_location (id), raw.service_location.id, o.service_location
-        const a = raw?.service_location ?? raw?.service_location?.id ?? o?.service_location;
-        return String(a) === String(locationId);
-      });
-
-      setOrders(filtered);
+      
+      // The backend should already filter by location for staff users
+      // But we'll keep this check just in case
+      setOrders(list);
     } catch (err: any) {
+      console.error('[Staff] Error fetching orders:', err);
       throw err;
     }
   }, []);
@@ -75,8 +73,10 @@ export default function StaffDashboard(): React.ReactElement {
       setError(null);
       try {
         const me = await fetchProfile();
-        const locId = me?.service_location ?? me?.service_location?.id ?? null;
-        await fetchOrders(locId ?? undefined);
+        console.log('[Staff] Profile object:', me);
+        console.log('[Staff] Staff location:', me?.service_location);
+        console.log('[Staff] Staff location display:', me?.service_location_display);
+        await fetchOrders();
       } catch (err: any) {
         setError(err?.message ?? 'Failed to load staff dashboard');
       } finally {

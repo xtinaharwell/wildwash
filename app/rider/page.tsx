@@ -252,15 +252,16 @@ export default function RiderMapPage(): React.ReactElement {
     fetchAndUpdateOrdersCount();
   }, []);
 
-  // Set up notifications with sound for new orders
-  useRiderNotifications(token, true, 15000); // Poll notifications every 15 seconds
-
   // Request notification permission on component mount
   useEffect(() => {
     if ('Notification' in window && Notification.permission === 'default') {
       Notification.requestPermission();
     }
   }, []);
+
+  // Set up notifications with sound for new orders - conditionally at top level
+  // Only set up polling if token is available
+  useRiderNotifications(token, !!token, 15000); // Poll notifications every 15 seconds when token is available
 
   const refresh = async () => {
     await Promise.all([fetchOrders(), fetchProfiles(), fetchLocations()]);

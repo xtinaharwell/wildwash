@@ -66,7 +66,7 @@ export default function Home() {
               </Link>
 
               <Link href="/orders" className="inline-flex items-center gap-2 border border-slate-200 dark:border-slate-700 px-4 py-3 rounded-full text-sm">View your orders</Link>
-              <Link href="/track" className="inline-flex items-center gap-2 border border-slate-200 dark:border-slate-700 px-4 py-3 rounded-full text-sm">Track an order</Link>
+              <Link href="/orders" className="inline-flex items-center gap-2 border border-slate-200 dark:border-slate-700 px-4 py-3 rounded-full text-sm">View orders</Link>
               <a href="#how" className="inline-flex items-center gap-2 border border-slate-200 dark:border-slate-700 px-4 py-3 rounded-full text-sm">How it works</a>
             </div>
 

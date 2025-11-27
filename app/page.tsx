@@ -103,12 +103,14 @@ export default function HomePage() {
 
   const handleAddToCart = (service: Service) => {
     // Convert price to string and ensure description is defined for cart
-    const cartService = {
-      ...service,
-      price: String(service.price),
-      description: service.description || ''
+    // Remove icon (React component) before storing in Redux
+    const { icon, ...cartService } = service;
+    const finalCartService = {
+      ...cartService,
+      price: String(cartService.price),
+      description: cartService.description || ''
     };
-    dispatch(addToCart(cartService));
+    dispatch(addToCart(finalCartService));
     console.log(`${service.name} added to cart`);
   };
 

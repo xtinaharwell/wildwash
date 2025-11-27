@@ -20,21 +20,28 @@ export function useRiderNotifications(
 
   const handleNewNotifications = useCallback(
     (notifications: RiderNotification[]) => {
+      if (notifications.length > 0) {
+        console.log(`[Notifications] Received ${notifications.length} notifications`);
+      }
       notifications.forEach((notification) => {
         // Check if this is a new notification we haven't seen before
         if (!lastNotificationIdsRef.current.has(notification.id)) {
           lastNotificationIdsRef.current.add(notification.id);
+          console.log(`[Notifications] New notification: ${notification.message}`);
 
           // Play sound for new notification
           playNotificationSound();
 
           // Show browser notification if available
           if ('Notification' in window && Notification.permission === 'granted') {
+            console.log('[Notifications] Showing browser notification');
             new Notification('New Order', {
               body: notification.message,
               icon: '/icon.png',
               tag: `order-${notification.order}`,
             });
+          } else {
+            console.log(`[Notifications] Browser notification unavailable (permission: ${Notification.permission})`);
           }
 
           // Mark as read after showing notification
@@ -54,7 +61,7 @@ export function useRiderNotifications(
       const notifications = await fetchRiderNotifications(token);
       handleNewNotifications(notifications);
     } catch (error) {
-      console.error('Polling notifications error:', error);
+      console.error('[Notifications] Polling error:', error);
     }
   }, [token, enabled, handleNewNotifications]);
 

@@ -61,20 +61,30 @@ export default function OrderDetailsPage() {
       setError(null);
 
       try {
-        const token = typeof window !== "undefined" ? localStorage.getItem("access_token") : null;
+        // Get auth token from wildwash_auth_state
+        let token = null;
+        if (typeof window !== 'undefined') {
+          const authState = localStorage.getItem('wildwash_auth_state');
+          if (authState) {
+            try {
+              const parsed = JSON.parse(authState);
+              token = parsed.token;
+            } catch (e) {
+              console.error('Error parsing auth state:', e);
+            }
+          }
+        }
+
         const headers: Record<string, string> = { Accept: "application/json" };
         if (token) {
-          headers["Authorization"] = `Bearer ${token}`;
-        } else {
-          const csrftoken = getCookie("csrftoken");
-          if (csrftoken) headers["X-CSRFToken"] = csrftoken;
+          headers["Authorization"] = `Token ${token}`;
         }
 
         const url = `${API_BASE}/orders?code=${encodeURIComponent(params.code)}`;
         const res = await fetch(url, {
           method: "GET",
           headers,
-          credentials: token ? "omit" : "include",
+          credentials: 'same-origin',
         });
 
         if (!res.ok) {
@@ -82,7 +92,16 @@ export default function OrderDetailsPage() {
         }
 
         const data = await res.json();
-        let found = Array.isArray(data) ? data[0] : data;
+        
+        // Handle paginated response format
+        let found;
+        if (data.results && Array.isArray(data.results)) {
+          found = data.results[0];
+        } else if (Array.isArray(data)) {
+          found = data[0];
+        } else {
+          found = data;
+        }
 
         if (!found) {
           throw new Error("Order not found");
@@ -105,12 +124,12 @@ export default function OrderDetailsPage() {
             if (found.service && typeof found.service === "object") return found.service.name ?? "Standard";
             return found.package ?? "Standard";
           })(),
-          price: found.price_display ?? (found.price ? `KSh ${Number(found.price).toLocaleString()}` : ""),
+          price: found.price_display ?? (found.total_price ? `KSh ${Number(found.total_price).toLocaleString()}` : (found.price ? `KSh ${Number(found.price).toLocaleString()}` : "")),
           priceDisplay: found.price_display ?? null,
           status: mapStatus(found.status ?? found.status_code ?? ""),
           eta: found.estimated_delivery ? new Date(found.estimated_delivery).toLocaleString() : undefined,
           deliveredAt: found.delivered_at ? new Date(found.delivered_at).toLocaleString() : undefined,
-          rider: found.rider ? { name: found.rider.name, phone: found.rider.phone } : undefined,
+          rider: found.rider ? { name: found.rider.username || found.rider.first_name || found.rider.name, phone: found.rider.phone } : undefined,
           statusLog: found.timeline ?? found.status_log ?? [],
         };
 
@@ -128,11 +147,6 @@ export default function OrderDetailsPage() {
     }
   }, [params.code, API_BASE]);
 
-  function gotoTrack() {
-    if (!order?.code) return;
-    router.push(`/track?code=${encodeURIComponent(order.code)}`);
-  }
-
   return (
     <div className="min-h-screen bg-gradient-to-b from-white via-[#f8fafc] to-[#eef2ff] dark:from-[#071025] dark:via-[#041022] dark:to-[#011018] text-slate-900 dark:text-slate-100 py-12">
       <div className="max-w-4xl mx-auto px-4">
@@ -141,11 +155,6 @@ export default function OrderDetailsPage() {
             <Link href="/orders" className="text-sm text-red-600 hover:underline">← Back to orders</Link>
             <h1 className="mt-2 text-3xl font-extrabold">Order Details</h1>
           </div>
-          {order && (
-            <button onClick={gotoTrack} className="rounded-lg px-4 py-2 bg-red-600 text-white text-sm shadow hover:bg-red-700">
-              Track Order
-            </button>
-          )}
         </div>
 
         {loading ? (

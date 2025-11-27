@@ -84,12 +84,6 @@ export default function OrdersPage(): React.JSX.Element {
     if (errorFromState) setErrorMessage(errorFromState);
   }, [errorFromState]);
 
-  function gotoTrack(code: string) {
-    router.push(`/track?code=${encodeURIComponent(code)}`);
-  }
-
-
-
   // filter the page-local orders list (search client-side on current page)
   const filtered = orders.filter((o) => {
     const q = (query ?? "").trim().toLowerCase();
@@ -112,7 +106,7 @@ export default function OrdersPage(): React.JSX.Element {
           </div>
 
           <div className="flex items-center gap-3">
-            <Link href="/book" className="rounded-full px-4 py-2 bg-red-600 text-white text-sm shadow hover:bg-emerald-700">New order</Link>
+            <Link href="/cart" className="rounded-full w-10 h-10 flex items-center justify-center bg-red-600 text-white text-lg shadow hover:bg-red-700">+</Link>
           </div>
         </header>
 
@@ -171,7 +165,6 @@ export default function OrdersPage(): React.JSX.Element {
                       {o.eta && <div className="text-xs text-slate-500 mt-2">ETA</div>}
                       {o.eta && <div className="font-medium">{o.eta}</div>}
                       <div className="mt-2 flex items-center gap-2 justify-end">
-                        <button onClick={() => gotoTrack(o.code)} className="text-xs px-2 py-1 rounded bg-slate-100 dark:bg-white/5">Track</button>
                         <Link href={`/orders/${o.code}`} className="text-xs px-2 py-1 rounded bg-slate-100 dark:bg-white/5">Details</Link>
                       </div>
                     </div>
@@ -179,7 +172,6 @@ export default function OrdersPage(): React.JSX.Element {
 
                   <div className="mt-3 flex items-center justify-between">
                     <div className="text-sm text-slate-600">{o.price}</div>
-                    <div className="text-sm text-slate-500">{o.status === 'Delivered' ? `Delivered ${o.deliveredAt ?? ''}` : 'Updates appear here as your order progresses.'}</div>
                   </div>
                 </article>
               ))}
