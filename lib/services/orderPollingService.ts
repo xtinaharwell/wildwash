@@ -142,10 +142,13 @@ class OrderPollingService {
         dropoff_location: o.dropoff_location,
       }));
 
-      // Check for new orders (only for 'requested' status orders)
-      const newOrders = orders.filter(o => 
-        o.status === 'requested' && !this.lastOrderIds.has(o.id)
-      );
+      // Check for new orders (notify on status changes to 'ready' or 'requested')
+      const newOrders = orders.filter(o => {
+        const isNew = !this.lastOrderIds.has(o.id);
+        const isReadyForDelivery = o.status === 'ready';
+        const isRequested = o.status === 'requested';
+        return isNew && (isRequested || isReadyForDelivery);
+      });
 
       // Notify about new orders
       if (newOrders.length > 0) {
@@ -186,9 +189,10 @@ class OrderPollingService {
       // Show browser notification
       if ('Notification' in window && Notification.permission === 'granted') {
         const service = order.service?.name || 'New Service';
+        const statusLabel = order.status === 'ready' ? 'Ready for Delivery' : 'New Order';
         const message = `${order.code} - ${service}`;
         
-        new Notification('🎉 New Order Available!', {
+        new Notification(`🎉 ${statusLabel}!`, {
           body: message,
           icon: '/icon.png',
           tag: `order-${order.id}`,

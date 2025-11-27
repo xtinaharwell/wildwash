@@ -25,7 +25,6 @@ export default function Page() {
   const [sameAsPickup, setSameAsPickup] = useState(true);
   const [userProfile, setUserProfile] = useState<any>(null);
   const [urgency, setUrgency] = useState(2); // 1 = Normal, 2 = Fast, 3 = Express
-  const [progress, setProgress] = useState(0);
   const [sending, setSending] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
   const [serverErrors, setServerErrors] = useState<any | null>(null);
@@ -81,11 +80,9 @@ export default function Page() {
   async function postBooking(payload: Record<string, any>) {
     resetMessage();
     setSending(true);
-    setProgress(10);
     try {
       console.log("Posting booking payload:", payload);
       await new Promise((r) => setTimeout(r, 250));
-      setProgress(40);
 
       const csrf = getCookie("csrftoken");
       const authState = getStoredAuthState();
@@ -113,22 +110,18 @@ export default function Page() {
         console.error("Booking POST failed", res.status, data);
         setServerErrors(data || { non_field_errors: ["Server returned an error"] });
         setMessage(`Server error: ${res.status} ${res.statusText}`);
-        setProgress(0);
         return { ok: false, data };
       }
 
-      setProgress(100);
       setMessage(data?.code ? `Booking ${data.code} created` : "Booking created");
       return { ok: true, data };
     } catch (err: any) {
       console.error("Network/fetch error:", err);
       setMessage(`Network error: ${err?.message ?? String(err)}`);
-      setProgress(0);
       setServerErrors({ network: [err?.message ?? "Network failure"] });
       return { ok: false, err };
     } finally {
       setSending(false);
-      setTimeout(() => setProgress(0), 700);
     }
   }
 
@@ -183,15 +176,6 @@ export default function Page() {
               <div>
                 <h1 className="text-2xl md:text-3xl font-extrabold tracking-tight text-slate-800 dark:text-slate-100">Book a Pick Up</h1>
                 <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">Confirm details for your laundry & cleaning pickup.</p>
-              </div>
-              <div className="hidden md:block text-right">
-                <div className="text-xs text-slate-500 dark:text-slate-400">Progress</div>
-                <div className="mt-2 w-40">
-                  <div className="h-2 w-full rounded-full bg-slate-200 overflow-hidden">
-                    <div className="h-full rounded-full bg-gradient-to-r from-red-400 to-red-600 transition-all" style={{ width: `${progress}%` }} />
-                  </div>
-                </div>
-                <div className="text-xs text-slate-400 mt-1">{progress}%</div>
               </div>
             </header>
 

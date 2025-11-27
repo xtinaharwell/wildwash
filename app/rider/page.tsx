@@ -407,6 +407,10 @@ export default function RiderMapPage(): React.ReactElement {
 
   // Filter orders by selected status
   const filteredOrders = useMemo(() => {
+    if (currentStatus === 'in_progress') {
+      // Show both ready and in_progress orders for the in_progress tab
+      return orders.filter((o) => o.status === 'ready' || o.status === 'in_progress');
+    }
     return orders.filter((o) => o.status === currentStatus);
   }, [orders, currentStatus]);
 
@@ -718,7 +722,7 @@ export default function RiderMapPage(): React.ReactElement {
                           <div>To: {order.dropoff_address}</div>
                         </div>
                       </div>
-                      {order.status === 'in_progress' && (
+                      {(order.status === 'in_progress' || order.status === 'ready') && (
                         <button
                           onClick={() => handleOpenDetailsForm(order as any)}
                           className="px-3 py-1 text-sm rounded-full transition-all flex items-center gap-1 bg-green-600 hover:bg-green-700 text-white"
@@ -767,108 +771,88 @@ export default function RiderMapPage(): React.ReactElement {
             */}
           </div>
 
-          {/* Details Modal - Mobile Friendly Bottom Sheet */}
+          {/* Details Modal - Minimalistic */}
           {detailsOrderId !== null && (
-            <div className="fixed inset-0 bg-black bg-opacity-50 z-40" onClick={handleCloseDetailsForm}>
+            <div className="fixed inset-0 bg-black bg-opacity-20 z-40 flex items-end backdrop-blur-sm" onClick={handleCloseDetailsForm}>
               <div 
-                className="fixed bottom-0 left-0 right-0 bg-white dark:bg-slate-800 rounded-t-2xl p-6 max-h-[90vh] overflow-y-auto z-50 animate-in slide-in-from-bottom-5"
+                className="w-full bg-white dark:bg-slate-800 rounded-t-2xl p-4 max-h-[80vh] overflow-y-auto z-50 animate-in slide-in-from-bottom-5 sm:w-96 sm:mx-auto sm:mb-8 sm:rounded-2xl sm:items-center"
                 onClick={(e) => e.stopPropagation()}
               >
                 {/* Header */}
-                <div className="flex items-center justify-between mb-6">
-                  <h3 className="text-xl font-bold">Add Order Details</h3>
+                <div className="flex items-center justify-between mb-4">
+                  <h3 className="text-lg font-semibold">Order Details</h3>
                   <button
                     onClick={handleCloseDetailsForm}
                     className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200"
                   >
-                    <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
                     </svg>
                   </button>
                 </div>
 
-                {/* Order Info */}
-                <div className="bg-slate-100 dark:bg-slate-700 rounded-lg p-4 mb-6">
-                  <div className="font-semibold text-slate-900 dark:text-white">Order Information</div>
-                  <div className="text-sm text-slate-600 dark:text-slate-300 mt-2">
-                    {orders.find(o => o.id === detailsOrderId) && (
-                      <>
-                        <div>Code: {orders.find(o => o.id === detailsOrderId)?.code}</div>
-                        <div>From: {orders.find(o => o.id === detailsOrderId)?.pickup_address}</div>
-                        <div>To: {orders.find(o => o.id === detailsOrderId)?.dropoff_address}</div>
-                      </>
-                    )}
-                  </div>
-                </div>
-
                 {/* Form Fields */}
-                <div className="space-y-5 mb-6">
+                <div className="space-y-3 mb-4">
                   {/* Quantity Field */}
                   <div>
-                    <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
-                      Quantity (items)
-                      <span className="text-slate-400 ml-1">Optional</span>
+                    <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
+                      Quantity
                     </label>
                     <input
                       type="number"
                       min="1"
-                      placeholder="Enter number of items"
+                      placeholder="Items"
                       value={orderDetails.quantity || ''}
                       onChange={(e) => setOrderDetails(prev => ({
                         ...prev,
                         quantity: e.target.value ? parseInt(e.target.value) : undefined
                       }))}
-                      className="w-full px-4 py-3 rounded-lg border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-green-500"
+                      className="w-full px-3 py-2 rounded-lg border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-green-500 text-sm"
                     />
-                    <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">Total number of items to pick up</p>
                   </div>
 
                   {/* Weight Field */}
                   <div>
-                    <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
+                    <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
                       Weight (kg)
-                      <span className="text-slate-400 ml-1">Optional</span>
                     </label>
                     <input
                       type="number"
                       min="0"
                       step="0.1"
-                      placeholder="Enter weight in kilograms"
+                      placeholder="Weight"
                       value={orderDetails.weight_kg || ''}
                       onChange={(e) => setOrderDetails(prev => ({
                         ...prev,
                         weight_kg: e.target.value ? parseFloat(e.target.value) : undefined
                       }))}
-                      className="w-full px-4 py-3 rounded-lg border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-green-500"
+                      className="w-full px-3 py-2 rounded-lg border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-green-500 text-sm"
                     />
-                    <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">Total weight of all items</p>
                   </div>
 
                   {/* Description Field */}
                   <div>
-                    <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
-                      Additional Details
-                      <span className="text-slate-400 ml-1">Optional</span>
+                    <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
+                      Notes
                     </label>
                     <textarea
-                      placeholder="Add any notes (fragile items, special handling, etc.)"
+                      placeholder="Special instructions..."
                       value={orderDetails.description}
                       onChange={(e) => setOrderDetails(prev => ({
                         ...prev,
                         description: e.target.value
                       }))}
-                      rows={4}
-                      className="w-full px-4 py-3 rounded-lg border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-green-500 resize-none"
+                      rows={3}
+                      className="w-full px-3 py-2 rounded-lg border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-green-500 resize-none text-sm"
                     />
-                    <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">Max 500 characters</p>
                   </div>
                 </div>
 
                 {/* Action Buttons */}
-                <div className="flex gap-3 pb-4">
+                <div className="flex gap-2">
                   <button
                     onClick={handleCloseDetailsForm}
-                    className="flex-1 px-4 py-3 rounded-lg border border-slate-200 dark:border-slate-600 text-slate-700 dark:text-slate-300 font-medium hover:bg-slate-50 dark:hover:bg-slate-700 transition-all"
+                    className="flex-1 px-3 py-2 rounded-lg border border-slate-200 dark:border-slate-600 text-slate-700 dark:text-slate-300 font-medium hover:bg-slate-50 dark:hover:bg-slate-700 transition-all text-sm"
                   >
                     Cancel
                   </button>
