@@ -95,13 +95,18 @@ export default function NavBar() {
 
           <nav className="hidden md:flex items-center gap-3">
             <Link
+              href="/borrow"
+              className="text-sm px-4 py-2 rounded-lg bg-red-600 text-white hover:bg-red-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-red-300 font-medium">
+              Borrow
+            </Link>
+            <Link
               href="/financing"
-              className="text-sm px-3 py-2 rounded-md hover:underline focus:outline-none focus-visible:ring-2 focus-visible:ring-red-300">
+              className="text-sm px-4 py-2 rounded-lg bg-red-600 text-white hover:bg-red-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-red-300 font-medium">
               Financing
             </Link>
             <Link
               href="/offers"
-              className="text-sm px-3 py-2 rounded-md hover:underline focus:outline-none focus-visible:ring-2 focus-visible:ring-red-300">
+              className="text-sm px-4 py-2 rounded-lg bg-red-600 text-white hover:bg-red-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-red-300 font-medium">
               Offers
             </Link>
           </nav>
@@ -247,15 +252,21 @@ export default function NavBar() {
           <div className="mt-2 rounded-xl bg-white/95 dark:bg-black/60 shadow-lg p-4 backdrop-blur-sm">
             <div className="flex flex-col gap-2">
               <Link
+                href="/borrow"
+                onClick={() => setMobileOpen(false)}
+                className="block text-lg px-4 py-3 rounded-lg bg-red-600 text-white hover:bg-red-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-red-300 font-medium">
+                Borrow
+              </Link>
+              <Link
                 href="/financing"
                 onClick={() => setMobileOpen(false)}
-                className="block text-lg px-4 py-3 rounded-lg hover:bg-slate-50 dark:hover:bg-white/5 focus:outline-none focus-visible:ring-2 focus-visible:ring-red-300">
+                className="block text-lg px-4 py-3 rounded-lg bg-red-600 text-white hover:bg-red-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-red-300 font-medium">
                 Financing
               </Link>
               <Link
                 href="/offers"
                 onClick={() => setMobileOpen(false)}
-                className="block text-lg px-4 py-3 rounded-lg hover:bg-slate-50 dark:hover:bg-white/5 focus:outline-none focus-visible:ring-2 focus-visible:ring-red-300">
+                  className="block text-lg px-4 py-3 rounded-lg bg-red-600 text-white hover:bg-red-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-red-300 font-medium">
                 Offers
               </Link>
 

@@ -130,11 +130,23 @@ export const fetchOrders = createAsyncThunk<
   const url = `${baseUrl}?${params.toString()}`;
 
   try {
-    const token = typeof window !== 'undefined' ? localStorage.getItem('access_token') : null;
+    let token: string | null = null;
+    if (typeof window !== 'undefined') {
+      const authState = localStorage.getItem('wildwash_auth_state');
+      if (authState) {
+        try {
+          const parsed = JSON.parse(authState);
+          token = parsed.token ?? null;
+        } catch (e) {
+          console.error('Error parsing auth state:', e);
+        }
+      }
+    }
+    
     const headers: Record<string, string> = { Accept: 'application/json' };
     let res: Response;
     if (token) {
-      headers['Authorization'] = `Bearer ${token}`;
+      headers['Authorization'] = `Token ${token}`;
       res = await fetch(url, { headers });
     } else {
       // session cookie flow

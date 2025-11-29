@@ -5,19 +5,28 @@ const API_BASE = process.env.NEXT_PUBLIC_API_BASE ?? process.env.NEXT_PUBLIC_API
 async function fetchWithAuth(url: string, options: RequestInit = {}) {
   let token = null;
   if (typeof window !== 'undefined') {
+    // Primary source: new unified auth state used across the app
     const authState = localStorage.getItem(AUTH_STORAGE_KEY);
     if (authState) {
       try {
-        const { token: storedToken } = JSON.parse(authState);
-        token = storedToken;
+        const parsed = JSON.parse(authState);
+        // support several possible token property names from different flows
+        token = parsed?.token ?? parsed?.access ?? parsed?.key ?? null;
       } catch (e) {
         console.error('Error parsing auth state:', e);
       }
+    }
+
+    // Fallbacks for older code paths that write different localStorage keys
+    if (!token) {
+      token = localStorage.getItem('access_token') || localStorage.getItem('token') || null;
     }
   }
   
   const headers = {
     'Content-Type': 'application/json',
+    // If token exists, attach DRF Token auth header. If it looks like a Bearer token,
+    // client code should still work with DRF TokenAuthentication for local dev.
     ...(token ? { 'Authorization': `Token ${token}` } : {}),
     ...options.headers,
   };

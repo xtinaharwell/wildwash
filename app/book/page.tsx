@@ -28,6 +28,10 @@ export default function Page() {
   const [sending, setSending] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
   const [serverErrors, setServerErrors] = useState<any | null>(null);
+  const [scheduleOption, setScheduleOption] = useState<'today' | 'scheduled'>('today');
+  const [scheduledAt, setScheduledAt] = useState<string>(''); // stores value from datetime-local input
+  const [customerNote, setCustomerNote] = useState<string>('');
+  const [summaryExpanded, setSummaryExpanded] = useState<boolean>(false);
 
   const cartItems = useAppSelector(selectCartItems);
   const cartServiceIds = useMemo(() => cartItems.map(item => item.id), [cartItems]);
@@ -140,7 +144,11 @@ export default function Page() {
         items: cartItems.length,
         weight_kg: null, // To be determined at pickup
         price: null, // To be determined at pickup
-        estimated_delivery: null, // To be set by backend
+    estimated_delivery: null, // To be set by backend
+  // Include an optional customer note/description
+  ...(customerNote ? { description: customerNote } : {}),
+    // If user chose to schedule a pickup, send requested_pickup_at in ISO format
+    ...(scheduleOption === 'scheduled' && scheduledAt ? { requested_pickup_at: new Date(scheduledAt).toISOString() } : {}),
     };
 
     const result = await postBooking(payload);
@@ -222,6 +230,18 @@ export default function Page() {
 
               </div>
 
+              <div>
+                <label htmlFor="customer-note" className="block text-xs text-slate-500 dark:text-slate-400 mb-1">Note for the rider (optional)</label>
+                <textarea
+                  id="customer-note"
+                  value={customerNote}
+                  onChange={(e) => setCustomerNote(e.target.value)}
+                  placeholder="Any special instructions or notes for pickup"
+                  className="w-full rounded-lg border border-slate-200 dark:border-slate-600 p-3 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-sky-300 bg-white dark:bg-slate-700 text-slate-900 dark:text-slate-100 placeholder-slate-400 dark:placeholder-slate-500"
+                  rows={3}
+                />
+              </div>
+
               <div className="space-y-3">
                 <div className="text-sm font-semibold text-slate-700 dark:text-slate-200">Dropoff Address</div>
                 <div className="space-y-2">
@@ -283,6 +303,34 @@ export default function Page() {
                 </div>
               </div>
 
+              <div className="space-y-3">
+                <div className="text-sm font-semibold text-slate-700 dark:text-slate-200">Schedule</div>
+                <div className="flex items-center gap-4">
+                  <label className="flex items-center space-x-2">
+                    <input type="radio" name="schedule" value="today" checked={scheduleOption === 'today'} onChange={() => setScheduleOption('today')} className="rounded" />
+                    <span className="text-sm text-slate-700 dark:text-slate-300">BOOK NOW</span>
+                  </label>
+                  <label className="flex items-center space-x-2">
+                    <input type="radio" name="schedule" value="scheduled" checked={scheduleOption === 'scheduled'} onChange={() => setScheduleOption('scheduled')} className="rounded" />
+                    <span className="text-sm text-slate-700 dark:text-slate-300">SCHEDULE</span>
+                  </label>
+                </div>
+
+                {scheduleOption === 'scheduled' && (
+                  <div className="mt-2">
+                    <label htmlFor="scheduled-at" className="block text-xs text-slate-500 mb-1">Pickup date & time</label>
+                    <input
+                      id="scheduled-at"
+                      type="datetime-local"
+                      value={scheduledAt}
+                      onChange={(e) => setScheduledAt(e.target.value)}
+                      className="w-full rounded-lg border border-slate-200 dark:border-slate-600 p-3 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-red-500 bg-white dark:bg-slate-700 text-slate-900 dark:text-slate-100"
+                    />
+                    <div className="text-xs text-slate-500 mt-1">Times are local to your device. We'll schedule pickup for the chosen time.</div>
+                  </div>
+                )}
+              </div>
+
                 <div className="pt-2">
                 {message && (
                   <div className="rounded-md bg-amber-50 dark:bg-amber-900/20 border border-amber-100 dark:border-amber-800 p-3 text-sm text-amber-800 dark:text-amber-200">
@@ -301,7 +349,8 @@ export default function Page() {
           <aside className="w-full md:w-1/3 bg-gradient-to-b from-slate-50 to-white dark:from-slate-800 dark:to-slate-900 p-6 md:p-8 border-l border-slate-100 dark:border-slate-700">
             <div className="sticky top-6">
               <h3 className="text-sm font-semibold text-slate-700 dark:text-slate-200">Booking Summary</h3>
-              <div className="mt-3 space-y-3 text-sm text-slate-600 dark:text-slate-400">
+              {/* Desktop / wide view: full summary */}
+              <div className="hidden md:block mt-3 space-y-3 text-sm text-slate-600 dark:text-slate-400">
                 <div>
                   <div className="text-xs text-slate-500 dark:text-slate-500">Pickup Location</div>
                   <div className="mt-1 font-medium text-slate-800 dark:text-slate-100">{pickupBuilding || "—"}</div>
@@ -323,6 +372,49 @@ export default function Page() {
                   <div className="text-xs text-slate-500 dark:text-slate-500">Delivery Speed</div>
                   <div className="mt-1 font-medium text-slate-800 dark:text-slate-100">{urgency === 1 ? "Normal (48h)" : urgency === 2 ? "Fast (24h)" : "Express (4-6h)"}</div>
                 </div>
+              </div>
+
+              {/* Mobile: compact summary with expandable details to avoid long scrolling */}
+              <div className="md:hidden mt-3">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <div className="text-xs text-slate-500">Pickup</div>
+                    <div className="font-medium text-slate-800 dark:text-slate-100 truncate max-w-xs">{pickupBuilding || "—"}</div>
+                  </div>
+                  <div className="text-right">
+                    <div className="text-xs text-slate-500">Services</div>
+                    <div className="font-medium text-slate-800 dark:text-slate-100">{cartItems.length}</div>
+                  </div>
+                </div>
+                <div className="mt-2 flex items-center justify-between">
+                  <div className="text-xs text-slate-500">Total</div>
+                  <div className="font-semibold text-red-600 dark:text-red-400">KSh {cartItems.reduce((acc, item) => acc + Number(item.price), 0).toFixed(2)}</div>
+                </div>
+
+                <div className="mt-3 flex items-center gap-2">
+                  <button onClick={() => setSummaryExpanded(s => !s)} className="text-sm text-blue-600 dark:text-blue-400 underline">
+                    {summaryExpanded ? 'Hide details' : 'Show details'}
+                  </button>
+                  <div className="text-xs text-slate-500">{urgency === 1 ? "Normal" : urgency === 2 ? "Fast" : "Express"}</div>
+                </div>
+
+                {summaryExpanded && (
+                  <div className="mt-3 space-y-3 text-sm text-slate-600 dark:text-slate-400 max-h-56 overflow-auto">
+                    <div>
+                      <div className="text-xs text-slate-500 dark:text-slate-500">Pickup Location</div>
+                      <div className="mt-1 font-medium text-slate-800 dark:text-slate-100">{pickupBuilding || "—"}</div>
+                      <div className="text-xs text-slate-500 dark:text-slate-500">{pickupContact || "No contact provided"}</div>
+                    </div>
+                    <div>
+                      <div className="text-xs text-slate-500 dark:text-slate-500">Dropoff Location</div>
+                      <div className="mt-1 font-medium text-slate-800 dark:text-slate-100">{sameAsPickup ? "(Same as pickup)" : dropoffAddress || "—"}</div>
+                    </div>
+                    <div>
+                      <div className="text-xs text-slate-500 dark:text-slate-500">Selected Services</div>
+                      <div className="mt-1 font-medium text-slate-800 dark:text-slate-100">{cartItems.map(item => item.name).join(", ") || "No services selected"}</div>
+                    </div>
+                  </div>
+                )}
               </div>
 
               <div className="mt-6 pt-4 border-t border-slate-200 dark:border-slate-700">

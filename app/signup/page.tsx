@@ -4,6 +4,7 @@ import React, { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useDispatch } from "react-redux";
 import { setAuth } from "../../redux/features/authSlice";
+import { handleLogin, LOGIN_ENDPOINTS } from '@/lib/api/loginHelpers';
 import Link from "next/link";
 
 const API_BASE = process.env.NEXT_PUBLIC_API_BASE ?? process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://127.0.0.1:8000";
@@ -18,6 +19,8 @@ export default function SignupPage() {
     confirmPassword: "",
     location: "",
   });
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -56,33 +59,15 @@ export default function SignupPage() {
         throw new Error(body?.detail || body || `Status ${res.status}`);
       }
 
-      // After successful registration, attempt to login
-      const loginRes = await fetch(`${API_BASE}/users/login/`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          username: formData.username,
-          password: formData.password,
-        }),
-      });
-
-      if (!loginRes.ok) {
-        router.push("/login");
-        return;
-      }
-
-      const data = await loginRes.json();
-      const token = data?.token ?? data?.access ?? null;
-      const user = data?.user;
-
-      if (token && user) {
-        localStorage.setItem("access_token", token);
-        localStorage.setItem("user", JSON.stringify(user));
-        dispatch(setAuth(user));
+      // After successful registration, attempt to login via our shared helper so
+      // the auth state is persisted consistently (AUTH_STORAGE_KEY)
+      const loginResult = await handleLogin(LOGIN_ENDPOINTS.USER, { username: formData.username, password: formData.password }, dispatch);
+      if (loginResult.success) {
         router.push("/");
         return;
       }
-      
+
+      // If helper fails for some reason, fall back to redirecting to login
       router.push("/login");
     } catch (err: any) {
       setError(err?.message ?? "Registration failed");
@@ -148,28 +133,50 @@ export default function SignupPage() {
 
           <div>
             <label className="text-xs text-slate-500">Password</label>
-            <input
-              name="password"
-              type="password"
-              value={formData.password}
-              onChange={handleChange}
-              className="mt-1 w-full rounded-md border dark:border-slate-800 bg-white dark:bg-slate-900 px-3 py-2 text-sm"
-              placeholder="Create a password"
-              autoComplete="new-password"
-            />
+            <div className="mt-1 relative">
+              <input
+                name="password"
+                type={showPassword ? "text" : "password"}
+                value={formData.password}
+                onChange={handleChange}
+                className="w-full rounded-md border dark:border-slate-800 bg-white dark:bg-slate-900 px-3 py-2 text-sm"
+                placeholder="Create a password"
+                autoComplete="new-password"
+              />
+              <button
+                type="button"
+                onClick={() => setShowPassword((s) => !s)}
+                aria-pressed={showPassword}
+                aria-label={showPassword ? "Hide password" : "Show password"}
+                className="absolute inset-y-0 right-0 pr-3 flex items-center text-sm text-slate-500"
+              >
+                {showPassword ? "Hide" : "Show"}
+              </button>
+            </div>
           </div>
 
           <div>
             <label className="text-xs text-slate-500">Confirm Password</label>
-            <input
-              name="confirmPassword"
-              type="password"
-              value={formData.confirmPassword}
-              onChange={handleChange}
-              className="mt-1 w-full rounded-md border dark:border-slate-800 bg-white dark:bg-slate-900 px-3 py-2 text-sm"
-              placeholder="Confirm your password"
-              autoComplete="new-password"
-            />
+            <div className="mt-1 relative">
+              <input
+                name="confirmPassword"
+                type={showConfirmPassword ? "text" : "password"}
+                value={formData.confirmPassword}
+                onChange={handleChange}
+                className="w-full rounded-md border dark:border-slate-800 bg-white dark:bg-slate-900 px-3 py-2 text-sm"
+                placeholder="Confirm your password"
+                autoComplete="new-password"
+              />
+              <button
+                type="button"
+                onClick={() => setShowConfirmPassword((s) => !s)}
+                aria-pressed={showConfirmPassword}
+                aria-label={showConfirmPassword ? "Hide password" : "Show password"}
+                className="absolute inset-y-0 right-0 pr-3 flex items-center text-sm text-slate-500"
+              >
+                {showConfirmPassword ? "Hide" : "Show"}
+              </button>
+            </div>
           </div>
 
           {error && <div className="text-sm text-red-600 dark:text-red-400">{error}</div>}

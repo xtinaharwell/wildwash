@@ -51,7 +51,7 @@ export default function CartPage() {
 
             <div className="mt-8 pt-4 border-t border-slate-200 dark:border-slate-700">
                 <div className="flex justify-between items-center">
-                    <h2 className="text-xl font-bold">Total:</h2>
+                    <h2 className="text-xl font-bold">Estimated Total:</h2>
                     <p className="text-xl font-bold">KSh {totalPrice.toFixed(2)}</p>
                 </div>
             </div>
@@ -61,7 +61,7 @@ export default function CartPage() {
                 Clear Cart
               </button>
               <Link href="/book" className="bg-red-600 text-white px-6 py-3 rounded-md font-medium">
-                Book a Pick Up
+                Book / Schedule Pick Up
               </Link>
             </div>
           </div>

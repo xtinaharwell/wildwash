@@ -5,12 +5,13 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import Image from 'next/image';
 import { useDispatch, useSelector } from 'react-redux';
-import { setAuth } from '@/redux/features/authSlice';
+import { handleLogin, LOGIN_ENDPOINTS } from '@/lib/api/loginHelpers';
 import type { RootState } from '@/redux/store';
 
 export default function RiderLoginPage() {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
@@ -50,38 +51,35 @@ export default function RiderLoginPage() {
     setError('');
     setLoading(true);
 
-    try {
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_BASE}/users/login/`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ username, password }),
-      });
+    const result = await handleLogin(
+      LOGIN_ENDPOINTS.USER,
+      { username, password },
+      dispatch
+    );
 
-      const data = await res.json();
-
-      if (!res.ok) {
-        throw new Error(data.detail || 'Login failed');
+    if (result.success) {
+      // Check if user is actually a rider
+      const authState = localStorage.getItem('wildwash_auth_state');
+      if (authState) {
+        try {
+          const parsed = JSON.parse(authState);
+          if (parsed.user?.role === 'rider') {
+            // The Redux state will be updated by handleLogin, and the useEffect above
+            // will handle the redirect when auth state changes
+          } else {
+            setError('Access denied. This login is for riders only.');
+            // Clear the auth state if not a rider
+            localStorage.removeItem('wildwash_auth_state');
+          }
+        } catch (e) {
+          setError('Failed to parse authentication response');
+        }
       }
-
-      if (data.user?.role === 'rider') {
-        // Store auth data
-        dispatch(setAuth({
-          user: data.user,
-          token: data.token,
-        }));
-
-        // Redirect to rider dashboard
-        router.push('/rider');
-      } else {
-        throw new Error('Access denied. This login is for riders only.');
-      }
-    } catch (err: any) {
-      setError(err.message || 'Failed to login');
-    } finally {
-      setLoading(false);
+    } else {
+      setError(result.error || 'Failed to login');
     }
+
+    setLoading(false);
   };
 
   return (
@@ -132,17 +130,26 @@ export default function RiderLoginPage() {
               <label htmlFor="password" className="block text-sm font-medium leading-6 text-gray-900 dark:text-gray-200">
                 Password
               </label>
-              <div className="mt-2">
+              <div className="mt-2 relative">
                 <input
                   id="password"
                   name="password"
-                  type="password"
+                  type={showPassword ? "text" : "password"}
                   autoComplete="current-password"
                   required
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   className="block w-full rounded-md border-0 py-1.5 text-gray-900 dark:text-white shadow-sm ring-1 ring-inset ring-gray-300 dark:ring-gray-700 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-red-600 dark:focus:ring-red-500 sm:text-sm sm:leading-6 dark:bg-gray-800/50"
                 />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword((s) => !s)}
+                  aria-pressed={showPassword}
+                  aria-label={showPassword ? "Hide password" : "Show password"}
+                  className="absolute inset-y-0 right-0 pr-3 flex items-center text-sm text-slate-500"
+                >
+                  {showPassword ? "Hide" : "Show"}
+                </button>
               </div>
             </div>
 

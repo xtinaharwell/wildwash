@@ -13,19 +13,38 @@ export default function LoginPage() {
   const dispatch = useDispatch();
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const isAuthenticated = useSelector((state: RootState) => state.auth.isAuthenticated);
   const isLoading = useSelector((state: RootState) => state.auth.isLoading);
+  const user = useSelector((state: RootState) => state.auth.user);
 
-  // If already authenticated, redirect to home or the redirect URL
+  // If already authenticated, redirect based on user role
   useEffect(() => {
-    if (!isLoading && isAuthenticated) {
+    if (!isLoading && isAuthenticated && user) {
       const params = new URLSearchParams(window.location.search);
-      const redirectUrl = params.get('redirect') || '/';
-      router.push(redirectUrl);
+      const redirectUrl = params.get('redirect');
+      
+      // If explicit redirect URL provided, use it
+      if (redirectUrl) {
+        router.push(redirectUrl);
+        return;
+      }
+      
+      // Otherwise redirect based on user role
+      if (user.is_superuser || user.role === 'admin') {
+        router.push('/admin');
+      } else if (user.is_staff || user.role === 'staff') {
+        router.push('/staff');
+      } else if (user.role === 'rider') {
+        router.push('/rider');
+      } else {
+        // Default redirect for regular users
+        router.push('/');
+      }
     }
-  }, [isAuthenticated, isLoading, router]);
+  }, [isAuthenticated, isLoading, user, router]);
 
   // Show loading state while auth is initializing
   if (isLoading) {
@@ -53,10 +72,8 @@ export default function LoginPage() {
     );
 
     if (result.success) {
-      // Get the redirect URL from the search params
-      const params = new URLSearchParams(window.location.search);
-      const redirectUrl = params.get('redirect') || '/';
-      router.push(redirectUrl);
+      // The Redux state will be updated by handleLogin, and the useEffect above
+      // will handle the redirect based on user role
     } else {
       setError(result.error || "Login failed");
     }
@@ -92,14 +109,25 @@ export default function LoginPage() {
 
           <div>
             <label className="text-xs text-slate-500">Password</label>
-            <input
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              type="password"
-              className="mt-1 w-full rounded-md border dark:border-slate-800 bg-white dark:bg-slate-900 px-3 py-2 text-sm"
-              placeholder="password"
-              autoComplete="current-password"
-            />
+            <div className="mt-1 relative">
+              <input
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                type={showPassword ? "text" : "password"}
+                className="w-full rounded-md border dark:border-slate-800 bg-white dark:bg-slate-900 px-3 py-2 text-sm"
+                placeholder="password"
+                autoComplete="current-password"
+              />
+              <button
+                type="button"
+                onClick={() => setShowPassword((s) => !s)}
+                aria-pressed={showPassword}
+                aria-label={showPassword ? "Hide password" : "Show password"}
+                className="absolute inset-y-0 right-0 pr-3 flex items-center text-sm text-slate-500"
+              >
+                {showPassword ? "Hide" : "Show"}
+              </button>
+            </div>
           </div>
 
           {error && <div className="text-sm text-red-600 dark:text-red-400">{error}</div>}

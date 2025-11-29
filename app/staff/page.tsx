@@ -15,6 +15,8 @@ export default function StaffDashboard(): React.ReactElement {
   const [error, setError] = useState<string | null>(null);
   const [profile, setProfile] = useState<any | null>(null);
   const [orders, setOrders] = useState<Order[]>([]);
+  const [detailsFormOrderId, setDetailsFormOrderId] = useState<number | null>(null);
+  const [detailsForm, setDetailsForm] = useState<{ items?: number; weight_kg?: string; pickup_notes?: string; actual_price?: string }>({});
   const [statusFilter, setStatusFilter] = useState<string>('');
   const [riderFilter, setRiderFilter] = useState<string>('');
   const [searchQuery, setSearchQuery] = useState<string>('');
@@ -88,7 +90,8 @@ export default function StaffDashboard(): React.ReactElement {
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gradient-to-b from-white via-slate-50 to-slate-100 dark:from-slate-900 dark:via-slate-800 dark:to-slate-900">
-        <div className="rounded-lg bg-white dark:bg-slate-800 p-8 shadow-lg border border-slate-200 dark:border-slate-700">
+        {/* center spinner and text inside the white card */}
+        <div className="rounded-lg bg-white dark:bg-slate-800 p-8 shadow-lg border border-slate-200 dark:border-slate-700 flex flex-col items-center justify-center">
           <Spinner className="w-8 h-8 text-red-600 dark:text-red-400" />
           <div className="mt-4 text-slate-600 dark:text-slate-400 text-sm">Loading dashboard...</div>
         </div>
@@ -195,7 +198,9 @@ export default function StaffDashboard(): React.ReactElement {
                 <th className="text-left py-2 px-3 w-32">Code</th>
                 <th className="text-left py-2 px-3 w-72">Status</th>
                 <th className="text-left py-2 px-3">Rider</th>
-                <th className="text-right py-2 px-3">Price</th>
+                <th className="text-right py-2 px-3">Estimated Price</th>
+                <th className="text-right py-2 px-3">Actual Price</th>
+                <th className="text-right py-2 px-3">Actions</th>
                 <th className="text-right py-2 px-3 w-32">Date</th>
               </tr>
             </thead>
@@ -219,8 +224,53 @@ export default function StaffDashboard(): React.ReactElement {
                       ? (o.rider?.username || o.rider?.first_name || o.rider?.name || '—')
                       : o.rider ?? o.user ?? '—'}
                   </td>
-                  <td className="py-2 px-3 text-right text-slate-900 dark:text-slate-300">{Number(o.price ?? o.price_display ?? 0).toLocaleString()}</td>
-                  <td className="py-2 px-3 text-right text-slate-600 dark:text-slate-400">{o.created_at?.split?.('T')?.[0] ?? '—'}</td>
+                  <td className="py-2 px-3 text-right text-slate-900 dark:text-slate-300">
+                    {(() => {
+                      // Prefer a numeric total_price if provided by the API
+                      const total = o.total_price ?? null;
+                      if (total !== null && total !== undefined && !isNaN(Number(total))) {
+                        return `KSh ${Number(total).toLocaleString()}`;
+                      }
+
+                      // Fall back to numeric price
+                      if (o.price !== undefined && o.price !== null && !isNaN(Number(o.price))) {
+                        return `KSh ${Number(o.price).toLocaleString()}`;
+                      }
+
+                      // Fall back to pre-formatted price_display string from API
+                      if (o.price_display) return o.price_display;
+
+                      return '—';
+                    })()}
+                  </td>
+                  <td className="py-2 px-3 text-right text-slate-900 dark:text-slate-300">
+                    {(() => {
+                      if (o.actual_price !== undefined && o.actual_price !== null && !isNaN(Number(o.actual_price))) {
+                        return `KSh ${Number(o.actual_price).toLocaleString()}`;
+                      }
+                      return '—';
+                    })()}
+                  </td>
+                  <td className="py-2 px-3 text-right">
+                    <div className="flex items-center justify-end gap-2">
+                      <button
+                        onClick={() => {
+                          // Open details modal for this order
+                          setDetailsFormOrderId(o.id);
+                          setDetailsForm({
+                            items: o.items ?? 1,
+                            weight_kg: o.weight_kg ? String(o.weight_kg) : '',
+                            pickup_notes: o.pickup_notes ?? '',
+                            actual_price: o.actual_price !== undefined && o.actual_price !== null ? String(o.actual_price) : ''
+                          });
+                        }}
+                        className="px-2 py-1 text-xs rounded bg-slate-100 dark:bg-slate-700 text-slate-800 dark:text-slate-200"
+                      >
+                        Add details
+                      </button>
+                      <div className="text-right text-slate-600 dark:text-slate-400">{o.created_at?.split?.('T')?.[0] ?? '—'}</div>
+                    </div>
+                  </td>
                 </tr>
               ))}
               {filteredOrders.length === 0 && (
@@ -234,6 +284,86 @@ export default function StaffDashboard(): React.ReactElement {
           </table>
         </div>
       </div>
+      {/* Details modal overlay */}
+      {detailsFormOrderId !== null && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
+          <div className="w-full max-w-md bg-white dark:bg-slate-800 rounded shadow-lg p-4">
+            <h3 className="text-lg font-semibold mb-2 text-slate-900 dark:text-slate-100">Add / Edit Details</h3>
+            <div className="space-y-2">
+              <label className="text-xs text-slate-600">Quantity</label>
+              <input
+                type="number"
+                min={1}
+                value={detailsForm.items ?? 1}
+                onChange={(e) => setDetailsForm(prev => ({ ...prev, items: Number(e.target.value) }))}
+                className="w-full px-2 py-1 rounded border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-sm"
+              />
+
+              <label className="text-xs text-slate-600">Weight (kg)</label>
+              <input
+                type="number"
+                step="0.1"
+                value={detailsForm.weight_kg ?? ''}
+                onChange={(e) => setDetailsForm(prev => ({ ...prev, weight_kg: e.target.value }))}
+                className="w-full px-2 py-1 rounded border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-sm"
+              />
+
+              <label className="text-xs text-slate-600">Short description / notes</label>
+              <textarea
+                value={detailsForm.pickup_notes ?? ''}
+                onChange={(e) => setDetailsForm(prev => ({ ...prev, pickup_notes: e.target.value }))}
+                className="w-full px-2 py-1 rounded border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-sm"
+                rows={3}
+                placeholder="e.g. 3 shirts, 2 towels"
+              />
+
+              <label className="text-xs text-slate-600">Actual price paid (KSh)</label>
+              <input
+                type="number"
+                step="0.01"
+                value={detailsForm.actual_price ?? ''}
+                onChange={(e) => setDetailsForm(prev => ({ ...prev, actual_price: e.target.value }))}
+                className="w-full px-2 py-1 rounded border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-sm"
+                placeholder="e.g. 350.00"
+              />
+            </div>
+
+            <div className="mt-4 flex items-center justify-end gap-2">
+              <button
+                onClick={() => setDetailsFormOrderId(null)}
+                className="px-3 py-1 rounded bg-slate-100 dark:bg-slate-700"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={async () => {
+                  try {
+                    // Build payload and only include fields that are set
+                    const payload: any = {
+                      status: 'in_progress', // keep existing status or you could omit
+                    };
+                    if (detailsForm.items !== undefined) payload.quantity = detailsForm.items;
+                    if (detailsForm.weight_kg !== undefined) payload.weight_kg = detailsForm.weight_kg;
+                    if (detailsForm.pickup_notes !== undefined) payload.description = detailsForm.pickup_notes;
+                    if (detailsForm.actual_price !== undefined && detailsForm.actual_price !== '') payload.actual_price = detailsForm.actual_price;
+
+                    // Send PATCH to update order details
+                    await client.patch(`/orders/update/?id=${detailsFormOrderId}`, payload);
+                    setDetailsFormOrderId(null);
+                    await fetchOrders();
+                  } catch (err: any) {
+                    console.error('Failed to save details:', err);
+                    alert(err?.message || 'Failed to save details');
+                  }
+                }}
+                className="px-3 py-1 rounded bg-indigo-600 text-white hover:bg-indigo-700"
+              >
+                Save details
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
     </div>
   );

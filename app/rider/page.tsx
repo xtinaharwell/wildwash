@@ -269,11 +269,11 @@ export default function RiderMapPage(): React.ReactElement {
 
   const handleOpenDetailsForm = (order: Order) => {
     setDetailsOrderId(order.id);
-    // Pre-fill with existing values if they exist
+    // Do NOT pre-fill: require the rider to enter their own quantity/weight/notes
     setOrderDetails({
-      quantity: order.items || undefined,
-      weight_kg: order.weight_kg ? Number(order.weight_kg) : undefined,
-      description: order.description || '',
+      quantity: undefined,
+      weight_kg: undefined,
+      description: '',
     });
   };
 
@@ -388,6 +388,53 @@ export default function RiderMapPage(): React.ReactElement {
       alert(err.message || 'Failed to complete pickup. Please try again.');
     } finally {
       // Clear loading state
+      setProcessingOrderId(null);
+    }
+  };
+
+  const handleMarkDelivered = async (orderId: number) => {
+    try {
+      const authState = JSON.parse(localStorage.getItem('wildwash_auth_state') || '{}');
+      const token = authState.token;
+      if (!token) throw new Error('Authentication required');
+
+      // Confirmation pattern (reuse confirmingOrderId)
+      if (confirmingOrderId !== orderId) {
+        setConfirmingOrderId(orderId);
+        if (confirmTimeoutRef.current) clearTimeout(confirmTimeoutRef.current);
+        confirmTimeoutRef.current = setTimeout(() => setConfirmingOrderId(null), 3000);
+        return;
+      }
+
+      // Second click: perform delivery
+      setConfirmingOrderId(null);
+      if (confirmTimeoutRef.current) clearTimeout(confirmTimeoutRef.current);
+
+      setProcessingOrderId(orderId);
+
+      const payload: any = { status: 'delivered', delivered_at: new Date().toISOString() };
+
+      const res = await fetch(`${API_BASE}/orders/update/?id=${orderId}`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Token ${token}`,
+        },
+        body: JSON.stringify(payload)
+      });
+
+      if (!res.ok) {
+        const errorData = await res.json().catch(() => ({}));
+        throw new Error(errorData.error || `Failed to mark delivered: ${res.status}`);
+      }
+
+      // Refresh orders and switch to delivered view
+      await refreshOrders(token);
+      setCurrentStatus('delivered');
+    } catch (err: any) {
+      console.error('Failed to mark delivered:', err);
+      alert(err?.message || 'Failed to mark delivered.');
+    } finally {
       setProcessingOrderId(null);
     }
   };
@@ -723,15 +770,28 @@ export default function RiderMapPage(): React.ReactElement {
                         </div>
                       </div>
                       {(order.status === 'in_progress' || order.status === 'ready') && (
-                        <button
-                          onClick={() => handleOpenDetailsForm(order as any)}
-                          className="px-3 py-1 text-sm rounded-full transition-all flex items-center gap-1 bg-green-600 hover:bg-green-700 text-white"
-                        >
-                          <span>Add Details</span>
-                          <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
-                            <path fillRule="evenodd" d="M10.293 3.293a1 1 0 011.414 0l6 6a1 1 0 010 1.414l-6 6a1 1 0 01-1.414-1.414L14.586 11H3a1 1 0 110-2h11.586l-4.293-4.293a1 1 0 010-1.414z" clipRule="evenodd" />
-                          </svg>
-                        </button>
+                        <div className="flex flex-col gap-2">
+                          <button
+                            onClick={() => handleOpenDetailsForm(order as any)}
+                            className="px-3 py-1 text-sm rounded-full transition-all flex items-center gap-1 bg-green-600 hover:bg-green-700 text-white"
+                          >
+                            <span>Add Details</span>
+                            <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+                              <path fillRule="evenodd" d="M10.293 3.293a1 1 0 011.414 0l6 6a1 1 0 010 1.414l-6 6a1 1 0 01-1.414-1.414L14.586 11H3a1 1 0 110-2h11.586l-4.293-4.293a1 1 0 010-1.414z" clipRule="evenodd" />
+                            </svg>
+                          </button>
+
+                          <button
+                            onClick={() => handleMarkDelivered(order.id)}
+                            disabled={processingOrderId === order.id}
+                            className={`px-3 py-1 text-sm rounded-full transition-all flex items-center gap-1 ${confirmingOrderId === order.id ? 'bg-red-600 hover:bg-red-700 text-white' : 'bg-blue-600 hover:bg-blue-700 text-white'}`}
+                          >
+                            <span>{confirmingOrderId === order.id ? 'Confirm Deliver' : 'Mark Delivered'}</span>
+                            <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+                              <path d="M2 11a1 1 0 011-1h2.586l1-1H3a1 1 0 110-2h4.586l1-1H6a1 1 0 110-2h6a1 1 0 110 2h-3.586l1 1H17a1 1 0 110 2h-2.586l-1 1H17a1 1 0 110 2H8.414l-1 1H17a1 1 0 110 2H3a1 1 0 01-1-1v-4z" />
+                            </svg>
+                          </button>
+                        </div>
                       )}
                     </div>
                   ))}
@@ -773,9 +833,9 @@ export default function RiderMapPage(): React.ReactElement {
 
           {/* Details Modal - Minimalistic */}
           {detailsOrderId !== null && (
-            <div className="fixed inset-0 bg-black bg-opacity-20 z-40 flex items-end backdrop-blur-sm" onClick={handleCloseDetailsForm}>
-              <div 
-                className="w-full bg-white dark:bg-slate-800 rounded-t-2xl p-4 max-h-[80vh] overflow-y-auto z-50 animate-in slide-in-from-bottom-5 sm:w-96 sm:mx-auto sm:mb-8 sm:rounded-2xl sm:items-center"
+            <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40" onClick={handleCloseDetailsForm}>
+              <div
+                className="w-full max-w-md bg-white dark:bg-slate-800 rounded-xl p-4 shadow-lg overflow-y-auto"
                 onClick={(e) => e.stopPropagation()}
               >
                 {/* Header */}

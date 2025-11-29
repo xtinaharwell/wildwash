@@ -19,6 +19,7 @@ export default function AdminLoginPage() {
 function AdminLoginContent() {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   
@@ -60,7 +61,8 @@ function AdminLoginContent() {
     );
 
     if (result.success) {
-      router.push(redirect);
+      // The Redux state will be updated by handleLogin, and the useEffect above
+      // will handle the redirect when auth state changes
     } else {
       setError(result.error || "An error occurred during login");
     }
@@ -108,16 +110,27 @@ function AdminLoginContent() {
               <label htmlFor="password" className="block text-sm font-medium text-slate-700 dark:text-slate-300">
                 Password
               </label>
-              <input
-                id="password"
-                name="password"
-                type="password"
-                required
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                className="mt-1 block w-full px-3 py-2 bg-white dark:bg-slate-700 border border-slate-300 dark:border-slate-600 rounded-lg text-sm shadow-sm placeholder-slate-400
-                         focus:outline-none focus:border-red-500 focus:ring-1 focus:ring-red-500"
-              />
+              <div className="mt-1 relative">
+                <input
+                  id="password"
+                  name="password"
+                  type={showPassword ? "text" : "password"}
+                  required
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  className="block w-full px-3 py-2 bg-white dark:bg-slate-700 border border-slate-300 dark:border-slate-600 rounded-lg text-sm shadow-sm placeholder-slate-400
+                           focus:outline-none focus:border-red-500 focus:ring-1 focus:ring-red-500"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword((s) => !s)}
+                  aria-pressed={showPassword}
+                  aria-label={showPassword ? "Hide password" : "Show password"}
+                  className="absolute inset-y-0 right-0 pr-3 flex items-center text-sm text-slate-500"
+                >
+                  {showPassword ? "Hide" : "Show"}
+                </button>
+              </div>
             </div>
           </div>
 

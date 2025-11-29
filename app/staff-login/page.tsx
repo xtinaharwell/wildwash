@@ -1,11 +1,12 @@
 "use client";
 
-import { useState, Suspense } from "react";
+import { useState, Suspense, useEffect } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { useDispatch } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
 import Loading from "./loading";
 import { handleLogin, LOGIN_ENDPOINTS } from "@/lib/api/loginHelpers";
 import { Spinner } from "@/components";
+import type { RootState } from "@/redux/store";
 
 export default function StaffLoginPage() {
   return (
@@ -18,6 +19,7 @@ export default function StaffLoginPage() {
 function StaffLoginContent() {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   
@@ -25,6 +27,34 @@ function StaffLoginContent() {
   const dispatch = useDispatch();
   const searchParams = useSearchParams();
   const redirect = searchParams.get("redirect") || "/staff";
+  
+  const isAuthenticated = useSelector((state: RootState) => state.auth.isAuthenticated);
+  const isLoading = useSelector((state: RootState) => state.auth.isLoading);
+  const user = useSelector((state: RootState) => state.auth.user);
+
+  // If already authenticated as staff, redirect
+  useEffect(() => {
+    if (!isLoading && isAuthenticated && user && (user.is_staff || user.role === 'staff')) {
+      router.push(redirect);
+    }
+  }, [isAuthenticated, isLoading, user, router, redirect]);
+
+  // Show loading state while auth is initializing
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-gradient-to-b from-white via-[#f8fafc] to-[#eef2ff] dark:from-[#071025] dark:via-[#041022] dark:to-[#011018] flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-red-600 mx-auto"></div>
+          <p className="mt-4 text-slate-600 dark:text-slate-300">Loading...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // If authenticated as staff, show nothing (redirect is happening)
+  if (isAuthenticated && user && (user.is_staff || user.role === 'staff')) {
+    return null;
+  }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -38,7 +68,8 @@ function StaffLoginContent() {
     );
 
     if (result.success) {
-      router.push(redirect);
+      // The Redux state will be updated by handleLogin, and the useEffect above
+      // will handle the redirect when auth state changes
     } else {
       setError(result.error || "An error occurred during login");
     }
@@ -86,16 +117,27 @@ function StaffLoginContent() {
               <label htmlFor="password" className="block text-sm font-medium text-slate-700 dark:text-slate-300">
                 Password
               </label>
-              <input
-                id="password"
-                name="password"
-                type="password"
-                required
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                className="mt-1 block w-full px-3 py-2 bg-white dark:bg-slate-700 border border-slate-300 dark:border-slate-600 rounded-lg text-sm shadow-sm placeholder-slate-400
-                         focus:outline-none focus:border-red-500 focus:ring-1 focus:ring-red-500"
-              />
+              <div className="mt-1 relative">
+                <input
+                  id="password"
+                  name="password"
+                  type={showPassword ? "text" : "password"}
+                  required
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  className="block w-full px-3 py-2 bg-white dark:bg-slate-700 border border-slate-300 dark:border-slate-600 rounded-lg text-sm shadow-sm placeholder-slate-400
+                           focus:outline-none focus:border-red-500 focus:ring-1 focus:ring-red-500"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword((s) => !s)}
+                  aria-pressed={showPassword}
+                  aria-label={showPassword ? "Hide password" : "Show password"}
+                  className="absolute inset-y-0 right-0 pr-3 flex items-center text-sm text-slate-500"
+                >
+                  {showPassword ? "Hide" : "Show"}
+                </button>
+              </div>
             </div>
           </div>
 
