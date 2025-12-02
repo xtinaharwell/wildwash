@@ -368,7 +368,17 @@ export default function BorrowPage(): React.JSX.Element {
         <div className="max-w-2xl mx-auto px-4">
           {/* Header */}
           <header className="mb-8">
-            <h1 className="text-4xl font-extrabold mb-3">Get a Loan</h1>
+            <div className="flex items-center justify-between mb-4">
+              <div>
+                <h1 className="text-4xl font-extrabold mb-2">Get a Loan</h1>
+              </div>
+              <Link
+                href="/loans"
+                className="flex items-center gap-2 px-6 py-3 bg-red-600 text-white rounded-lg font-semibold hover:bg-red-700 shadow-lg hover:shadow-xl transition-all duration-200 transform hover:scale-105">
+                <span className="text-lg"></span>
+                My Loans
+              </Link>
+            </div>
             <p className="text-lg text-slate-600 dark:text-slate-300 max-w-2xl">
               Borrow money using your pending orders or other assets as collateral. Quick approval, flexible repayment terms, and competitive rates.
             </p>
@@ -437,7 +447,7 @@ export default function BorrowPage(): React.JSX.Element {
                     setError(null);
                   }}
                   className="p-6 rounded-2xl bg-white/80 dark:bg-white/5 border-2 border-slate-200 dark:border-slate-700 hover:border-red-600 hover:shadow-lg transition-all text-left">
-                  <div className="text-4xl mb-3">📦</div>
+                  <div className="text-4xl mb-3"></div>
                   <h3 className="text-xl font-bold mb-2">Use Your Orders</h3>
                   <p className="text-sm text-slate-600 dark:text-slate-400 mb-4">
                     Use pending orders as collateral to get a loan quickly
@@ -457,7 +467,7 @@ export default function BorrowPage(): React.JSX.Element {
                     setError(null);
                   }}
                   className="p-6 rounded-2xl bg-white/80 dark:bg-white/5 border-2 border-slate-200 dark:border-slate-700 hover:border-red-600 hover:shadow-lg transition-all text-left">
-                  <div className="text-4xl mb-3">🏠</div>
+                  <div className="text-4xl mb-3"></div>
                   <h3 className="text-xl font-bold mb-2">Use Other Assets</h3>
                   <p className="text-sm text-slate-600 dark:text-slate-400 mb-4">
                     Use property, vehicles, or equipment as collateral
