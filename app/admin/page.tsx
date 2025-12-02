@@ -3,6 +3,7 @@
 import React, { useEffect, useState, useCallback } from "react";
 import Link from "next/link";
 import RouteGuard from "@/components/RouteGuard";
+import { client } from "@/lib/api/client";
 import {
   LineChart,
   Line,
@@ -51,9 +52,6 @@ type RiderLocation = {
   raw?: RawLocation;
 };
 
-/* --- Config --- */
-const API_BASE = process.env.NEXT_PUBLIC_API_BASE ?? "http://127.0.0.1:8000";
-
 /* --- Component --- */
 export default function AdminPage(): React.ReactElement {
   const [orders, setOrders] = useState<Order[]>([]);
@@ -76,14 +74,7 @@ export default function AdminPage(): React.ReactElement {
     setLoadingOrders(true);
     setErrorOrders(null);
     try {
-      const res = await fetch(`${API_BASE}/orders/`, {
-        method: "GET",
-        headers: { Accept: "application/json" },
-      });
-      if (!res.ok) {
-        throw new Error(`Orders fetch failed: ${res.status} ${res.statusText}`);
-      }
-      const data = await res.json().catch(() => null);
+      const data = await client.get("/orders/?page_size=100");
       const list: any[] = Array.isArray(data) ? data : Array.isArray(data?.results) ? data.results : [];
       setOrders(
         list.map((o: any) => ({
@@ -111,17 +102,8 @@ export default function AdminPage(): React.ReactElement {
     setLoadingLocations(true);
     setErrorLocations(null);
     try {
-      // public endpoint — no credentials required
-      const res = await fetch(`${API_BASE}/riders/`, {
-        method: "GET",
-        headers: { Accept: "application/json" },
-      });
-      if (!res.ok) {
-        throw new Error(`Riders fetch failed: ${res.status} ${res.statusText}`);
-      }
-      const data = await res.json().catch(() => null);
-
-      // Expect an array of latest locations
+      // Use authenticated client for rider locations
+      const data = await client.get("/riders/");
       const list: any[] = Array.isArray(data) ? data : Array.isArray(data?.results) ? data.results : [];
 
       setLocations(
