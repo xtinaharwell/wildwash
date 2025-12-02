@@ -57,11 +57,16 @@ type User = {
   id?: number;
   username?: string;
   email?: string;
+  phone?: string;
+  phone_number?: string;
   first_name?: string;
   last_name?: string;
+  role?: string;
+  location?: string;
   is_staff?: boolean;
   is_superuser?: boolean;
   date_joined?: string;
+  created_at?: string;
   raw?: RawUser;
 };
 
@@ -78,6 +83,9 @@ export default function AdminPage(): React.ReactElement {
   const [startDate, setStartDate] = useState<string>('');
   const [endDate, setEndDate] = useState<string>('');
   const [dateFilter, setDateFilter] = useState<'today' | 'week' | 'month' | 'custom'>('week');
+  const [userSearchQuery, setUserSearchQuery] = useState<string>('');
+  const [userRoleFilter, setUserRoleFilter] = useState<string>('');
+  const [userJoinDateFilter, setUserJoinDateFilter] = useState<string>('');
 
   const [loadingOrders, setLoadingOrders] = useState<boolean>(true);
   const [loadingLocations, setLoadingLocations] = useState<boolean>(true);
@@ -98,7 +106,7 @@ export default function AdminPage(): React.ReactElement {
           id: o.id,
           code: o.code,
           created_at: o.created_at,
-          price: o.price ?? o.price_display ?? 0,
+          price: o.total_price ?? o.price ?? o.price_display ?? 0,
           status: o.status ?? o.status_code ?? o.state ?? "unknown",
           rider: typeof o.rider === 'object' 
             ? (o.rider?.username || o.rider?.first_name || o.rider?.name || null)
@@ -158,11 +166,15 @@ export default function AdminPage(): React.ReactElement {
           id: u.id,
           username: u.username,
           email: u.email,
+          phone: u.phone ?? u.phone_number ?? null,
           first_name: u.first_name,
           last_name: u.last_name,
+          role: u.role ?? null,
+          location: u.location ?? null,
           is_staff: u.is_staff ?? false,
           is_superuser: u.is_superuser ?? false,
           date_joined: u.date_joined,
+          created_at: u.created_at,
           raw: u,
         }))
       );
@@ -186,7 +198,10 @@ export default function AdminPage(): React.ReactElement {
   const totalOrders = orders.length;
   const completed = orders.filter((o) => String(o.status ?? "").toLowerCase() === "delivered").length;
   const inProgress = orders.filter((o) => String(o.status ?? "").toLowerCase() !== "delivered").length;
-  const totalRevenue = orders.reduce((sum, o) => sum + Number(o.price ?? 0), 0);
+  const totalRevenue = orders.reduce((sum, o) => {
+    const price = Number(o.price ?? 0);
+    return sum + (isNaN(price) ? 0 : price);
+  }, 0);
 
   // Latest location per rider (in case public endpoint returns multiple per rider)
   const latestLocationByRider = (() => {
@@ -209,7 +224,8 @@ export default function AdminPage(): React.ReactElement {
       const date = o.created_at?.split?.("T")?.[0] ?? new Date().toISOString().split("T")[0];
       if (!acc[date]) acc[date] = { date, orders: 0, revenue: 0 };
       acc[date].orders += 1;
-      acc[date].revenue += Number(o.price ?? 0);
+      const price = Number(o.price ?? 0);
+      acc[date].revenue += isNaN(price) ? 0 : price;
       return acc;
     }, {})
   );
@@ -281,6 +297,50 @@ export default function AdminPage(): React.ReactElement {
     return true;
   });
 
+  const filteredUsers = users.filter(u => {
+    // Search by username, email, or name
+    if (userSearchQuery) {
+      const q = userSearchQuery.toLowerCase();
+      const matchesUsername = String(u.username ?? '').toLowerCase().includes(q);
+      const matchesEmail = String(u.email ?? '').toLowerCase().includes(q);
+      const matchesName = `${u.first_name ?? ''} ${u.last_name ?? ''}`.toLowerCase().includes(q);
+      if (!matchesUsername && !matchesEmail && !matchesName) return false;
+    }
+
+    // Filter by role
+    if (userRoleFilter) {
+      if (userRoleFilter === 'admin' && !u.is_superuser) return false;
+      if (userRoleFilter === 'staff' && (!u.is_staff || u.is_superuser)) return false;
+      if (userRoleFilter === 'user' && (u.is_staff || u.is_superuser)) return false;
+    }
+
+    // Filter by join date
+    if (userJoinDateFilter) {
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      const userJoinDate = new Date(u.date_joined ?? '');
+      userJoinDate.setHours(0, 0, 0, 0);
+
+      switch (userJoinDateFilter) {
+        case 'today':
+          if (userJoinDate.getTime() !== today.getTime()) return false;
+          break;
+        case 'week':
+          const weekAgo = new Date(today);
+          weekAgo.setDate(today.getDate() - 7);
+          if (userJoinDate.getTime() < weekAgo.getTime()) return false;
+          break;
+        case 'month':
+          const monthAgo = new Date(today);
+          monthAgo.setMonth(today.getMonth() - 1);
+          if (userJoinDate.getTime() < monthAgo.getTime()) return false;
+          break;
+      }
+    }
+
+    return true;
+  });
+
   // Compute body JSX separately to avoid complex inline nested ternaries in JSX
   const body = (() => {
     if (loadingOrders || loadingLocations) {
@@ -302,10 +362,10 @@ export default function AdminPage(): React.ReactElement {
     return (
       <div>
         {/* Tab Navigation */}
-        <div className="mb-8 flex gap-4">
+        <div className="mb-8 flex gap-2 sm:gap-3 md:gap-4 overflow-x-auto overflow-y-hidden pb-2 -mx-4 px-4 sm:mx-0 sm:px-0">
           <button
             onClick={() => setActiveTab('orders')}
-            className={`px-8 py-3 font-semibold rounded-lg transition-all ${
+            className={`px-3 sm:px-6 md:px-8 py-2 sm:py-3 text-xs sm:text-sm md:text-base font-semibold rounded-lg transition-all whitespace-nowrap flex-shrink-0 ${
               activeTab === 'orders'
                 ? 'bg-red-600 text-white shadow-lg hover:bg-red-700'
                 : 'bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700'
@@ -315,7 +375,7 @@ export default function AdminPage(): React.ReactElement {
           </button>
           <button
             onClick={() => setActiveTab('riders')}
-            className={`px-8 py-3 font-semibold rounded-lg transition-all ${
+            className={`px-3 sm:px-6 md:px-8 py-2 sm:py-3 text-xs sm:text-sm md:text-base font-semibold rounded-lg transition-all whitespace-nowrap flex-shrink-0 ${
               activeTab === 'riders'
                 ? 'bg-red-600 text-white shadow-lg hover:bg-red-700'
                 : 'bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700'
@@ -325,7 +385,7 @@ export default function AdminPage(): React.ReactElement {
           </button>
           <button
             onClick={() => setActiveTab('users')}
-            className={`px-8 py-3 font-semibold rounded-lg transition-all ${
+            className={`px-3 sm:px-6 md:px-8 py-2 sm:py-3 text-xs sm:text-sm md:text-base font-semibold rounded-lg transition-all whitespace-nowrap flex-shrink-0 ${
               activeTab === 'users'
                 ? 'bg-red-600 text-white shadow-lg hover:bg-red-700'
                 : 'bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700'
@@ -335,7 +395,7 @@ export default function AdminPage(): React.ReactElement {
           </button>
           <button
             onClick={() => setActiveTab('analytics')}
-            className={`px-8 py-3 font-semibold rounded-lg transition-all ${
+            className={`px-3 sm:px-6 md:px-8 py-2 sm:py-3 text-xs sm:text-sm md:text-base font-semibold rounded-lg transition-all whitespace-nowrap flex-shrink-0 ${
               activeTab === 'analytics'
                 ? 'bg-red-600 text-white shadow-lg hover:bg-red-700'
                 : 'bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700'
@@ -485,7 +545,11 @@ export default function AdminPage(): React.ReactElement {
                       </td>
                       <td className="py-3 px-4">{o.raw?.user?.location || "—"}</td>
                       <td className="py-3 px-4">{o.rider ?? "—"}</td>
-                      <td className="py-3 px-4 text-right font-medium">{Number(o.price ?? 0).toLocaleString()}</td>
+                      <td className="py-3 px-4 text-right font-medium">
+                        {isNaN(Number(o.price)) || o.price === null || o.price === undefined 
+                          ? '—' 
+                          : Number(o.price).toLocaleString()}
+                      </td>
                       <td className="py-3 px-4 text-right text-slate-500">{o.created_at?.split?.("T")?.[0] ?? "—"}</td>
                     </tr>
                   ))}
@@ -638,34 +702,87 @@ export default function AdminPage(): React.ReactElement {
               </div>
             )}
 
+            {/* User Filters */}
+            <div className="mb-4 flex flex-wrap items-center gap-3">
+              <div className="flex-1 min-w-[200px]">
+                <input 
+                  value={userSearchQuery} 
+                  onChange={(e) => setUserSearchQuery(e.target.value)} 
+                  placeholder="Search by username, email, or name" 
+                  className="w-full rounded-lg border border-slate-200 bg-white/50 backdrop-blur-sm dark:border-slate-800 dark:bg-slate-900/50 px-3 py-2 text-sm transition-shadow duration-200 hover:bg-white dark:hover:bg-slate-900 focus:outline-none focus:ring-2 focus:ring-red-500/20" 
+                />
+              </div>
+
+              <div className="flex-1 min-w-[200px]">
+                <select 
+                  value={userRoleFilter} 
+                  onChange={(e) => setUserRoleFilter(e.target.value)} 
+                  className="w-full rounded-lg border border-slate-200 bg-white/50 backdrop-blur-sm dark:border-slate-800 dark:bg-slate-900/50 px-3 py-2 text-sm transition-shadow duration-200 hover:bg-white dark:hover:bg-slate-900 focus:outline-none focus:ring-2 focus:ring-red-500/20"
+                >
+                  <option value="">All roles</option>
+                  <option value="admin">Admin</option>
+                  <option value="staff">Staff</option>
+                  <option value="user">User</option>
+                </select>
+              </div>
+
+              <div className="flex-1 min-w-[200px]">
+                <select 
+                  value={userJoinDateFilter} 
+                  onChange={(e) => setUserJoinDateFilter(e.target.value)} 
+                  className="w-full rounded-lg border border-slate-200 bg-white/50 backdrop-blur-sm dark:border-slate-800 dark:bg-slate-900/50 px-3 py-2 text-sm transition-shadow duration-200 hover:bg-white dark:hover:bg-slate-900 focus:outline-none focus:ring-2 focus:ring-red-500/20"
+                >
+                  <option value="">All join dates</option>
+                  <option value="today">Joined Today</option>
+                  <option value="week">Joined This Week</option>
+                  <option value="month">Joined This Month</option>
+                </select>
+              </div>
+
+              <button 
+                onClick={() => { 
+                  setUserSearchQuery('');
+                  setUserRoleFilter('');
+                  setUserJoinDateFilter('');
+                }} 
+                className="text-sm px-3 py-2 text-slate-500 hover:text-slate-900 dark:hover:text-slate-300 transition-colors duration-200 flex items-center gap-2"
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="animate-spin-once">
+                  <path d="M21 12a9 9 0 1 1-9-9c2.52 0 4.93 1 6.74 2.74L21 8" />
+                </svg>
+                Reset
+              </button>
+            </div>
+
             <div className="overflow-x-auto overflow-y-auto max-h-[500px] scrollbar-thin scrollbar-thumb-gray-400 scrollbar-track-gray-100 dark:scrollbar-thumb-gray-600 dark:scrollbar-track-gray-800">
               <table className="min-w-full text-sm divide-y divide-slate-200/50 dark:divide-slate-800/50">
                 <thead className="text-slate-600 dark:text-slate-400">
                   <tr>
                     <th className="text-left py-3 px-4 font-medium">Username</th>
-                    <th className="text-left py-3 px-4 font-medium">Email</th>
+                    <th className="text-left py-3 px-4 font-medium">Phone</th>
                     <th className="text-left py-3 px-4 font-medium">Name</th>
                     <th className="text-center py-3 px-4 font-medium">Role</th>
                     <th className="text-right py-3 px-4 font-medium">Joined</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-200/50 dark:divide-slate-800/50">
-                  {users.slice(0, 50).map((u) => (
+                  {filteredUsers.slice(0, 50).map((u) => (
                     <tr key={u.id} className="hover:bg-slate-50/50 dark:hover:bg-slate-800/50 transition-colors duration-150">
                       <td className="py-3 px-4 font-medium text-indigo-600 dark:text-indigo-400">{u.username}</td>
-                      <td className="py-3 px-4 text-slate-600 dark:text-slate-400">{u.email}</td>
+                      <td className="py-3 px-4 text-slate-600 dark:text-slate-400">{u.phone || u.phone_number || u.email || "—"}</td>
                       <td className="py-3 px-4">{u.first_name && u.last_name ? `${u.first_name} ${u.last_name}` : "—"}</td>
                       <td className="py-3 px-4 text-center">
                         <span className="inline-flex gap-1">
                           {u.is_superuser && <span className="inline-flex px-2 py-1 rounded-full text-xs font-medium bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-400">Admin</span>}
                           {u.is_staff && !u.is_superuser && <span className="inline-flex px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400">Staff</span>}
-                          {!u.is_staff && !u.is_superuser && <span className="inline-flex px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400">User</span>}
+                          {!u.is_staff && !u.is_superuser && u.role && <span className="inline-flex px-2 py-1 rounded-full text-xs font-medium bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-400 capitalize">{u.role}</span>}
+                          {!u.is_staff && !u.is_superuser && !u.role && <span className="inline-flex px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400">User</span>}
                         </span>
                       </td>
-                      <td className="py-3 px-4 text-right text-slate-500">{u.date_joined?.split?.("T")?.[0] ?? "—"}</td>
+                      <td className="py-3 px-4 text-right text-slate-500 whitespace-nowrap">{(u.created_at || u.date_joined)?.split?.("T")?.[0] ?? "—"}</td>
                     </tr>
                   ))}
-                  {users.length === 0 && (
+                  {filteredUsers.length === 0 && (
                     <tr>
                       <td colSpan={5} className="py-8 text-center text-slate-500">
                         <div className="flex flex-col items-center gap-2">
@@ -696,7 +813,7 @@ export default function AdminPage(): React.ReactElement {
         <div className="max-w-7xl mx-auto px-4">
           <header className="mb-6 flex items-start justify-between gap-4">
             <div>
-              <h1 className="text-3xl font-extrabold">Admin — Orders & Riders</h1>
+              <h1 className="text-3xl font-extrabold">Admin</h1>
             </div>
 
             <div className="flex gap-3 items-center">
