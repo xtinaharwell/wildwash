@@ -30,6 +30,7 @@ import {
 type RawOrder = Record<string, any>;
 type RawLocation = Record<string, any>;
 type RawUser = Record<string, any>;
+type RawLoan = Record<string, any>;
 
 type Order = {
   id?: number;
@@ -70,12 +71,37 @@ type User = {
   raw?: RawUser;
 };
 
+type LoanApplication = {
+  id?: string;
+  loan_type?: string;
+  loan_amount?: string | number;
+  duration_days?: number;
+  purpose?: string;
+  status?: string;
+  total_repayment?: string | number;
+  created_at?: string;
+  approved_at?: string;
+  order_code?: string;
+  user_id?: number;
+  user_name?: string;
+  user_email?: string;
+  user_phone?: string;
+  guarantors?: Array<{
+    id?: string;
+    name?: string;
+    phone_number?: string;
+    email?: string;
+  }>;
+  raw?: RawLoan;
+};
+
 /* --- Component --- */
 export default function AdminPage(): React.ReactElement {
   const [orders, setOrders] = useState<Order[]>([]);
   const [locations, setLocations] = useState<RiderLocation[]>([]);
   const [users, setUsers] = useState<User[]>([]);
-  const [activeTab, setActiveTab] = useState<'orders' | 'riders' | 'users' | 'analytics'>('orders');
+  const [loans, setLoans] = useState<LoanApplication[]>([]);
+  const [activeTab, setActiveTab] = useState<'orders' | 'riders' | 'users' | 'loans' | 'analytics'>('orders');
   const [statusFilter, setStatusFilter] = useState<string>('');
   const [riderFilter, setRiderFilter] = useState<string>('');
   const [locationFilter, setLocationFilter] = useState<string>('');
@@ -86,14 +112,19 @@ export default function AdminPage(): React.ReactElement {
   const [userSearchQuery, setUserSearchQuery] = useState<string>('');
   const [userRoleFilter, setUserRoleFilter] = useState<string>('');
   const [userJoinDateFilter, setUserJoinDateFilter] = useState<string>('');
+  const [loanStatusFilter, setLoanStatusFilter] = useState<string>('');
 
   const [loadingOrders, setLoadingOrders] = useState<boolean>(true);
   const [loadingLocations, setLoadingLocations] = useState<boolean>(true);
   const [loadingUsers, setLoadingUsers] = useState<boolean>(true);
+  const [loadingLoans, setLoadingLoans] = useState<boolean>(true);
 
   const [errorOrders, setErrorOrders] = useState<string | null>(null);
   const [errorLocations, setErrorLocations] = useState<string | null>(null);
   const [errorUsers, setErrorUsers] = useState<string | null>(null);
+  const [errorLoans, setErrorLoans] = useState<string | null>(null);
+
+  const [selectedLoan, setSelectedLoan] = useState<LoanApplication | null>(null);
 
   const fetchOrders = useCallback(async () => {
     setLoadingOrders(true);
@@ -187,12 +218,57 @@ export default function AdminPage(): React.ReactElement {
     }
   }, []);
 
+  const fetchLoans = useCallback(async () => {
+    setLoadingLoans(true);
+    setErrorLoans(null);
+    try {
+      const data = await client.get("/loans/loans/?page_size=100");
+      const list: any[] = Array.isArray(data) ? data : Array.isArray(data?.results) ? data.results : [];
+
+      setLoans(
+        list.map((l: any) => {
+          // Extract user information from the loan object
+          const userData = l.user || {};
+          const userName = userData.first_name && userData.last_name 
+            ? `${userData.first_name} ${userData.last_name}` 
+            : userData.username || "Unknown User";
+          
+          return {
+            id: l.id,
+            loan_type: l.loan_type ?? "unknown",
+            loan_amount: l.loan_amount ?? 0,
+            duration_days: l.duration_days ?? 0,
+            purpose: l.purpose ?? "",
+            status: l.status ?? "pending",
+            total_repayment: l.total_repayment ?? 0,
+            created_at: l.created_at,
+            approved_at: l.approved_at,
+            order_code: l.order_code,
+            user_id: userData.id ?? l.user_id,
+            user_name: userName,
+            user_email: userData.email ?? l.user_email,
+            user_phone: userData.phone ?? userData.phone_number ?? l.user_phone,
+            guarantors: l.guarantors ?? [],
+            raw: l,
+          };
+        })
+      );
+    } catch (err: any) {
+      console.error("fetchLoans error:", err);
+      setErrorLoans(err?.message ?? "Failed to load loan applications");
+      setLoans([]);
+    } finally {
+      setLoadingLoans(false);
+    }
+  }, []);
+
   useEffect(() => {
-    // initial load both
+    // initial load
     fetchOrders();
     fetchLocations();
     fetchUsers();
-  }, [fetchOrders, fetchLocations, fetchUsers]);
+    fetchLoans();
+  }, [fetchOrders, fetchLocations, fetchUsers, fetchLoans]);
 
   // Derived metrics
   const totalOrders = orders.length;
@@ -231,7 +307,7 @@ export default function AdminPage(): React.ReactElement {
   );
 
   const refreshAll = async () => {
-    await Promise.all([fetchOrders(), fetchLocations(), fetchUsers()]);
+    await Promise.all([fetchOrders(), fetchLocations(), fetchUsers(), fetchLoans()]);
   };
 
   // filter helpers
@@ -392,6 +468,16 @@ export default function AdminPage(): React.ReactElement {
             }`}
           >
             Users
+          </button>
+          <button
+            onClick={() => setActiveTab('loans')}
+            className={`px-3 sm:px-6 md:px-8 py-2 sm:py-3 text-xs sm:text-sm md:text-base font-semibold rounded-lg transition-all whitespace-nowrap flex-shrink-0 ${
+              activeTab === 'loans'
+                ? 'bg-red-600 text-white shadow-lg hover:bg-red-700'
+                : 'bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700'
+            }`}
+          >
+            Loans
           </button>
           <button
             onClick={() => setActiveTab('analytics')}
@@ -636,6 +722,303 @@ export default function AdminPage(): React.ReactElement {
             </div>
           </div>
         </div>
+        )}
+
+        {/* Loan Applications - Loans Tab */}
+        {activeTab === 'loans' && (
+        <div className="mb-8">
+          <div className="rounded-2xl bg-white/80 dark:bg-slate-900/50 backdrop-blur-sm p-6 shadow-lg shadow-slate-200/20 dark:shadow-slate-900/30 border border-slate-200/50 dark:border-slate-700/50">
+            <h2 className="text-xl font-semibold mb-4 text-slate-900 dark:text-white">Loan Applications</h2>
+            
+            <div className="mb-4 flex flex-wrap items-center gap-3">
+              <div className="flex-1 min-w-[200px]">
+                <select 
+                  value={loanStatusFilter} 
+                  onChange={(e) => setLoanStatusFilter(e.target.value)} 
+                  className="w-full rounded-lg border border-slate-200 bg-white/50 backdrop-blur-sm dark:border-slate-800 dark:bg-slate-900/50 px-3 py-2 text-sm transition-shadow duration-200 hover:bg-white dark:hover:bg-slate-900 focus:outline-none focus:ring-2 focus:ring-red-500/20"
+                >
+                  <option value="">All statuses</option>
+                  <option value="pending">Pending</option>
+                  <option value="approved">Approved</option>
+                  <option value="active">Active</option>
+                  <option value="repaid">Repaid</option>
+                  <option value="rejected">Rejected</option>
+                  <option value="defaulted">Defaulted</option>
+                </select>
+              </div>
+
+              <button 
+                onClick={() => { 
+                  setLoanStatusFilter('');
+                  fetchLoans();
+                }} 
+                className="px-4 py-2 bg-slate-300 dark:bg-slate-700 rounded-lg hover:bg-slate-400 dark:hover:bg-slate-600 transition-all font-medium text-sm"
+              >
+                Clear Filters
+              </button>
+            </div>
+
+            {loadingLoans ? (
+              <div className="flex justify-center items-center py-10">
+                <Loader2 className="animate-spin text-red-600 w-6 h-6" />
+              </div>
+            ) : errorLoans ? (
+              <div className="p-4 text-red-600 dark:text-red-400 bg-red-100 dark:bg-red-900/30 rounded-lg flex items-center gap-2">
+                <AlertCircle className="w-4 h-4" /> {errorLoans}
+              </div>
+            ) : (
+              <div className="overflow-x-auto">
+                <table className="min-w-full text-sm">
+                  <thead className="border-b border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-400">
+                    <tr>
+                      <th className="text-left py-3 px-4">ID</th>
+                      <th className="text-left py-3 px-4">User</th>
+                      <th className="text-left py-3 px-4">Type</th>
+                      <th className="text-right py-3 px-4">Amount</th>
+                      <th className="text-right py-3 px-4">Repayment</th>
+                      <th className="text-center py-3 px-4">Duration</th>
+                      <th className="text-left py-3 px-4">Status</th>
+                      <th className="text-left py-3 px-4">Purpose</th>
+                      <th className="text-left py-3 px-4">Guarantors</th>
+                      <th className="text-left py-3 px-4">Created</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {loans.filter(l => !loanStatusFilter || String(l.status).toLowerCase() === loanStatusFilter.toLowerCase()).map((loan) => (
+                      <tr key={loan.id} className="border-b border-slate-100 dark:border-slate-800 hover:bg-slate-50/50 dark:hover:bg-slate-800/50">
+                        <td className="py-3 px-4">
+                          <button
+                            onClick={() => setSelectedLoan(loan)}
+                            className="font-mono text-xs text-red-600 dark:text-red-400 hover:text-red-700 dark:hover:text-red-300 hover:underline cursor-pointer transition-all"
+                          >
+                            {String(loan.id).substring(0, 12)}...
+                          </button>
+                        </td>
+                        <td className="py-3 px-4">
+                          <div className="flex flex-col gap-1">
+                            <p className="font-medium text-slate-900 dark:text-white text-xs">{loan.user_name || "Unknown"}</p>
+                            <p className="text-xs text-slate-500 dark:text-slate-400">{loan.user_email || "—"}</p>
+                            {loan.user_phone && (
+                              <p className="text-xs text-slate-500 dark:text-slate-400">{loan.user_phone}</p>
+                            )}
+                          </div>
+                        </td>
+                        <td className="py-3 px-4">
+                          <span className="inline-block px-2 py-1 bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400 rounded text-xs font-medium">
+                            {loan.loan_type === 'order_collateral' ? 'Order' : 'Asset'}
+                          </span>
+                        </td>
+                        <td className="py-3 px-4 text-right font-semibold text-slate-900 dark:text-white">
+                          KSh {Number(loan.loan_amount ?? 0).toLocaleString()}
+                        </td>
+                        <td className="py-3 px-4 text-right text-slate-600 dark:text-slate-400">
+                          KSh {Number(loan.total_repayment ?? 0).toLocaleString()}
+                        </td>
+                        <td className="py-3 px-4 text-center">{loan.duration_days}d</td>
+                        <td className="py-3 px-4">
+                          <span className={`inline-block px-2 py-1 rounded text-xs font-medium ${
+                            loan.status === 'pending' ? 'bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400' :
+                            loan.status === 'approved' ? 'bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400' :
+                            loan.status === 'active' ? 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400' :
+                            loan.status === 'repaid' ? 'bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400' :
+                            loan.status === 'rejected' ? 'bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-400' :
+                            loan.status === 'defaulted' ? 'bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-400' :
+                            'bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-400'
+                          }`}>
+                            {String(loan.status).charAt(0).toUpperCase() + String(loan.status).slice(1)}
+                          </span>
+                        </td>
+                        <td className="py-3 px-4 max-w-xs truncate text-slate-600 dark:text-slate-400">{loan.purpose}</td>
+                        <td className="py-3 px-4 text-center">{loan.guarantors?.length ?? 0}</td>
+                        <td className="py-3 px-4 text-sm text-slate-500">
+                          {loan.created_at ? new Date(loan.created_at).toLocaleDateString() : '—'}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </div>
+        </div>
+        )}
+
+        {/* Loan Details Modal */}
+        {selectedLoan && (
+          <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
+            <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+              {/* Modal Header */}
+              <div className="flex items-center justify-between p-6 border-b border-slate-200 dark:border-slate-700 sticky top-0 bg-white dark:bg-slate-900">
+                <h2 className="text-xl font-bold text-slate-900 dark:text-white">Loan Application Details</h2>
+                <button
+                  onClick={() => setSelectedLoan(null)}
+                  className="text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200 transition-all"
+                >
+                  ✕
+                </button>
+              </div>
+
+              {/* Modal Content */}
+              <div className="p-6 space-y-6">
+                {/* Applicant Information */}
+                <div className="p-4 bg-gradient-to-r from-blue-50 to-purple-50 dark:from-blue-900/20 dark:to-purple-900/20 rounded-lg border border-blue-200 dark:border-blue-800">
+                  <p className="text-xs text-slate-600 dark:text-slate-400 font-medium mb-3">Applicant Information</p>
+                  <div className="space-y-2">
+                    <div>
+                      <p className="text-xs text-slate-500 dark:text-slate-500">Name</p>
+                      <p className="font-semibold text-slate-900 dark:text-white">{selectedLoan.user_name || "Unknown User"}</p>
+                    </div>
+                    {selectedLoan.user_email && (
+                      <div>
+                        <p className="text-xs text-slate-500 dark:text-slate-500">Email</p>
+                        <p className="text-sm text-blue-600 dark:text-blue-400 break-all">{selectedLoan.user_email}</p>
+                      </div>
+                    )}
+                    {selectedLoan.user_phone && (
+                      <div>
+                        <p className="text-xs text-slate-500 dark:text-slate-500">Phone</p>
+                        <p className="text-sm text-slate-900 dark:text-white">{selectedLoan.user_phone}</p>
+                      </div>
+                    )}
+                    {selectedLoan.user_id && (
+                      <div>
+                        <p className="text-xs text-slate-500 dark:text-slate-500">User ID</p>
+                        <p className="text-xs font-mono text-slate-600 dark:text-slate-400">{selectedLoan.user_id}</p>
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                {/* Loan ID and Status */}
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <p className="text-xs text-slate-600 dark:text-slate-400 font-medium mb-1">Loan ID</p>
+                    <p className="font-mono text-sm text-slate-900 dark:text-white break-all">{selectedLoan.id}</p>
+                  </div>
+                  <div>
+                    <p className="text-xs text-slate-600 dark:text-slate-400 font-medium mb-1">Status</p>
+                    <span className={`inline-block px-3 py-1 rounded-full text-xs font-bold ${
+                      selectedLoan.status === 'pending' ? 'bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400' :
+                      selectedLoan.status === 'approved' ? 'bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400' :
+                      selectedLoan.status === 'active' ? 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400' :
+                      selectedLoan.status === 'repaid' ? 'bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400' :
+                      selectedLoan.status === 'rejected' ? 'bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-400' :
+                      selectedLoan.status === 'defaulted' ? 'bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-400' :
+                      'bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-400'
+                    }`}>
+                      {String(selectedLoan.status).charAt(0).toUpperCase() + String(selectedLoan.status).slice(1)}
+                    </span>
+                  </div>
+                </div>
+
+                {/* Loan Type and Amount */}
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="p-4 bg-slate-50 dark:bg-slate-800/50 rounded-lg">
+                    <p className="text-xs text-slate-600 dark:text-slate-400 font-medium mb-2">Loan Type</p>
+                    <p className="text-sm font-semibold text-slate-900 dark:text-white">
+                      {selectedLoan.loan_type === 'order_collateral' ? 'Order Collateral' : 'Asset Collateral'}
+                    </p>
+                  </div>
+                  <div className="p-4 bg-slate-50 dark:bg-slate-800/50 rounded-lg">
+                    <p className="text-xs text-slate-600 dark:text-slate-400 font-medium mb-2">Loan Amount</p>
+                    <p className="text-lg font-bold text-red-600 dark:text-red-400">
+                      KSh {Number(selectedLoan.loan_amount ?? 0).toLocaleString()}
+                    </p>
+                  </div>
+                </div>
+
+                {/* Repayment Details */}
+                <div className="grid grid-cols-3 gap-4">
+                  <div className="p-4 bg-slate-50 dark:bg-slate-800/50 rounded-lg">
+                    <p className="text-xs text-slate-600 dark:text-slate-400 font-medium mb-2">Total Repayment</p>
+                    <p className="text-sm font-bold text-orange-600 dark:text-orange-400">
+                      KSh {Number(selectedLoan.total_repayment ?? 0).toLocaleString()}
+                    </p>
+                  </div>
+                  <div className="p-4 bg-slate-50 dark:bg-slate-800/50 rounded-lg">
+                    <p className="text-xs text-slate-600 dark:text-slate-400 font-medium mb-2">Duration</p>
+                    <p className="text-sm font-semibold text-slate-900 dark:text-white">
+                      {selectedLoan.duration_days} days
+                    </p>
+                  </div>
+                  <div className="p-4 bg-slate-50 dark:bg-slate-800/50 rounded-lg">
+                    <p className="text-xs text-slate-600 dark:text-slate-400 font-medium mb-2">Interest</p>
+                    <p className="text-sm font-semibold text-slate-900 dark:text-white">
+                      KSh {(Number(selectedLoan.total_repayment ?? 0) - Number(selectedLoan.loan_amount ?? 0)).toLocaleString()}
+                    </p>
+                  </div>
+                </div>
+
+                {/* Purpose */}
+                <div>
+                  <p className="text-xs text-slate-600 dark:text-slate-400 font-medium mb-2">Purpose</p>
+                  <div className="p-4 bg-slate-50 dark:bg-slate-800/50 rounded-lg">
+                    <p className="text-sm text-slate-900 dark:text-white leading-relaxed">{selectedLoan.purpose}</p>
+                  </div>
+                </div>
+
+                {/* Collateral Information */}
+                {selectedLoan.loan_type === 'order_collateral' && selectedLoan.order_code && (
+                  <div>
+                    <p className="text-xs text-slate-600 dark:text-slate-400 font-medium mb-2">Order Collateral</p>
+                    <div className="p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-800">
+                      <p className="font-mono font-semibold text-blue-900 dark:text-blue-200">{selectedLoan.order_code}</p>
+                    </div>
+                  </div>
+                )}
+
+                {/* Guarantors */}
+                {selectedLoan.guarantors && selectedLoan.guarantors.length > 0 && (
+                  <div>
+                    <p className="text-xs text-slate-600 dark:text-slate-400 font-medium mb-3">
+                      Guarantor{selectedLoan.guarantors.length !== 1 ? 's' : ''} ({selectedLoan.guarantors.length})
+                    </p>
+                    <div className="space-y-2">
+                      {selectedLoan.guarantors.map((guarantor, idx) => (
+                        <div key={idx} className="p-4 bg-slate-50 dark:bg-slate-800/50 rounded-lg border-l-2 border-red-500">
+                          <p className="font-semibold text-sm text-slate-900 dark:text-white">{guarantor.name}</p>
+                          <p className="text-xs text-slate-600 dark:text-slate-400 mt-1">
+                            📧 {guarantor.email}
+                          </p>
+                          <p className="text-xs text-slate-600 dark:text-slate-400">
+                            📞 {guarantor.phone_number}
+                          </p>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Dates */}
+                <div className="grid grid-cols-2 gap-4 pt-4 border-t border-slate-200 dark:border-slate-700">
+                  <div>
+                    <p className="text-xs text-slate-600 dark:text-slate-400 font-medium mb-1">Created</p>
+                    <p className="text-sm font-semibold text-slate-900 dark:text-white">
+                      {selectedLoan.created_at ? new Date(selectedLoan.created_at).toLocaleString() : '—'}
+                    </p>
+                  </div>
+                  {selectedLoan.approved_at && (
+                    <div>
+                      <p className="text-xs text-slate-600 dark:text-slate-400 font-medium mb-1">Approved</p>
+                      <p className="text-sm font-semibold text-green-600 dark:text-green-400">
+                        {new Date(selectedLoan.approved_at).toLocaleString()}
+                      </p>
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* Modal Footer */}
+              <div className="p-6 border-t border-slate-200 dark:border-slate-700 flex justify-end gap-3 sticky bottom-0 bg-white dark:bg-slate-900">
+                <button
+                  onClick={() => setSelectedLoan(null)}
+                  className="px-6 py-2 bg-slate-200 dark:bg-slate-700 text-slate-900 dark:text-slate-100 rounded-lg hover:bg-slate-300 dark:hover:bg-slate-600 transition-all font-medium"
+                >
+                  Close
+                </button>
+              </div>
+            </div>
+          </div>
         )}
 
         {/* Riders Section - Riders Tab */}
