@@ -223,151 +223,123 @@ export default function LoansPage(): React.JSX.Element {
                     <div className={`h-1 w-full ${colors.border}`}></div>
                     
                     <div className="p-4 md:p-6">
-                      {/* Header with Status */}
-                      <div className="flex flex-col md:flex-row items-start md:items-start justify-between gap-3 md:gap-0 mb-4 md:mb-5">
-                        <div className="flex items-start gap-3 md:gap-4 w-full md:w-auto">
-                          <div className={`text-2xl md:text-3xl p-2 md:p-3 rounded-lg ${colors.bg} font-bold flex-shrink-0`}>{getStatusIcon(app.status)}</div>
+                      {/* Compact Header with Status */}
+                      <div className="flex items-center justify-between gap-3 mb-3">
+                        <div className="flex items-center gap-2 min-w-0 flex-1">
+                          <div className={`text-xl md:text-2xl p-2 rounded-lg ${colors.bg} font-bold flex-shrink-0`}>{getStatusIcon(app.status)}</div>
                           <div className="min-w-0 flex-1">
-                            <h3 className="text-base md:text-lg font-bold break-words">
-                              {app.loan_type === "order_collateral" ? "Order Collateral Loan" : "Asset Collateral Loan"}
+                            <h3 className="text-sm md:text-base font-bold truncate">
+                              {app.loan_type === "order_collateral" ? "Order Loan" : "Asset Loan"}
                             </h3>
-                            <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 break-all">
-                              ID: <span className="font-mono">{app.id.substring(0, 12)}...</span>
+                            <p className="text-xs text-slate-500 dark:text-slate-400 truncate">
+                              {formatCurrency(app.loan_amount)} • {app.duration_days}d
                             </p>
                           </div>
                         </div>
-                        <div className={`px-3 md:px-4 py-2 rounded-full text-xs md:text-sm font-bold ${colors.badge} whitespace-nowrap flex-shrink-0`}>
+                        <div className={`px-2 md:px-3 py-1 rounded-full text-xs font-bold ${colors.badge} whitespace-nowrap flex-shrink-0`}>
                           {statusLabels[app.status as keyof typeof statusLabels]}
                         </div>
                       </div>
 
-                      {/* Loan Amount & Duration */}
-                      <div className="grid grid-cols-1 md:grid-cols-3 gap-3 md:gap-4 mb-4 md:mb-5 pb-4 md:pb-5 border-b border-slate-200 dark:border-slate-700">
-                        <div className="p-3 bg-slate-50 dark:bg-slate-800/50 rounded-lg">
-                          <p className="text-xs text-slate-600 dark:text-slate-400 font-medium mb-1">Loan Amount</p>
-                          <p className="text-xl md:text-2xl font-bold text-red-600">{formatCurrency(app.loan_amount)}</p>
+                      {/* Quick Info Row */}
+                      <div className="grid grid-cols-2 md:grid-cols-3 gap-2 mb-3 pb-3 border-b border-slate-200 dark:border-slate-700">
+                        <div className="p-2 bg-slate-50 dark:bg-slate-800/50 rounded">
+                          <p className="text-xs text-slate-600 dark:text-slate-400">To Repay</p>
+                          <p className="text-sm font-bold text-orange-600">{formatCurrency(app.total_repayment)}</p>
                         </div>
-                        <div className="p-3 bg-slate-50 dark:bg-slate-800/50 rounded-lg">
-                          <p className="text-xs text-slate-600 dark:text-slate-400 font-medium mb-1">Repayment Period</p>
-                          <p className="text-xl md:text-2xl font-bold">{app.duration_days} day{app.duration_days !== 1 ? "s" : ""}</p>
+                        <div className="p-2 bg-slate-50 dark:bg-slate-800/50 rounded">
+                          <p className="text-xs text-slate-600 dark:text-slate-400">Submitted</p>
+                          <p className="text-xs font-semibold">{formatDate(app.created_at)}</p>
                         </div>
-                        <div className="p-3 bg-slate-50 dark:bg-slate-800/50 rounded-lg">
-                          <p className="text-xs text-slate-600 dark:text-slate-400 font-medium mb-1">Total Repayment</p>
-                          <p className="text-xl md:text-2xl font-bold text-orange-600">{formatCurrency(app.total_repayment)}</p>
-                        </div>
-                      </div>
-
-                      {/* Purpose & Details */}
-                      <div className="mb-4 md:mb-5 pb-4 md:pb-5 border-b border-slate-200 dark:border-slate-700">
-                        <p className="text-xs text-slate-600 dark:text-slate-400 font-medium mb-2">Purpose</p>
-                        <p className="text-sm leading-relaxed">{app.purpose}</p>
-                      </div>
-
-                      {/* Collateral Info */}
-                      {app.loan_type === "order_collateral" && app.order_code && (
-                        <div className="mb-4 md:mb-5 pb-4 md:pb-5 border-b border-slate-200 dark:border-slate-700">
-                          <p className="text-xs text-slate-600 dark:text-slate-400 font-medium mb-2">Order Collateral</p>
-                          <div className="flex items-center gap-2 p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-800 overflow-auto">
-                            <p className="font-mono font-bold text-sm break-all">{app.order_code}</p>
-                          </div>
-                        </div>
-                      )}
-
-                      {app.loan_type === "collateral_only" && app.collateral_items && app.collateral_items.length > 0 && (
-                        <div className="mb-4 md:mb-5 pb-4 md:pb-5 border-b border-slate-200 dark:border-slate-700">
-                          <p className="text-xs text-slate-600 dark:text-slate-400 font-medium mb-3">Collateral Items ({app.collateral_items.length})</p>
-                          <div className="space-y-2">
-                            {app.collateral_items.map((item) => (
-                              <div key={item.id} className="flex flex-col md:flex-row justify-between items-start md:items-center gap-2 p-3 bg-slate-50 dark:bg-slate-800/50 rounded-lg">
-                                <div className="min-w-0 flex-1">
-                                  <p className="text-sm"><span className="capitalize font-semibold">{item.collateral_type}</span></p>
-                                  <p className="text-xs text-slate-600 dark:text-slate-400 break-words">{item.description.substring(0, 50)}{item.description.length > 50 ? "..." : ""}</p>
-                                </div>
-                                <p className="text-sm font-bold text-red-600 whitespace-nowrap flex-shrink-0">{formatCurrency(item.estimated_value)}</p>
-                              </div>
-                            ))}
-                          </div>
-                        </div>
-                      )}
-
-                      {/* Guarantors */}
-                      {app.guarantors && app.guarantors.length > 0 && (
-                        <div className="mb-4 md:mb-5 pb-4 md:pb-5 border-b border-slate-200 dark:border-slate-700">
-                          <p className="text-xs text-slate-600 dark:text-slate-400 font-medium mb-3">Guarantor{app.guarantors.length !== 1 ? "s" : ""} ({app.guarantors.length})</p>
-                          <div className="space-y-2">
-                            {app.guarantors.map((g) => (
-                              <div key={g.id} className="p-3 bg-slate-50 dark:bg-slate-800/50 rounded-lg border-l-2 border-red-500">
-                                <p className="font-medium text-sm">{g.name}</p>
-                                <p className="text-xs text-slate-600 dark:text-slate-400 mt-1 break-all">
-                                  {g.email} • {g.phone_number}
-                                </p>
-                                <p className="text-xs text-slate-500 dark:text-slate-400 capitalize mt-1">Relationship: {g.relationship}</p>
-                              </div>
-                            ))}
-                          </div>
-                        </div>
-                      )}
-
-                      {/* Timeline */}
-                      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-2 md:gap-3 mb-4 md:mb-5 pb-4 md:pb-5 border-b border-slate-200 dark:border-slate-700">
-                        <div className="p-3 bg-slate-50 dark:bg-slate-800/50 rounded-lg">
-                          <p className="text-xs text-slate-600 dark:text-slate-400 font-medium">Submitted</p>
-                          <p className="font-semibold text-xs md:text-sm mt-1 break-words">{formatDate(app.created_at)}</p>
-                        </div>
-                        {app.status === "approved" && app.approved_at && (
-                          <div className="p-3 bg-green-50 dark:bg-green-900/20 rounded-lg border border-green-200 dark:border-green-800">
-                            <p className="text-xs text-green-700 dark:text-green-300 font-medium">Approved</p>
-                            <p className="font-semibold text-xs md:text-sm mt-1 text-green-600 dark:text-green-400 break-words">{formatDate(app.approved_at)}</p>
-                          </div>
-                        )}
                         {app.status === "active" && app.due_date && (
-                          <div className="p-3 bg-red-50 dark:bg-red-900/20 rounded-lg border border-red-200 dark:border-red-800">
-                            <p className="text-xs text-red-700 dark:text-red-300 font-medium">Due Date</p>
-                            <p className="font-semibold text-xs md:text-sm mt-1 text-red-600 dark:text-red-400 break-words">{formatDate(app.due_date)}</p>
-                          </div>
-                        )}
-                        {(app.status === "repaid" || app.status === "defaulted") && (
-                          <div className="p-3 bg-slate-50 dark:bg-slate-800/50 rounded-lg">
-                            <p className="text-xs text-slate-600 dark:text-slate-400 font-medium">Repaid</p>
-                            <p className="font-semibold text-xs md:text-sm mt-1 break-words">{formatCurrency(app.amount_repaid)}</p>
+                          <div className="p-2 bg-red-50 dark:bg-red-900/20 rounded border border-red-200 dark:border-red-800">
+                            <p className="text-xs text-red-700 dark:text-red-300">Due</p>
+                            <p className="text-xs font-semibold text-red-600 dark:text-red-400">{formatDate(app.due_date)}</p>
                           </div>
                         )}
                       </div>
 
                       {/* Expandable Details Section */}
                       {expandedLoanId === app.id && (
-                        <div className="mb-4 md:mb-5 pb-4 md:pb-5 border-b border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/30 p-3 md:p-4 rounded-lg">
-                          <h4 className="font-bold mb-3 text-slate-900 dark:text-slate-100 text-sm md:text-base">Additional Information</h4>
-                          {detailedLoans[app.id] ? (
-                            <div className="space-y-3 text-sm">
-                              <div>
-                                <p className="text-slate-600 dark:text-slate-400 font-medium mb-1">Interest Rate</p>
-                                <p className="font-semibold text-sm">{detailedLoans[app.id].daily_interest_rate || "2"}% per day</p>
+                        <div className="mb-3 pb-3 border-b border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/30 p-3 rounded-lg space-y-3">
+                          {/* Purpose */}
+                          <div>
+                            <p className="text-xs text-slate-600 dark:text-slate-400 font-medium mb-1">Purpose</p>
+                            <p className="text-sm leading-relaxed">{app.purpose}</p>
+                          </div>
+
+                          {/* Collateral Info */}
+                          {app.loan_type === "order_collateral" && app.order_code && (
+                            <div>
+                              <p className="text-xs text-slate-600 dark:text-slate-400 font-medium mb-2">Order Collateral</p>
+                              <div className="flex items-center gap-2 p-2 bg-blue-50 dark:bg-blue-900/20 rounded border border-blue-200 dark:border-blue-800 overflow-auto">
+                                <p className="font-mono font-bold text-xs break-all">{app.order_code}</p>
                               </div>
-                              <div>
-                                <p className="text-slate-600 dark:text-slate-400 font-medium mb-1">Total Interest</p>
-                                <p className="font-semibold text-orange-600 text-sm">{formatCurrency(detailedLoans[app.id].total_interest)}</p>
-                              </div>
-                              <div>
-                                <p className="text-slate-600 dark:text-slate-400 font-medium mb-1">Loan Type</p>
-                                <p className="font-semibold text-sm capitalize">{detailedLoans[app.id].loan_type === "order_collateral" ? "Order Collateral" : "Asset Collateral"}</p>
-                              </div>
-                              {detailedLoans[app.id] && detailedLoans[app.id].repayments && detailedLoans[app.id].repayments!.length > 0 && (
-                                <div>
-                                  <p className="text-slate-600 dark:text-slate-400 font-medium mb-2 text-sm">Repayments ({detailedLoans[app.id].repayments!.length})</p>
-                                  <div className="space-y-1 max-h-40 overflow-y-auto">
-                                    {detailedLoans[app.id].repayments!.map((repayment: any) => (
-                                      <div key={repayment.id} className="flex justify-between p-2 bg-white dark:bg-slate-800 rounded text-xs">
-                                        <span className="text-xs">{formatDate(repayment.created_at)}</span>
-                                        <span className="font-semibold text-green-600 break-words">{formatCurrency(repayment.amount)}</span>
-                                      </div>
-                                    ))}
-                                  </div>
-                                </div>
-                              )}
                             </div>
-                          ) : (
-                            <div className="text-sm text-slate-600 dark:text-slate-400">Loading details...</div>
+                          )}
+
+                          {app.loan_type === "collateral_only" && app.collateral_items && app.collateral_items.length > 0 && (
+                            <div>
+                              <p className="text-xs text-slate-600 dark:text-slate-400 font-medium mb-2">Collateral Items ({app.collateral_items.length})</p>
+                              <div className="space-y-1">
+                                {app.collateral_items.map((item) => (
+                                  <div key={item.id} className="flex justify-between items-start gap-2 p-2 bg-white dark:bg-slate-800 rounded text-xs">
+                                    <div className="min-w-0 flex-1">
+                                      <p><span className="capitalize font-semibold">{item.collateral_type}</span></p>
+                                      <p className="text-slate-600 dark:text-slate-400 truncate">{item.description.substring(0, 40)}</p>
+                                    </div>
+                                    <p className="font-bold text-red-600 whitespace-nowrap flex-shrink-0">{formatCurrency(item.estimated_value)}</p>
+                                  </div>
+                                ))}
+                              </div>
+                            </div>
+                          )}
+
+                          {/* Guarantors */}
+                          {app.guarantors && app.guarantors.length > 0 && (
+                            <div>
+                              <p className="text-xs text-slate-600 dark:text-slate-400 font-medium mb-2">Guarantor{app.guarantors.length !== 1 ? "s" : ""} ({app.guarantors.length})</p>
+                              <div className="space-y-1">
+                                {app.guarantors.map((g) => (
+                                  <div key={g.id} className="p-2 bg-white dark:bg-slate-800 rounded border-l-2 border-red-500">
+                                    <p className="font-medium text-xs">{g.name}</p>
+                                    <p className="text-xs text-slate-600 dark:text-slate-400 truncate">
+                                      {g.email} • {g.phone_number}
+                                    </p>
+                                    <p className="text-xs text-slate-500 dark:text-slate-400 capitalize">Relationship: {g.relationship}</p>
+                                  </div>
+                                ))}
+                              </div>
+                            </div>
+                          )}
+
+                          {/* Interest & Additional Info */}
+                          <div className="pt-2 border-t border-slate-200 dark:border-slate-600">
+                            <div className="grid grid-cols-2 gap-2 text-xs">
+                              <div>
+                                <p className="text-slate-600 dark:text-slate-400 font-medium">Interest Rate</p>
+                                <p className="font-semibold">{detailedLoans[app.id]?.daily_interest_rate || "2"}% per day</p>
+                              </div>
+                              <div>
+                                <p className="text-slate-600 dark:text-slate-400 font-medium">Total Interest</p>
+                                <p className="font-semibold text-orange-600">{formatCurrency(detailedLoans[app.id]?.total_interest || app.total_interest)}</p>
+                              </div>
+                            </div>
+                          </div>
+
+                          {/* Repayments */}
+                          {detailedLoans[app.id]?.repayments && detailedLoans[app.id].repayments!.length > 0 && (
+                            <div>
+                              <p className="text-xs text-slate-600 dark:text-slate-400 font-medium mb-1">Repayments ({detailedLoans[app.id].repayments!.length})</p>
+                              <div className="space-y-1 max-h-32 overflow-y-auto">
+                                {detailedLoans[app.id].repayments!.map((repayment: any) => (
+                                  <div key={repayment.id} className="flex justify-between p-1.5 bg-white dark:bg-slate-800 rounded text-xs">
+                                    <span>{formatDate(repayment.created_at)}</span>
+                                    <span className="font-semibold text-green-600">{formatCurrency(repayment.amount)}</span>
+                                  </div>
+                                ))}
+                              </div>
+                            </div>
                           )}
                         </div>
                       )}

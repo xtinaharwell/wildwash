@@ -104,8 +104,15 @@ export default function BorrowPage(): React.JSX.Element {
     }
   }, [isAuthenticated, fetchOrders, borrowType]);
 
+  // Helper function to get order value with proper fallback
+  const getOrderValue = (order: Order) => {
+    // Priority: total_price (from services) > actual_price > price > 0
+    const value = order.total_price || order.actual_price || order.price || 0;
+    return Number(value);
+  };
+
   // Calculate loan details
-  const maxLoanAmount = selectedOrder ? Number(selectedOrder.actual_price || selectedOrder.price || 0) * 0.6 : 0;
+  const maxLoanAmount = selectedOrder ? getOrderValue(selectedOrder) * 0.6 : 0;
   const interestRate = 0.02; // 2% daily
   const dailyInterest = maxLoanAmount * (interestRate / 100);
   const totalInterest = dailyInterest * Number(loanDuration);
@@ -349,12 +356,6 @@ export default function BorrowPage(): React.JSX.Element {
         setLoading(false);
       }
     }
-  };
-
-  const getOrderValue = (order: Order) => {
-    // Priority: total_price (from services) > actual_price > price > 0
-    const value = order.total_price || order.actual_price || order.price || 0;
-    return Number(value);
   };
 
   const formatCurrency = (value: number) => {
