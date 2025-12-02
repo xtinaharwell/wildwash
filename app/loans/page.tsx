@@ -352,11 +352,11 @@ export default function LoansPage(): React.JSX.Element {
                                 <p className="text-slate-600 dark:text-slate-400 font-medium mb-1">Loan Type</p>
                                 <p className="font-semibold text-sm capitalize">{detailedLoans[app.id].loan_type === "order_collateral" ? "Order Collateral" : "Asset Collateral"}</p>
                               </div>
-                              {detailedLoans[app.id] && detailedLoans[app.id].repayments && detailedLoans[app.id].repayments.length > 0 && (
+                              {detailedLoans[app.id] && detailedLoans[app.id].repayments && detailedLoans[app.id].repayments!.length > 0 && (
                                 <div>
-                                  <p className="text-slate-600 dark:text-slate-400 font-medium mb-2 text-sm">Repayments ({detailedLoans[app.id]?.repayments?.length})</p>
+                                  <p className="text-slate-600 dark:text-slate-400 font-medium mb-2 text-sm">Repayments ({detailedLoans[app.id].repayments!.length})</p>
                                   <div className="space-y-1 max-h-40 overflow-y-auto">
-                                    {detailedLoans[app.id]?.repayments?.map((repayment: any) => (
+                                    {detailedLoans[app.id].repayments!.map((repayment: any) => (
                                       <div key={repayment.id} className="flex justify-between p-2 bg-white dark:bg-slate-800 rounded text-xs">
                                         <span className="text-xs">{formatDate(repayment.created_at)}</span>
                                         <span className="font-semibold text-green-600 break-words">{formatCurrency(repayment.amount)}</span>
