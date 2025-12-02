@@ -29,6 +29,7 @@ import {
 /* --- Types --- */
 type RawOrder = Record<string, any>;
 type RawLocation = Record<string, any>;
+type RawUser = Record<string, any>;
 
 type Order = {
   id?: number;
@@ -52,10 +53,24 @@ type RiderLocation = {
   raw?: RawLocation;
 };
 
+type User = {
+  id?: number;
+  username?: string;
+  email?: string;
+  first_name?: string;
+  last_name?: string;
+  is_staff?: boolean;
+  is_superuser?: boolean;
+  date_joined?: string;
+  raw?: RawUser;
+};
+
 /* --- Component --- */
 export default function AdminPage(): React.ReactElement {
   const [orders, setOrders] = useState<Order[]>([]);
   const [locations, setLocations] = useState<RiderLocation[]>([]);
+  const [users, setUsers] = useState<User[]>([]);
+  const [activeTab, setActiveTab] = useState<'orders' | 'riders' | 'users' | 'analytics'>('orders');
   const [statusFilter, setStatusFilter] = useState<string>('');
   const [riderFilter, setRiderFilter] = useState<string>('');
   const [locationFilter, setLocationFilter] = useState<string>('');
@@ -66,9 +81,11 @@ export default function AdminPage(): React.ReactElement {
 
   const [loadingOrders, setLoadingOrders] = useState<boolean>(true);
   const [loadingLocations, setLoadingLocations] = useState<boolean>(true);
+  const [loadingUsers, setLoadingUsers] = useState<boolean>(true);
 
   const [errorOrders, setErrorOrders] = useState<string | null>(null);
   const [errorLocations, setErrorLocations] = useState<string | null>(null);
+  const [errorUsers, setErrorUsers] = useState<string | null>(null);
 
   const fetchOrders = useCallback(async () => {
     setLoadingOrders(true);
@@ -128,11 +145,42 @@ export default function AdminPage(): React.ReactElement {
     }
   }, []);
 
+  const fetchUsers = useCallback(async () => {
+    setLoadingUsers(true);
+    setErrorUsers(null);
+    try {
+      // Use authenticated client to fetch users from the correct endpoint
+      const data = await client.get("/users/users/?page_size=100");
+      const list: any[] = Array.isArray(data) ? data : Array.isArray(data?.results) ? data.results : [];
+
+      setUsers(
+        list.map((u: any) => ({
+          id: u.id,
+          username: u.username,
+          email: u.email,
+          first_name: u.first_name,
+          last_name: u.last_name,
+          is_staff: u.is_staff ?? false,
+          is_superuser: u.is_superuser ?? false,
+          date_joined: u.date_joined,
+          raw: u,
+        }))
+      );
+    } catch (err: any) {
+      console.error("fetchUsers error:", err);
+      setErrorUsers(err?.message ?? "Failed to load users");
+      setUsers([]);
+    } finally {
+      setLoadingUsers(false);
+    }
+  }, []);
+
   useEffect(() => {
     // initial load both
     fetchOrders();
     fetchLocations();
-  }, [fetchOrders, fetchLocations]);
+    fetchUsers();
+  }, [fetchOrders, fetchLocations, fetchUsers]);
 
   // Derived metrics
   const totalOrders = orders.length;
@@ -167,7 +215,7 @@ export default function AdminPage(): React.ReactElement {
   );
 
   const refreshAll = async () => {
-    await Promise.all([fetchOrders(), fetchLocations()]);
+    await Promise.all([fetchOrders(), fetchLocations(), fetchUsers()]);
   };
 
   // filter helpers
@@ -253,18 +301,64 @@ export default function AdminPage(): React.ReactElement {
 
     return (
       <div>
-        {/* Summary */}
+        {/* Tab Navigation */}
+        <div className="mb-8 flex gap-4">
+          <button
+            onClick={() => setActiveTab('orders')}
+            className={`px-8 py-3 font-semibold rounded-lg transition-all ${
+              activeTab === 'orders'
+                ? 'bg-red-600 text-white shadow-lg hover:bg-red-700'
+                : 'bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700'
+            }`}
+          >
+            Orders
+          </button>
+          <button
+            onClick={() => setActiveTab('riders')}
+            className={`px-8 py-3 font-semibold rounded-lg transition-all ${
+              activeTab === 'riders'
+                ? 'bg-red-600 text-white shadow-lg hover:bg-red-700'
+                : 'bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700'
+            }`}
+          >
+            Riders
+          </button>
+          <button
+            onClick={() => setActiveTab('users')}
+            className={`px-8 py-3 font-semibold rounded-lg transition-all ${
+              activeTab === 'users'
+                ? 'bg-red-600 text-white shadow-lg hover:bg-red-700'
+                : 'bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700'
+            }`}
+          >
+            Users
+          </button>
+          <button
+            onClick={() => setActiveTab('analytics')}
+            className={`px-8 py-3 font-semibold rounded-lg transition-all ${
+              activeTab === 'analytics'
+                ? 'bg-red-600 text-white shadow-lg hover:bg-red-700'
+                : 'bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700'
+            }`}
+          >
+            Analytics
+          </button>
+        </div>
 
+        {/* Summary - Only show for Orders tab */}
+        {activeTab === 'orders' && (
         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 mb-6">
           <StatCard icon={<Users />} label="Total Orders" value={String(totalOrders)} />
           <StatCard icon={<Loader2 />} label="In Progress" value={String(inProgress)} />
           <StatCard icon={<CheckCircle />} label="Completed" value={String(completed)} />
           <StatCard icon={<DollarSign />} label="Revenue" value={`KSh ${totalRevenue.toLocaleString()}`} />
           <StatCard icon={<Truck />} label="Active Riders" value={String(new Set(orders.map(o => o.rider)).size)} />
-          <StatCard icon={<MapPin />} label="Total Riders" value={String(riderCount)} />
+          <StatCard icon={<Users />} label="Total Users" value={String(users.length)} />
         </div>
+        )}
 
-        {/* Recent Orders */}
+        {/* Recent Orders - Orders Tab */}
+        {activeTab === 'orders' && (
         <div className="mb-8">
           <div className="rounded-2xl bg-white/80 dark:bg-slate-900/50 backdrop-blur-sm p-6 shadow-lg shadow-slate-200/20 dark:shadow-slate-900/30 border border-slate-200/50 dark:border-slate-700/50">
             <h2 className="text-xl font-semibold mb-4 text-slate-900 dark:text-white">Recent Orders</h2>
@@ -415,8 +509,10 @@ export default function AdminPage(): React.ReactElement {
             </div>
           </div>
         </div>
+        )}
 
-        {/* Charts and Statistics */}
+        {/* Charts and Statistics - Analytics Tab */}
+        {activeTab === 'analytics' && (
         <div className="grid grid-cols-1 xl:grid-cols-2 gap-8 mb-8">
           {/* Orders per Day Chart */}
           <ChartCard title="Orders per Day">
@@ -476,6 +572,120 @@ export default function AdminPage(): React.ReactElement {
             </div>
           </div>
         </div>
+        )}
+
+        {/* Riders Section - Riders Tab */}
+        {activeTab === 'riders' && (
+        <div className="mb-8">
+          <div className="rounded-2xl bg-white/80 dark:bg-white/5 p-6 shadow">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-lg font-semibold">Rider Statistics</h2>
+            </div>
+
+            <div className="overflow-x-auto">
+              <table className="min-w-full text-sm">
+                <thead className="border-b border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-400">
+                  <tr>
+                    <th className="text-left py-3 px-4">Rider</th>
+                    <th className="text-left py-3 px-4">Location</th>
+                    <th className="text-center py-3 px-4">Total Orders</th>
+                    <th className="text-center py-3 px-4">Completed</th>
+                    <th className="text-center py-3 px-4">In Progress</th>
+                    <th className="text-center py-3 px-4">Success Rate</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {availableRiders.map((rider) => {
+                    const riderOrders = orders.filter(o => String(o.rider) === rider);
+                    const completed = riderOrders.filter(o => String(o.status).toLowerCase() === 'delivered').length;
+                    const inProgress = riderOrders.filter(o => !['delivered', 'cancelled'].includes(String(o.status).toLowerCase())).length;
+                    const total = riderOrders.length;
+                    const successRate = total > 0 ? ((completed / total) * 100).toFixed(1) : '0';
+                    
+                    return (
+                      <tr key={rider} className="border-b border-slate-100 dark:border-slate-800 hover:bg-slate-50/50 dark:hover:bg-slate-800/50">
+                        <td className="py-3 px-4 font-medium">{rider}</td>
+                        <td className="py-3 px-4">{riderOrders[0]?.raw?.rider?.service_location?.name || "—"}</td>
+                        <td className="py-3 px-4 text-center">{total}</td>
+                        <td className="py-3 px-4 text-center text-green-600">{completed}</td>
+                        <td className="py-3 px-4 text-center text-blue-600">{inProgress}</td>
+                        <td className="py-3 px-4 text-center font-medium">{successRate}%</td>
+                      </tr>
+                    );
+                  })}
+                  {availableRiders.length === 0 && (
+                    <tr>
+                      <td colSpan={5} className="py-8 text-center text-slate-500">No riders found.</td>
+                    </tr>
+                  )}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+        )}
+
+        {/* Users Section - Users Tab */}
+        {activeTab === 'users' && (
+        <div className="mb-8">
+          <div className="rounded-2xl bg-white/80 dark:bg-slate-900/50 backdrop-blur-sm p-6 shadow-lg shadow-slate-200/20 dark:shadow-slate-900/30 border border-slate-200/50 dark:border-slate-700/50">
+            <h2 className="text-xl font-semibold mb-4 text-slate-900 dark:text-white">Registered Users</h2>
+            
+            {errorUsers && (
+              <div className="mb-4 p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg text-red-600 dark:text-red-400 flex items-center gap-2">
+                <AlertCircle className="w-4 h-4" />
+                {errorUsers}
+              </div>
+            )}
+
+            <div className="overflow-x-auto overflow-y-auto max-h-[500px] scrollbar-thin scrollbar-thumb-gray-400 scrollbar-track-gray-100 dark:scrollbar-thumb-gray-600 dark:scrollbar-track-gray-800">
+              <table className="min-w-full text-sm divide-y divide-slate-200/50 dark:divide-slate-800/50">
+                <thead className="text-slate-600 dark:text-slate-400">
+                  <tr>
+                    <th className="text-left py-3 px-4 font-medium">Username</th>
+                    <th className="text-left py-3 px-4 font-medium">Email</th>
+                    <th className="text-left py-3 px-4 font-medium">Name</th>
+                    <th className="text-center py-3 px-4 font-medium">Role</th>
+                    <th className="text-right py-3 px-4 font-medium">Joined</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-200/50 dark:divide-slate-800/50">
+                  {users.slice(0, 50).map((u) => (
+                    <tr key={u.id} className="hover:bg-slate-50/50 dark:hover:bg-slate-800/50 transition-colors duration-150">
+                      <td className="py-3 px-4 font-medium text-indigo-600 dark:text-indigo-400">{u.username}</td>
+                      <td className="py-3 px-4 text-slate-600 dark:text-slate-400">{u.email}</td>
+                      <td className="py-3 px-4">{u.first_name && u.last_name ? `${u.first_name} ${u.last_name}` : "—"}</td>
+                      <td className="py-3 px-4 text-center">
+                        <span className="inline-flex gap-1">
+                          {u.is_superuser && <span className="inline-flex px-2 py-1 rounded-full text-xs font-medium bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-400">Admin</span>}
+                          {u.is_staff && !u.is_superuser && <span className="inline-flex px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400">Staff</span>}
+                          {!u.is_staff && !u.is_superuser && <span className="inline-flex px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400">User</span>}
+                        </span>
+                      </td>
+                      <td className="py-3 px-4 text-right text-slate-500">{u.date_joined?.split?.("T")?.[0] ?? "—"}</td>
+                    </tr>
+                  ))}
+                  {users.length === 0 && (
+                    <tr>
+                      <td colSpan={5} className="py-8 text-center text-slate-500">
+                        <div className="flex flex-col items-center gap-2">
+                          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                            <circle cx="12" cy="12" r="10"/>
+                            <line x1="8" y1="15" x2="16" y2="15"/>
+                            <line x1="9" y1="9" x2="9.01" y2="9"/>
+                            <line x1="15" y1="9" x2="15.01" y2="9"/>
+                          </svg>
+                          <span>No users found</span>
+                        </div>
+                      </td>
+                    </tr>
+                  )}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+        )}
       </div>
     );
   })();
