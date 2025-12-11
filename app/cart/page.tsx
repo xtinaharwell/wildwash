@@ -2,7 +2,7 @@
 
 import React from 'react';
 import { useAppSelector, useAppDispatch } from '@/redux/hooks';
-import { removeFromCart, clearCart, selectCartItems } from '@/redux/features/cartSlice';
+import { removeFromCart, clearCart, selectCartItems, updateQuantity } from '@/redux/features/cartSlice';
 import Link from 'next/link';
 
 export default function CartPage() {
@@ -17,7 +17,16 @@ export default function CartPage() {
     dispatch(clearCart());
   };
 
-  const totalPrice = cartItems.reduce((acc, item) => acc + Number(item.price), 0);
+  const handleQuantityChange = (id: number, quantity: number) => {
+    if (quantity > 0) {
+      dispatch(updateQuantity({ id, quantity }));
+    }
+  };
+
+  const totalPrice = cartItems.reduce((acc, item) => {
+    const qty = item.quantity || 1;
+    return acc + Number(item.price) * qty;
+  }, 0);
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-white via-[#f8fafc] to-[#eef2ff] dark:from-[#071025] dark:via-[#041022] dark:to-[#011018] text-slate-900 dark:text-slate-100 py-12">
@@ -36,15 +45,37 @@ export default function CartPage() {
             <ul className="space-y-4">
               {cartItems.map((item) => (
                 <li key={item.id} className="flex items-center justify-between bg-white/80 dark:bg-white/5 p-4 rounded-lg shadow">
-                  <div>
+                  <div className="flex-1">
                     <h2 className="font-semibold">{item.name}</h2>
-                    <p className="text-sm text-slate-500">KSh {item.price}</p>
+                    <p className="text-sm text-slate-500">KSh {Number(item.price).toFixed(2)} each</p>
                   </div>
-                  <button 
-                    onClick={() => handleRemoveFromCart(item.id)} 
-                    className="text-red-600 hover:text-red-800 font-medium">
-                    Remove
-                  </button>
+                  
+                  <div className="flex items-center gap-4">
+                    <div className="flex items-center gap-2 bg-slate-100 dark:bg-slate-700 rounded-lg px-2 py-1">
+                      <button
+                        onClick={() => handleQuantityChange(item.id, (item.quantity || 1) - 1)}
+                        className="text-lg font-bold text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-slate-100 w-6 h-6 flex items-center justify-center"
+                      >
+                        −
+                      </button>
+                      <span className="w-8 text-center font-semibold">{item.quantity || 1}</span>
+                      <button
+                        onClick={() => handleQuantityChange(item.id, (item.quantity || 1) + 1)}
+                        className="text-lg font-bold text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-slate-100 w-6 h-6 flex items-center justify-center"
+                      >
+                        +
+                      </button>
+                    </div>
+                    <div className="w-24 text-right">
+                      <p className="text-sm text-slate-500">Subtotal</p>
+                      <p className="font-semibold">KSh {(Number(item.price) * (item.quantity || 1)).toFixed(2)}</p>
+                    </div>
+                    <button 
+                      onClick={() => handleRemoveFromCart(item.id)} 
+                      className="text-red-600 hover:text-red-800 font-medium ml-4">
+                      Remove
+                    </button>
+                  </div>
                 </li>
               ))}
             </ul>

@@ -137,6 +137,7 @@ export default function Page() {
 
     const payload = {
         services: cartServiceIds,
+        service_quantities: cartItems.map(item => ({ service_id: item.id, quantity: item.quantity || 1 })),
         pickup_address: pickupBuilding + (pickupContact ? ` (contact: ${pickupContact})` : ""),
         dropoff_address: sameAsPickup ? pickupBuilding : dropoffAddress,
         urgency: Number(urgency),
@@ -220,8 +221,11 @@ export default function Page() {
                     <ul className="space-y-2" role="list">
                         {cartItems.map((item) => (
                             <li key={item.id} className="flex items-center justify-between p-2 bg-slate-50 dark:bg-slate-700/50 rounded-md">
-                                <span className="text-sm text-slate-700 dark:text-slate-300">{item.name}</span>
-                                <span className="text-sm font-medium text-slate-800 dark:text-slate-200">KSh {item.price}</span>
+                                <div className="flex-1">
+                                  <span className="text-sm text-slate-700 dark:text-slate-300">{item.name}</span>
+                                  <div className="text-xs text-slate-500 dark:text-slate-400">Qty: {item.quantity || 1}</div>
+                                </div>
+                                <span className="text-sm font-medium text-slate-800 dark:text-slate-200">KSh {(Number(item.price) * (item.quantity || 1)).toFixed(2)}</span>
                             </li>
                         ))}
                     </ul>
@@ -365,7 +369,7 @@ export default function Page() {
                 <div>
                   <div className="text-xs text-slate-500 dark:text-slate-500">Selected Services</div>
                   <div className="mt-1 font-medium text-slate-800 dark:text-slate-100">
-                    {cartItems.map(item => item.name).join(", ") || "No services selected"}
+                    {cartItems.map(item => `${item.name} (x${item.quantity || 1})`).join(", ") || "No services selected"}
                   </div>
                 </div>
                 <div>
@@ -388,7 +392,7 @@ export default function Page() {
                 </div>
                 <div className="mt-2 flex items-center justify-between">
                   <div className="text-xs text-slate-500">Total</div>
-                  <div className="font-semibold text-red-600 dark:text-red-400">KSh {cartItems.reduce((acc, item) => acc + Number(item.price), 0).toFixed(2)}</div>
+                  <div className="font-semibold text-red-600 dark:text-red-400">KSh {cartItems.reduce((acc, item) => acc + Number(item.price) * (item.quantity || 1), 0).toFixed(2)}</div>
                 </div>
 
                 <div className="mt-3 flex items-center gap-2">
@@ -411,7 +415,7 @@ export default function Page() {
                     </div>
                     <div>
                       <div className="text-xs text-slate-500 dark:text-slate-500">Selected Services</div>
-                      <div className="mt-1 font-medium text-slate-800 dark:text-slate-100">{cartItems.map(item => item.name).join(", ") || "No services selected"}</div>
+                      <div className="mt-1 font-medium text-slate-800 dark:text-slate-100">{cartItems.map(item => `${item.name} (x${item.quantity || 1})`).join(", ") || "No services selected"}</div>
                     </div>
                   </div>
                 )}
@@ -421,7 +425,7 @@ export default function Page() {
                 <div className="flex justify-between items-center">
                   <div className="text-xs font-semibold text-slate-700 dark:text-slate-200">Total Cost:</div>
                   <div className="text-lg font-bold text-red-600 dark:text-red-400">
-                    KSh {cartItems.reduce((acc, item) => acc + Number(item.price), 0).toFixed(2)}
+                    KSh {cartItems.reduce((acc, item) => acc + Number(item.price) * (item.quantity || 1), 0).toFixed(2)}
                   </div>
                 </div>
               </div>

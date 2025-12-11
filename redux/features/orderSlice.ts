@@ -15,6 +15,7 @@ type BackendOrder = {
   package?: string; // fallback: service name or provided string
   price?: string | number | null;
   price_display?: string | null;
+  order_items?: Array<{ service: number; service_name: string; service_price: number; quantity: number }>;
   status: 'requested' | 'picked' | 'in_progress' | 'ready' | 'delivered' | 'cancelled' | string;
   estimated_delivery?: string | null;
   delivered_at?: string | null;
@@ -67,7 +68,20 @@ const frontendToBackendStatus: Record<string, string> = {
 };
 
 function backendToFrontend(o: BackendOrder): Order {
-  const price = o.price_display ?? (o.price ? `KSh ${Number(o.price).toLocaleString()}` : "");
+  // Calculate price from order_items if available, otherwise use price_display or price
+  let price = '';
+  
+  if (o.order_items && o.order_items.length > 0) {
+    // Calculate total from order items with quantities
+    const total = o.order_items.reduce((acc, item) => {
+      return acc + (item.service_price * item.quantity);
+    }, 0);
+    price = `KSh ${total.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+  } else {
+    // Fallback to existing price calculation
+    price = o.price_display ?? (o.price ? `KSh ${Number(o.price).toLocaleString()}` : "");
+  }
+  
   const weightKg = o.weight_kg ? Number(o.weight_kg) : undefined;
   const eta = o.estimated_delivery ? new Date(o.estimated_delivery).toLocaleString() : undefined;
   const deliveredAt = o.delivered_at ? new Date(o.delivered_at).toLocaleString() : undefined;

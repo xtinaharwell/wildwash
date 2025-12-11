@@ -126,6 +126,18 @@ export default function AdminPage(): React.ReactElement {
 
   const [selectedLoan, setSelectedLoan] = useState<LoanApplication | null>(null);
 
+  // Helper function to calculate price from order_items with quantities
+  const calculateOrderPrice = (order: any): number => {
+    if (order.order_items && Array.isArray(order.order_items) && order.order_items.length > 0) {
+      return order.order_items.reduce((total: number, item: any) => {
+        const itemPrice = Number(item.service_price ?? 0);
+        const quantity = Number(item.quantity ?? 1);
+        return total + (itemPrice * quantity);
+      }, 0);
+    }
+    return Number(order.total_price ?? order.price ?? order.price_display ?? 0);
+  };
+
   const fetchOrders = useCallback(async () => {
     setLoadingOrders(true);
     setErrorOrders(null);
@@ -137,7 +149,7 @@ export default function AdminPage(): React.ReactElement {
           id: o.id,
           code: o.code,
           created_at: o.created_at,
-          price: o.total_price ?? o.price ?? o.price_display ?? 0,
+          price: calculateOrderPrice(o),
           status: o.status ?? o.status_code ?? o.state ?? "unknown",
           rider: typeof o.rider === 'object' 
             ? (o.rider?.username || o.rider?.first_name || o.rider?.name || null)

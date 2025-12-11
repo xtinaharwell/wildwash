@@ -11,12 +11,13 @@ interface OrderStatusUpdateProps {
 }
 
 const ORDER_STATUSES = [
-  { value: 'requested', label: 'Received' },
-  { value: 'picked', label: 'Washing' },
-  { value: 'in_progress', label: 'Drying' },
-  { value: 'ready', label: 'Ready' },
+  { value: 'requested', label: 'Requested' },
+  { value: 'picked', label: 'Picked Up' },
+  { value: 'in_progress', label: 'In Progress' },
+  { value: 'ready', label: 'Ready for Delivery' },
   { value: 'delivered', label: 'Delivered' },
-  { value: 'cancelled', label: 'Cancelled' }
+  { value: 'cancelled', label: 'Cancelled' },
+  { value: 'pending_assignment', label: 'Pending Assignment' }
 ] as const;
 
 type OrderStatus = typeof ORDER_STATUSES[number]['value'];

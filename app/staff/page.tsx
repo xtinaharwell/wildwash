@@ -393,8 +393,8 @@ export default function StaffDashboard(): React.ReactElement {
       </div>
       {/* Create Order Modal */}
       {showCreateOrderModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
-          <div className="w-full max-w-md bg-white dark:bg-slate-800 rounded shadow-lg p-4 max-h-[90vh] overflow-y-auto">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40" onClick={() => setShowCreateOrderModal(false)}>
+          <div className="w-full max-w-md bg-white dark:bg-slate-800 rounded shadow-lg p-4 max-h-[90vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
             <h3 className="text-lg font-semibold mb-4 text-slate-900 dark:text-slate-100">Create New Order</h3>
             
             <div className="space-y-3">

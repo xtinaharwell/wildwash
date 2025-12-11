@@ -8,6 +8,7 @@ export interface Service {
   name: string;
   price: string;
   description: string;
+  quantity?: number; // Add quantity field
 }
 
 // Define the state shape
@@ -24,10 +25,14 @@ export const cartSlice = createSlice({
   initialState,
   reducers: {
     addToCart: (state, action: PayloadAction<Service>) => {
-      // Avoid adding duplicates
+      // Avoid adding duplicates, or increment quantity if already exists
       const existingItem = state.items.find(item => item.id === action.payload.id);
       if (!existingItem) {
-        state.items.push(action.payload);
+        const newItem = { ...action.payload, quantity: action.payload.quantity || 1 };
+        state.items.push(newItem);
+      } else {
+        // If item already exists, increment its quantity
+        existingItem.quantity = (existingItem.quantity || 1) + 1;
       }
     },
     removeFromCart: (state, action: PayloadAction<number>) => { // action.payload is the service id
@@ -36,11 +41,17 @@ export const cartSlice = createSlice({
     clearCart: (state) => {
       state.items = [];
     },
+    updateQuantity: (state, action: PayloadAction<{ id: number; quantity: number }>) => {
+      const item = state.items.find(item => item.id === action.payload.id);
+      if (item && action.payload.quantity > 0) {
+        item.quantity = action.payload.quantity;
+      }
+    },
   },
 });
 
 // Export actions
-export const { addToCart, removeFromCart, clearCart } = cartSlice.actions;
+export const { addToCart, removeFromCart, clearCart, updateQuantity } = cartSlice.actions;
 
 // Export selectors
 export const selectCartItems = (state: RootState) => state.cart.items;
