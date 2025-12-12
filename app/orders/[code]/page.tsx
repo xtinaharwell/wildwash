@@ -273,6 +273,16 @@ export default function OrderDetailsPage() {
               </div>
             </div>
 
+            {/* Actions */}
+            <div className="mt-6">
+              <Link
+                href={`/checkout?order_id=${encodeURIComponent(order.code)}&amount=${encodeURIComponent(order.price.replace(/[^0-9.]/g, ''))}`}
+                className="inline-block px-6 py-3 bg-red-600 text-white font-medium rounded-lg hover:bg-red-700 transition-all duration-300 transform hover:scale-105 active:scale-95"
+              >
+                Proceed to Checkout
+              </Link>
+            </div>
+
             {/* Status timeline */}
             {order.statusLog && order.statusLog.length > 0 && (
               <div className="mt-8 border-t dark:border-slate-700 pt-8">
