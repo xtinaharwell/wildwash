@@ -25,11 +25,17 @@ module.exports = {
       },
       animation: {
         'spin': 'spin 1s linear infinite',
+        'pulse-bounce': 'pulse-bounce 0.6s ease-out',
       },
       keyframes: {
         'spin': {
           '0%': { transform: 'rotate(0deg)' },
           '100%': { transform: 'rotate(360deg)' },
+        },
+        'pulse-bounce': {
+          '0%': { transform: 'scale(1)', opacity: '1' },
+          '50%': { transform: 'scale(1.1)' },
+          '100%': { transform: 'scale(1)', opacity: '1' },
         },
       },
     },

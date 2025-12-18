@@ -102,7 +102,7 @@ export default function NavBar() {
             <Link
               href="/financing"
               className="text-sm px-4 py-2 rounded-lg bg-red-600 text-white hover:bg-red-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-red-300 font-medium">
-              Financing
+              Financing / Pay
             </Link>
             <Link
               href="/offers"
@@ -261,7 +261,7 @@ export default function NavBar() {
                 href="/financing"
                 onClick={() => setMobileOpen(false)}
                 className="block text-lg px-4 py-3 rounded-lg bg-red-600 text-white hover:bg-red-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-red-300 font-medium">
-                Financing
+                Financing / Pay
               </Link>
               <Link
                 href="/offers"
