@@ -7,7 +7,7 @@ import { setAuth } from "../../redux/features/authSlice";
 import { handleLogin, LOGIN_ENDPOINTS } from '@/lib/api/loginHelpers';
 import Link from "next/link";
 
-const API_BASE = process.env.NEXT_PUBLIC_API_BASE ?? process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://127.0.0.1:8000";
+const API_BASE = process.env.NEXT_PUBLIC_API_BASE || '';
 
 export default function SignupPage() {
   const router = useRouter();

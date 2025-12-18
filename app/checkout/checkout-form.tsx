@@ -133,7 +133,7 @@ export default function CheckoutForm() {
       let cleanPhone = formData.phone.replace('+', '');
       
       const response = await axios.post(
-        `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'}/payments/mpesa/stk-push/`,
+        `${process.env.NEXT_PUBLIC_API_BASE}/payments/mpesa/stk-push/`,
         {
           amount: formData.amount,
           phone: cleanPhone,

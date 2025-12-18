@@ -27,7 +27,7 @@ export default function PaymentStatusPage() {
         const token = localStorage.getItem('token');
         
         const response = await axios.get(
-          `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'}/api/orders/${orderId}/payment-status/`,
+          `${process.env.NEXT_PUBLIC_API_BASE}/api/orders/${orderId}/payment-status/`,
           {
             headers: {
               'Authorization': `Token ${token}`,

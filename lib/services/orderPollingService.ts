@@ -22,7 +22,7 @@ class OrderPollingService {
   private subscribers: Set<PollingCallback> = new Set();
   private cachedOrders: Order[] = [];
   private isPolling: boolean = false;
-  private apiBase: string = process.env.NEXT_PUBLIC_API_BASE ?? 'http://127.0.0.1:8000';
+  private apiBase: string = process.env.NEXT_PUBLIC_API_BASE || '';
   private lastOrderIds: Set<number> = new Set(); // Track seen order IDs
 
   private constructor() {}
