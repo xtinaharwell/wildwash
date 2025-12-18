@@ -129,11 +129,17 @@ export default function CheckoutForm() {
         }
       }
       
+      // Get API base URL - use env variable, never fallback to localhost
+      const apiBase = process.env.NEXT_PUBLIC_API_BASE;
+      if (!apiBase) {
+        throw new Error('API endpoint not configured. Please contact support.');
+      }
+      
       // Clean phone number (remove + if present)
       let cleanPhone = formData.phone.replace('+', '');
       
       const response = await axios.post(
-        `${process.env.NEXT_PUBLIC_API_BASE}/payments/mpesa/stk-push/`,
+        `${apiBase}/payments/mpesa/stk-push/`,
         {
           amount: formData.amount,
           phone: cleanPhone,
