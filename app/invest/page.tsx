@@ -10,7 +10,7 @@ export default function InvestPage(): React.ReactElement {
     {
       id: 'starter',
       name: 'Starter',
-      minInvestment: 50000,
+      minInvestment: 5000,
       expectedReturn: '15%',
       term: '12 months',
       description: 'Perfect for new investors starting their investment journey',
@@ -27,7 +27,7 @@ export default function InvestPage(): React.ReactElement {
     {
       id: 'professional',
       name: 'Professional',
-      minInvestment: 250000,
+      minInvestment: 25000,
       expectedReturn: '18%',
       term: '12-24 months',
       description: 'For serious investors looking for higher returns',
@@ -44,7 +44,7 @@ export default function InvestPage(): React.ReactElement {
     {
       id: 'enterprise',
       name: 'Enterprise',
-      minInvestment: 1000000,
+      minInvestment: 100000,
       expectedReturn: '22%',
       term: '12-36 months',
       description: 'Premium investment package for institutional investors',
