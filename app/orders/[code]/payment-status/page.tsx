@@ -114,7 +114,7 @@ export default function PaymentStatusPage() {
         token = localStorage.getItem('token');
       }
 
-      const response = await axios.post(
+      const response = await axios.post<{ status: string }>(
         `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'}/orders/${orderId}/request-delivery/`,
         {},
         {
