@@ -95,6 +95,11 @@ export default function NavBar() {
 
           <nav className="hidden md:flex items-center gap-3">
             <Link
+              href="/invest"
+              className="text-sm px-4 py-2 rounded-lg bg-red-600 text-white hover:bg-red-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-red-300 font-medium">
+              Invest
+            </Link>
+            <Link
               href="/borrow"
               className="text-sm px-4 py-2 rounded-lg bg-red-600 text-white hover:bg-red-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-red-300 font-medium">
               Borrow

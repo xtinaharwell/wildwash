@@ -305,11 +305,52 @@ export default function StaffDashboard(): React.ReactElement {
                     </Link>
                   </td>
                   <td className="py-2 px-3">
-                    <OrderStatusUpdate
-                      orderId={o.id}
-                      currentStatus={o.status ?? o.state ?? 'requested'}
-                      onUpdate={fetchOrders}
-                    />
+                    <div className="flex flex-col gap-2">
+                      <div className="px-3 py-1 rounded bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-300 text-xs font-medium capitalize">
+                        {o.status ?? o.state ?? 'requested'}
+                      </div>
+                      {profile?.role === 'washer' ? (
+                        o.status !== 'washed' && (
+                          <button
+                            onClick={async () => {
+                              try {
+                                await client.patch(`/orders/update/?id=${o.id}`, { status: 'washed' });
+                                await fetchOrders();
+                              } catch (err: any) {
+                                console.error('Failed to update status:', err);
+                                alert(err?.message || 'Failed to update status');
+                              }
+                            }}
+                            className="px-3 py-1 rounded bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400 hover:bg-blue-200 dark:hover:bg-blue-900/50 text-xs font-medium transition-colors"
+                          >
+                            Mark as Washed
+                          </button>
+                        )
+                      ) : profile?.role === 'folder' ? (
+                        o.status !== 'ready' && (
+                          <button
+                            onClick={async () => {
+                              try {
+                                await client.patch(`/orders/update/?id=${o.id}`, { status: 'ready' });
+                                await fetchOrders();
+                              } catch (err: any) {
+                                console.error('Failed to update status:', err);
+                                alert(err?.message || 'Failed to update status');
+                              }
+                            }}
+                            className="px-3 py-1 rounded bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-400 hover:bg-purple-200 dark:hover:bg-purple-900/50 text-xs font-medium transition-colors"
+                          >
+                            Mark as Ready
+                          </button>
+                        )
+                      ) : (
+                        <OrderStatusUpdate
+                          orderId={o.id}
+                          currentStatus={o.status ?? o.state ?? 'requested'}
+                          onUpdate={fetchOrders}
+                        />
+                      )}
+                    </div>
                   </td>
                   <td className="py-2 px-3 text-slate-900 dark:text-slate-300">
                     {o.order_type === 'manual' ? (
@@ -371,7 +412,7 @@ export default function StaffDashboard(): React.ReactElement {
                             actual_price: o.actual_price !== undefined && o.actual_price !== null ? String(o.actual_price) : ''
                           });
                         }}
-                        className="px-2 py-1 text-xs rounded bg-slate-100 dark:bg-slate-700 text-slate-800 dark:text-slate-200"
+                        className="px-2 py-1 text-xs rounded bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-400"
                       >
                         Add details
                       </button>
@@ -509,52 +550,60 @@ export default function StaffDashboard(): React.ReactElement {
       )}
       {/* Details modal overlay */}
       {detailsFormOrderId !== null && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
-          <div className="w-full max-w-md bg-white dark:bg-slate-800 rounded shadow-lg p-4">
-            <h3 className="text-lg font-semibold mb-2 text-slate-900 dark:text-slate-100">Add / Edit Details</h3>
-            <div className="space-y-2">
-              <label className="text-xs text-slate-600">Quantity</label>
-              <input
-                type="number"
-                min={1}
-                value={detailsForm.items ?? 1}
-                onChange={(e) => setDetailsForm(prev => ({ ...prev, items: Number(e.target.value) }))}
-                className="w-full px-2 py-1 rounded border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-sm"
-              />
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40" onClick={() => setDetailsFormOrderId(null)}>
+          <div className="w-full max-w-md bg-white dark:bg-slate-800 rounded-lg shadow-xl p-6 border border-slate-200 dark:border-slate-700" onClick={(e) => e.stopPropagation()}>
+            <h3 className="text-xl font-bold mb-6 text-slate-900 dark:text-slate-100">Order Details</h3>
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Quantity</label>
+                <input
+                  type="number"
+                  min={1}
+                  value={detailsForm.items ?? 1}
+                  onChange={(e) => setDetailsForm(prev => ({ ...prev, items: Number(e.target.value) }))}
+                  className="w-full px-3 py-2 rounded-md border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 text-sm focus:outline-none focus:ring-2 focus:ring-red-500"
+                />
+              </div>
 
-              <label className="text-xs text-slate-600">Weight (kg)</label>
-              <input
-                type="number"
-                step="0.1"
-                value={detailsForm.weight_kg ?? ''}
-                onChange={(e) => setDetailsForm(prev => ({ ...prev, weight_kg: e.target.value }))}
-                className="w-full px-2 py-1 rounded border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-sm"
-              />
+              <div>
+                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Weight (kg)</label>
+                <input
+                  type="number"
+                  step="0.1"
+                  value={detailsForm.weight_kg ?? ''}
+                  onChange={(e) => setDetailsForm(prev => ({ ...prev, weight_kg: e.target.value }))}
+                  className="w-full px-3 py-2 rounded-md border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 text-sm focus:outline-none focus:ring-2 focus:ring-red-500"
+                />
+              </div>
 
-              <label className="text-xs text-slate-600">Short description / notes</label>
-              <textarea
-                value={detailsForm.pickup_notes ?? ''}
-                onChange={(e) => setDetailsForm(prev => ({ ...prev, pickup_notes: e.target.value }))}
-                className="w-full px-2 py-1 rounded border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-sm"
-                rows={3}
-                placeholder="e.g. 3 shirts, 2 towels"
-              />
+              <div>
+                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Description / Items</label>
+                <textarea
+                  value={detailsForm.pickup_notes ?? ''}
+                  onChange={(e) => setDetailsForm(prev => ({ ...prev, pickup_notes: e.target.value }))}
+                  className="w-full px-3 py-2 rounded-md border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 text-sm focus:outline-none focus:ring-2 focus:ring-red-500"
+                  rows={3}
+                  placeholder="e.g. 3 shirts, 2 towels"
+                />
+              </div>
 
-              <label className="text-xs text-slate-600">Actual price paid (KSh)</label>
-              <input
-                type="number"
-                step="0.01"
-                value={detailsForm.actual_price ?? ''}
-                onChange={(e) => setDetailsForm(prev => ({ ...prev, actual_price: e.target.value }))}
-                className="w-full px-2 py-1 rounded border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-sm"
-                placeholder="e.g. 350.00"
-              />
+              <div>
+                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Actual Price (KSh)</label>
+                <input
+                  type="number"
+                  step="0.01"
+                  value={detailsForm.actual_price ?? ''}
+                  onChange={(e) => setDetailsForm(prev => ({ ...prev, actual_price: e.target.value }))}
+                  className="w-full px-3 py-2 rounded-md border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 text-sm focus:outline-none focus:ring-2 focus:ring-red-500"
+                  placeholder="e.g. 350.00"
+                />
+              </div>
             </div>
 
-            <div className="mt-4 flex items-center justify-end gap-2">
+            <div className="mt-6 flex items-center justify-end gap-3">
               <button
                 onClick={() => setDetailsFormOrderId(null)}
-                className="px-3 py-1 rounded bg-slate-100 dark:bg-slate-700"
+                className="px-4 py-2 rounded-md bg-slate-100 dark:bg-slate-700 text-slate-900 dark:text-slate-100 font-medium hover:bg-slate-200 dark:hover:bg-slate-600 transition-colors"
               >
                 Cancel
               </button>
@@ -579,9 +628,9 @@ export default function StaffDashboard(): React.ReactElement {
                     alert(err?.message || 'Failed to save details');
                   }
                 }}
-                className="px-3 py-1 rounded bg-indigo-600 text-white hover:bg-indigo-700"
+                className="px-4 py-2 rounded-md bg-red-600 text-white font-medium hover:bg-red-700 dark:bg-red-700 dark:hover:bg-red-600 transition-colors"
               >
-                Save details
+                Save Details
               </button>
             </div>
           </div>

@@ -6,11 +6,12 @@ import axios from 'axios';
 import Link from 'next/link';
 
 interface PaymentStatus {
-  status: 'pending' | 'completed' | 'failed' | 'initiated';
+  status: 'pending' | 'completed' | 'failed' | 'initiated' | 'success';
   message: string;
   checkout_request_id: string;
   order_id: string;
   amount: number;
+  delivery_requested?: boolean;
 }
 
 export default function PaymentStatusPage() {
@@ -20,17 +21,38 @@ export default function PaymentStatusPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [pollingCount, setPollingCount] = useState(0);
+  const [requestingDelivery, setRequestingDelivery] = useState(false);
+  const [deliverySuccess, setDeliverySuccess] = useState(false);
+  const [deliveryError, setDeliveryError] = useState('');
 
   useEffect(() => {
     const fetchPaymentStatus = async () => {
       try {
-        const token = localStorage.getItem('token');
+        let token = null;
+        
+        // Try to get token from wildwash_auth_state first
+        if (typeof window !== 'undefined') {
+          const authState = localStorage.getItem('wildwash_auth_state');
+          if (authState) {
+            try {
+              const parsed = JSON.parse(authState);
+              token = parsed.token;
+            } catch (e) {
+              console.error('Error parsing auth state:', e);
+            }
+          }
+        }
+        
+        // Fallback to direct token key if wildwash_auth_state doesn't work
+        if (!token) {
+          token = localStorage.getItem('token');
+        }
         
         const response = await axios.get(
-          `${process.env.NEXT_PUBLIC_API_BASE}/api/orders/${orderId}/payment-status/`,
+          `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'}/orders/${orderId}/payment-status/`,
           {
             headers: {
-              'Authorization': `Token ${token}`,
+              ...(token && { 'Authorization': `Token ${token}` }),
             },
           }
         );
@@ -39,7 +61,7 @@ export default function PaymentStatusPage() {
         setPaymentStatus(data);
 
         // Stop polling if payment is completed or failed
-        if (data.status === 'completed' || data.status === 'failed') {
+        if (data.status === 'success' || data.status === 'completed' || data.status === 'failed') {
           setLoading(false);
         }
       } catch (err: any) {
@@ -67,6 +89,55 @@ export default function PaymentStatusPage() {
     return () => clearInterval(interval);
   }, [orderId]);
 
+  const handleRequestDelivery = async () => {
+    setRequestingDelivery(true);
+    setDeliveryError('');
+    setDeliverySuccess(false);
+
+    try {
+      let token = null;
+      
+      // Get token from localStorage
+      if (typeof window !== 'undefined') {
+        const authState = localStorage.getItem('wildwash_auth_state');
+        if (authState) {
+          try {
+            const parsed = JSON.parse(authState);
+            token = parsed.token;
+          } catch (e) {
+            console.error('Error parsing auth state:', e);
+          }
+        }
+      }
+      
+      if (!token) {
+        token = localStorage.getItem('token');
+      }
+
+      const response = await axios.post(
+        `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'}/orders/${orderId}/request-delivery/`,
+        {},
+        {
+          headers: {
+            ...(token && { 'Authorization': `Token ${token}` }),
+          },
+        }
+      );
+
+      if (response.data.status === 'success') {
+        setDeliverySuccess(true);
+        // Reset success message after 5 seconds
+        setTimeout(() => setDeliverySuccess(false), 5000);
+      }
+    } catch (err: any) {
+      const errorMsg = err.response?.data?.detail || 'Failed to request delivery';
+      setDeliveryError(errorMsg);
+      console.error('Delivery request error:', err);
+    } finally {
+      setRequestingDelivery(false);
+    }
+  };
+
   if (loading && !paymentStatus) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center">
@@ -81,7 +152,7 @@ export default function PaymentStatusPage() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 py-12 px-4 sm:px-6 lg:px-8">
       <div className="max-w-md w-full mx-auto bg-white rounded-lg shadow-lg p-8">
-        {paymentStatus?.status === 'completed' ? (
+        {paymentStatus?.status === 'completed' || paymentStatus?.status === 'success' ? (
           <>
             <div className="text-center">
               <div className="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-green-100">
@@ -108,7 +179,43 @@ export default function PaymentStatusPage() {
               </div>
             </div>
 
+            {deliverySuccess && (
+              <div className="mt-6 p-4 bg-green-50 border border-green-200 rounded-lg">
+                <p className="text-green-700 text-sm font-medium">
+                  ✓ Delivery request sent to rider!
+                </p>
+              </div>
+            )}
+
+            {deliveryError && (
+              <div className="mt-6 p-4 bg-red-50 border border-red-200 rounded-lg">
+                <p className="text-red-700 text-sm">
+                  {deliveryError}
+                </p>
+              </div>
+            )}
+
             <div className="mt-6 space-y-3">
+              <button
+                onClick={handleRequestDelivery}
+                disabled={requestingDelivery || deliverySuccess || paymentStatus.delivery_requested}
+                className={`w-full font-semibold py-3 px-4 rounded-lg transition duration-200 text-center block ${
+                  requestingDelivery || deliverySuccess || paymentStatus.delivery_requested
+                    ? 'bg-green-500 text-white cursor-not-allowed'
+                    : 'bg-red-600 hover:bg-red-700 text-white'
+                }`}
+              >
+                {requestingDelivery ? (
+                  <span className="flex items-center justify-center">
+                    <span className="animate-spin mr-2">⏳</span>
+                    Requesting Delivery...
+                  </span>
+                ) : deliverySuccess || paymentStatus.delivery_requested ? (
+                  '✓ Rider Notified'
+                ) : (
+                  '🚴 Request Delivery Now'
+                )}
+              </button>
               <Link
                 href={`/orders/${orderId}`}
                 className="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-3 px-4 rounded-lg transition duration-200 text-center block"
