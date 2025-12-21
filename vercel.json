@@ -1,6 +1,6 @@
 {
   "env": {
-    "NEXT_PUBLIC_API_URL": "@next_public_api_url"
+    "NEXT_PUBLIC_API_URL": "https://api.wildwash.com"
   },
   "buildCommand": "npm run build",
   "outputDirectory": ".next",
