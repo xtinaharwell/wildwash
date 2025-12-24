@@ -95,13 +95,42 @@ type LoanApplication = {
   raw?: RawLoan;
 };
 
+type TradeIn = {
+  id?: number;
+  user_id?: number;
+  user_name?: string;
+  user_phone?: string;
+  description?: string;
+  estimated_price?: string | number;
+  contact_phone?: string;
+  status?: string;
+  created_at?: string;
+  raw?: Record<string, any>;
+};
+
+type BNPLUser = {
+  id?: number;
+  user_id?: number;
+  user_name?: string;
+  user_phone?: string;
+  is_enrolled?: boolean;
+  is_active?: boolean;
+  credit_limit?: string | number;
+  current_balance?: string | number;
+  created_at?: string;
+  updated_at?: string;
+  raw?: Record<string, any>;
+};
+
 /* --- Component --- */
 export default function AdminPage(): React.ReactElement {
   const [orders, setOrders] = useState<Order[]>([]);
   const [locations, setLocations] = useState<RiderLocation[]>([]);
   const [users, setUsers] = useState<User[]>([]);
   const [loans, setLoans] = useState<LoanApplication[]>([]);
-  const [activeTab, setActiveTab] = useState<'orders' | 'riders' | 'users' | 'loans' | 'analytics'>('orders');
+  const [tradeIns, setTradeIns] = useState<TradeIn[]>([]);
+  const [bnplUsers, setBnplUsers] = useState<BNPLUser[]>([]);
+  const [activeTab, setActiveTab] = useState<'orders' | 'riders' | 'users' | 'loans' | 'tradeins' | 'bnpl' | 'analytics'>('orders');
   const [statusFilter, setStatusFilter] = useState<string>('');
   const [riderFilter, setRiderFilter] = useState<string>('');
   const [locationFilter, setLocationFilter] = useState<string>('');
@@ -113,16 +142,22 @@ export default function AdminPage(): React.ReactElement {
   const [userRoleFilter, setUserRoleFilter] = useState<string>('');
   const [userJoinDateFilter, setUserJoinDateFilter] = useState<string>('');
   const [loanStatusFilter, setLoanStatusFilter] = useState<string>('');
+  const [tradeInStatusFilter, setTradeInStatusFilter] = useState<string>('');
+  const [bnplSearchQuery, setBnplSearchQuery] = useState<string>('');
 
   const [loadingOrders, setLoadingOrders] = useState<boolean>(true);
   const [loadingLocations, setLoadingLocations] = useState<boolean>(true);
   const [loadingUsers, setLoadingUsers] = useState<boolean>(true);
   const [loadingLoans, setLoadingLoans] = useState<boolean>(true);
+  const [loadingTradeIns, setLoadingTradeIns] = useState<boolean>(true);
+  const [loadingBNPL, setLoadingBNPL] = useState<boolean>(true);
 
   const [errorOrders, setErrorOrders] = useState<string | null>(null);
   const [errorLocations, setErrorLocations] = useState<string | null>(null);
   const [errorUsers, setErrorUsers] = useState<string | null>(null);
   const [errorLoans, setErrorLoans] = useState<string | null>(null);
+  const [errorTradeIns, setErrorTradeIns] = useState<string | null>(null);
+  const [errorBNPL, setErrorBNPL] = useState<string | null>(null);
 
   const [selectedLoan, setSelectedLoan] = useState<LoanApplication | null>(null);
 
@@ -274,13 +309,90 @@ export default function AdminPage(): React.ReactElement {
     }
   }, []);
 
+  const fetchTradeIns = useCallback(async () => {
+    setLoadingTradeIns(true);
+    setErrorTradeIns(null);
+    try {
+      const data = await client.get("/payments/tradein/?page_size=100");
+      const list: any[] = Array.isArray(data) ? data : Array.isArray(data?.results) ? data.results : [];
+
+      setTradeIns(
+        list.map((t: any) => {
+          const userData = t.user || {};
+          const userName = userData.first_name && userData.last_name 
+            ? `${userData.first_name} ${userData.last_name}` 
+            : userData.username || "Unknown User";
+          
+          return {
+            id: t.id,
+            user_id: userData.id ?? t.user_id,
+            user_name: userName,
+            user_phone: userData.phone ?? userData.phone_number,
+            description: t.description ?? "",
+            estimated_price: t.estimated_price ?? 0,
+            contact_phone: t.contact_phone ?? "",
+            status: t.status ?? "pending",
+            created_at: t.created_at,
+            raw: t,
+          };
+        })
+      );
+    } catch (err: any) {
+      console.error("fetchTradeIns error:", err);
+      setErrorTradeIns(err?.message ?? "Failed to load trade-ins");
+      setTradeIns([]);
+    } finally {
+      setLoadingTradeIns(false);
+    }
+  }, []);
+
+  const fetchBNPL = useCallback(async () => {
+    setLoadingBNPL(true);
+    setErrorBNPL(null);
+    try {
+      const data = await client.get("/payments/bnpl/users/?page_size=100");
+      const list: any[] = Array.isArray(data) ? data : Array.isArray(data?.results) ? data.results : [];
+
+      setBnplUsers(
+        list.map((b: any) => {
+          const userData = b.user || {};
+          const userName = userData.first_name && userData.last_name 
+            ? `${userData.first_name} ${userData.last_name}` 
+            : userData.username || "Unknown User";
+          
+          return {
+            id: b.id,
+            user_id: userData.id ?? b.user_id,
+            user_name: userName,
+            user_phone: userData.phone ?? userData.phone_number,
+            is_enrolled: b.is_enrolled ?? false,
+            is_active: b.is_active ?? false,
+            credit_limit: b.credit_limit ?? 0,
+            current_balance: b.current_balance ?? 0,
+            created_at: b.created_at,
+            updated_at: b.updated_at,
+            raw: b,
+          };
+        })
+      );
+    } catch (err: any) {
+      console.error("fetchBNPL error:", err);
+      setErrorBNPL(err?.message ?? "Failed to load BNPL users");
+      setBnplUsers([]);
+    } finally {
+      setLoadingBNPL(false);
+    }
+  }, []);
+
   useEffect(() => {
     // initial load
     fetchOrders();
     fetchLocations();
     fetchUsers();
     fetchLoans();
-  }, [fetchOrders, fetchLocations, fetchUsers, fetchLoans]);
+    fetchTradeIns();
+    fetchBNPL();
+  }, [fetchOrders, fetchLocations, fetchUsers, fetchLoans, fetchTradeIns, fetchBNPL]);
 
   // Derived metrics
   const totalOrders = orders.length;
@@ -319,7 +431,7 @@ export default function AdminPage(): React.ReactElement {
   );
 
   const refreshAll = async () => {
-    await Promise.all([fetchOrders(), fetchLocations(), fetchUsers(), fetchLoans()]);
+    await Promise.all([fetchOrders(), fetchLocations(), fetchUsers(), fetchLoans(), fetchTradeIns(), fetchBNPL()]);
   };
 
   // filter helpers
@@ -490,6 +602,26 @@ export default function AdminPage(): React.ReactElement {
             }`}
           >
             Loans
+          </button>
+          <button
+            onClick={() => setActiveTab('tradeins')}
+            className={`px-3 sm:px-6 md:px-8 py-2 sm:py-3 text-xs sm:text-sm md:text-base font-semibold rounded-lg transition-all whitespace-nowrap flex-shrink-0 ${
+              activeTab === 'tradeins'
+                ? 'bg-red-600 text-white shadow-lg hover:bg-red-700'
+                : 'bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700'
+            }`}
+          >
+            Trade-Ins
+          </button>
+          <button
+            onClick={() => setActiveTab('bnpl')}
+            className={`px-3 sm:px-6 md:px-8 py-2 sm:py-3 text-xs sm:text-sm md:text-base font-semibold rounded-lg transition-all whitespace-nowrap flex-shrink-0 ${
+              activeTab === 'bnpl'
+                ? 'bg-red-600 text-white shadow-lg hover:bg-red-700'
+                : 'bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700'
+            }`}
+          >
+            BNPL
           </button>
           <button
             onClick={() => setActiveTab('analytics')}
@@ -1195,6 +1327,193 @@ export default function AdminPage(): React.ReactElement {
                 </tbody>
               </table>
             </div>
+          </div>
+        </div>
+        )}
+
+        {/* Trade-Ins Section - Trade-Ins Tab */}
+        {activeTab === 'tradeins' && (
+        <div className="mb-8">
+          <div className="rounded-2xl bg-white/80 dark:bg-slate-900/50 backdrop-blur-sm p-6 shadow-lg shadow-slate-200/20 dark:shadow-slate-900/30 border border-slate-200/50 dark:border-slate-700/50">
+            <h2 className="text-xl font-semibold mb-4 text-slate-900 dark:text-white">Trade-In Submissions</h2>
+            
+            <div className="mb-4 flex flex-wrap items-center gap-3">
+              <div className="flex-1 min-w-[200px]">
+                <select 
+                  value={tradeInStatusFilter} 
+                  onChange={(e) => setTradeInStatusFilter(e.target.value)} 
+                  className="w-full rounded-lg border border-slate-200 bg-white/50 backdrop-blur-sm dark:border-slate-800 dark:bg-slate-900/50 px-3 py-2 text-sm transition-shadow duration-200 hover:bg-white dark:hover:bg-slate-900 focus:outline-none focus:ring-2 focus:ring-red-500/20"
+                >
+                  <option value="">All statuses</option>
+                  <option value="pending">Pending</option>
+                  <option value="approved">Approved</option>
+                  <option value="rejected">Rejected</option>
+                </select>
+              </div>
+
+              <button 
+                onClick={() => { 
+                  setTradeInStatusFilter('');
+                  fetchTradeIns();
+                }} 
+                className="px-4 py-2 bg-slate-300 dark:bg-slate-700 rounded-lg hover:bg-slate-400 dark:hover:bg-slate-600 transition-all font-medium text-sm"
+              >
+                Clear Filters
+              </button>
+            </div>
+
+            {loadingTradeIns ? (
+              <div className="flex justify-center items-center py-10">
+                <Loader2 className="animate-spin text-red-600 w-6 h-6" />
+              </div>
+            ) : errorTradeIns ? (
+              <div className="p-4 text-red-600 dark:text-red-400 bg-red-100 dark:bg-red-900/30 rounded-lg flex items-center gap-2">
+                <AlertCircle className="w-4 h-4" /> {errorTradeIns}
+              </div>
+            ) : (
+              <div className="overflow-x-auto">
+                <table className="min-w-full text-sm">
+                  <thead className="border-b border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-400">
+                    <tr>
+                      <th className="text-left py-3 px-4">ID</th>
+                      <th className="text-left py-3 px-4">User</th>
+                      <th className="text-left py-3 px-4">Contact Phone</th>
+                      <th className="text-left py-3 px-4">Item Description</th>
+                      <th className="text-right py-3 px-4">Estimated Price</th>
+                      <th className="text-left py-3 px-4">Status</th>
+                      <th className="text-left py-3 px-4">Submitted</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {tradeIns.filter(t => !tradeInStatusFilter || String(t.status).toLowerCase() === tradeInStatusFilter.toLowerCase()).map((trade) => (
+                      <tr key={trade.id} className="border-b border-slate-100 dark:border-slate-800 hover:bg-slate-50/50 dark:hover:bg-slate-800/50">
+                        <td className="py-3 px-4 font-mono text-xs text-slate-600 dark:text-slate-400">{trade.id}</td>
+                        <td className="py-3 px-4">
+                          <div className="flex flex-col gap-1">
+                            <p className="font-medium text-slate-900 dark:text-white">{trade.user_name}</p>
+                            <p className="text-xs text-slate-500 dark:text-slate-400">{trade.user_phone}</p>
+                          </div>
+                        </td>
+                        <td className="py-3 px-4 text-slate-600 dark:text-slate-400">{trade.contact_phone || "—"}</td>
+                        <td className="py-3 px-4 text-slate-600 dark:text-slate-400 max-w-xs truncate">{trade.description || "—"}</td>
+                        <td className="py-3 px-4 text-right font-semibold text-slate-900 dark:text-white">
+                          KSh {Number(trade.estimated_price ?? 0).toLocaleString()}
+                        </td>
+                        <td className="py-3 px-4">
+                          <span className={`inline-block px-2 py-1 rounded text-xs font-medium ${
+                            trade.status === 'pending' ? 'bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400' :
+                            trade.status === 'approved' ? 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400' :
+                            trade.status === 'rejected' ? 'bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-400' :
+                            'bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-400'
+                          }`}>
+                            {String(trade.status).charAt(0).toUpperCase() + String(trade.status).slice(1)}
+                          </span>
+                        </td>
+                        <td className="py-3 px-4 text-sm text-slate-500">
+                          {trade.created_at ? new Date(trade.created_at).toLocaleDateString() : '—'}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </div>
+        </div>
+        )}
+
+        {/* BNPL Users Section - BNPL Tab */}
+        {activeTab === 'bnpl' && (
+        <div className="mb-8">
+          <div className="rounded-2xl bg-white/80 dark:bg-slate-900/50 backdrop-blur-sm p-6 shadow-lg shadow-slate-200/20 dark:shadow-slate-900/30 border border-slate-200/50 dark:border-slate-700/50">
+            <h2 className="text-xl font-semibold mb-4 text-slate-900 dark:text-white">BNPL Users</h2>
+            
+            <div className="mb-4 flex flex-wrap items-center gap-3">
+              <div className="flex-1 min-w-[200px]">
+                <input 
+                  value={bnplSearchQuery} 
+                  onChange={(e) => setBnplSearchQuery(e.target.value)} 
+                  placeholder="Search by username or phone" 
+                  className="w-full rounded-lg border border-slate-200 bg-white/50 backdrop-blur-sm dark:border-slate-800 dark:bg-slate-900/50 px-3 py-2 text-sm transition-shadow duration-200 hover:bg-white dark:hover:bg-slate-900 focus:outline-none focus:ring-2 focus:ring-red-500/20" 
+                />
+              </div>
+
+              <button 
+                onClick={() => { 
+                  setBnplSearchQuery('');
+                  fetchBNPL();
+                }} 
+                className="px-4 py-2 bg-slate-300 dark:bg-slate-700 rounded-lg hover:bg-slate-400 dark:hover:bg-slate-600 transition-all font-medium text-sm"
+              >
+                Clear Filters
+              </button>
+            </div>
+
+            {loadingBNPL ? (
+              <div className="flex justify-center items-center py-10">
+                <Loader2 className="animate-spin text-red-600 w-6 h-6" />
+              </div>
+            ) : errorBNPL ? (
+              <div className="p-4 text-red-600 dark:text-red-400 bg-red-100 dark:bg-red-900/30 rounded-lg flex items-center gap-2">
+                <AlertCircle className="w-4 h-4" /> {errorBNPL}
+              </div>
+            ) : (
+              <div className="overflow-x-auto">
+                <table className="min-w-full text-sm">
+                  <thead className="border-b border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-400">
+                    <tr>
+                      <th className="text-left py-3 px-4">User</th>
+                      <th className="text-left py-3 px-4">Phone</th>
+                      <th className="text-center py-3 px-4">Enrolled</th>
+                      <th className="text-center py-3 px-4">Active</th>
+                      <th className="text-right py-3 px-4">Credit Limit</th>
+                      <th className="text-right py-3 px-4">Current Balance</th>
+                      <th className="text-right py-3 px-4">Available Credit</th>
+                      <th className="text-left py-3 px-4">Created</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {bnplUsers.filter(b => {
+                      if (bnplSearchQuery) {
+                        const q = bnplSearchQuery.toLowerCase();
+                        return String(b.user_name ?? '').toLowerCase().includes(q) || String(b.user_phone ?? '').toLowerCase().includes(q);
+                      }
+                      return true;
+                    }).map((bnpl) => {
+                      const availableCredit = Number(bnpl.credit_limit ?? 0) - Number(bnpl.current_balance ?? 0);
+                      return (
+                        <tr key={bnpl.id} className="border-b border-slate-100 dark:border-slate-800 hover:bg-slate-50/50 dark:hover:bg-slate-800/50">
+                          <td className="py-3 px-4 font-medium text-slate-900 dark:text-white">{bnpl.user_name}</td>
+                          <td className="py-3 px-4 text-slate-600 dark:text-slate-400">{bnpl.user_phone || "—"}</td>
+                          <td className="py-3 px-4 text-center">
+                            <span className={`inline-block px-2 py-1 rounded-full text-xs font-medium ${bnpl.is_enrolled ? 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400' : 'bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-400'}`}>
+                              {bnpl.is_enrolled ? 'Yes' : 'No'}
+                            </span>
+                          </td>
+                          <td className="py-3 px-4 text-center">
+                            <span className={`inline-block px-2 py-1 rounded-full text-xs font-medium ${bnpl.is_active ? 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400' : 'bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-400'}`}>
+                              {bnpl.is_active ? 'Active' : 'Inactive'}
+                            </span>
+                          </td>
+                          <td className="py-3 px-4 text-right font-semibold text-slate-900 dark:text-white">
+                            KSh {Number(bnpl.credit_limit ?? 0).toLocaleString()}
+                          </td>
+                          <td className="py-3 px-4 text-right font-semibold text-orange-600 dark:text-orange-400">
+                            KSh {Number(bnpl.current_balance ?? 0).toLocaleString()}
+                          </td>
+                          <td className="py-3 px-4 text-right font-semibold text-green-600 dark:text-green-400">
+                            KSh {availableCredit.toLocaleString()}
+                          </td>
+                          <td className="py-3 px-4 text-sm text-slate-500">
+                            {bnpl.created_at ? new Date(bnpl.created_at).toLocaleDateString() : '—'}
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+            )}
           </div>
         </div>
         )}

@@ -11,6 +11,8 @@ interface CheckoutForm {
   phone: string;
   order_id: string;
   paymentMethod: 'mpesa' | 'bnpl' | 'tradein' | 'gift';
+  trade_description?: string;
+  trade_estimated_price?: string;
 }
 
 interface UserData {
@@ -27,6 +29,8 @@ export default function CheckoutForm() {
     phone: '',
     order_id: '',
     paymentMethod: 'mpesa',
+    trade_description: '',
+    trade_estimated_price: '',
   });
 
   const [loading, setLoading] = useState(false);
@@ -128,6 +132,13 @@ export default function CheckoutForm() {
     if (!formData.amount || !formData.phone || !formData.order_id) {
       setError('Phone number and order ID are required');
       return false;
+    }
+
+    if (formData.paymentMethod === 'tradein') {
+      if (!formData.trade_description || !formData.trade_estimated_price) {
+        setError('Please provide a description and estimated price for the trade-in item.');
+        return false;
+      }
     }
 
     // Validate phone number
@@ -258,14 +269,49 @@ export default function CheckoutForm() {
       }
 
       // Handle other payment methods (Trade In, Gift) - show message
-      if (formData.paymentMethod === 'tradein' || formData.paymentMethod === 'gift') {
+      if (formData.paymentMethod === 'tradein') {
+        try {
+          const payload = {
+            description: formData.trade_description,
+            estimated_price: formData.trade_estimated_price,
+            contact_phone: formData.phone,
+          };
+
+          const tradeResponse = await axios.post(
+            `${apiBase}/payments/tradein/`,
+            payload,
+            {
+              headers: {
+                ...(token && { 'Authorization': `Token ${token}` }),
+                'Content-Type': 'application/json',
+              },
+            }
+          );
+
+          if (tradeResponse.status === 200 || tradeResponse.status === 201) {
+            setSuccess('Trade-in submitted. Our team will contact you shortly to evaluate the item.');
+            setTimeout(() => {
+              router.push(`/orders/${formData.order_id}/payment-status`);
+            }, 2000);
+            return;
+          } else {
+            setError('Failed to submit trade-in. Please try again.');
+            setLoading(false);
+            return;
+          }
+        } catch (tradeErr: any) {
+          const message = tradeErr.response?.data?.detail || 'Failed to submit trade-in. Please try again.';
+          setError(message);
+          setLoading(false);
+          return;
+        }
+      }
+
+      if (formData.paymentMethod === 'gift') {
         const methodMessages: Record<string, string> = {
-          tradein: 'Trade In submission received. We will contact you shortly to evaluate your items.',
           gift: 'Gift card option set up. Check your email for details on how to send it.',
         };
-        
         setSuccess(methodMessages[formData.paymentMethod] || 'Payment method selected successfully!');
-        
         setTimeout(() => {
           router.push(`/orders/${formData.order_id}/payment-status`);
         }, 2000);
@@ -374,7 +420,7 @@ export default function CheckoutForm() {
           </div>
 
           {/* Phone Number - Only show for M-PESA */}
-          {formData.paymentMethod === 'mpesa' && (
+          {(formData.paymentMethod === 'mpesa' || formData.paymentMethod === 'tradein') && (
             <div>
               <label htmlFor="phone" className="block text-sm font-medium text-slate-900 dark:text-slate-100">
                 M-Pesa Phone Number
@@ -390,6 +436,40 @@ export default function CheckoutForm() {
                 disabled={loading}
               />
               <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">Format: 254712345678 or 0712345678</p>
+            </div>
+          )}
+
+          {/* Trade-In fields */}
+          {formData.paymentMethod === 'tradein' && (
+            <div>
+              <label htmlFor="trade_description" className="block text-sm font-medium text-slate-900 dark:text-slate-100">
+                Item to Trade In
+              </label>
+              <textarea
+                id="trade_description"
+                name="trade_description"
+                value={formData.trade_description}
+                onChange={(e) => setFormData(prev => ({ ...prev, trade_description: e.target.value }))}
+                placeholder="Describe the item, brand, model, defects, etc."
+                className="mt-2 block w-full px-4 py-3 border border-slate-200 dark:border-slate-700 rounded-lg bg-white dark:bg-slate-900 focus:ring-2 focus:ring-purple-500 focus:border-transparent outline-none text-sm"
+                disabled={loading}
+              />
+
+              <label htmlFor="trade_estimated_price" className="block text-sm font-medium text-slate-900 dark:text-slate-100 mt-4">
+                Estimated Price (KES)
+              </label>
+              <input
+                type="number"
+                id="trade_estimated_price"
+                name="trade_estimated_price"
+                value={formData.trade_estimated_price}
+                onChange={(e) => setFormData(prev => ({ ...prev, trade_estimated_price: e.target.value }))}
+                placeholder="Estimated price in KES"
+                step="0.01"
+                min="0"
+                className="mt-2 block w-full px-4 py-3 border border-slate-200 dark:border-slate-700 rounded-full bg-white dark:bg-slate-900 focus:ring-2 focus:ring-purple-500 focus:border-transparent outline-none text-sm"
+                disabled={loading}
+              />
             </div>
           )}
 
