@@ -1,7 +1,8 @@
 'use client';
 
 import React, { useState, useEffect, useRef } from 'react';
-import { Wallet, Zap, RotateCw, Plus, Minus, Trophy, TrendingUp, Heart, AlertCircle, Clock } from 'lucide-react';
+import { Zap, RotateCw, Minus, Trophy, TrendingUp, Heart, AlertCircle, Clock } from 'lucide-react';
+import GamesNavBar from '@/components/GamesNavBar';
 
 interface WheelSegment {
   id: number;
@@ -42,7 +43,6 @@ const WEEKLY_LIMIT = 20000; // KES max spend per week
 
 export default function GamesPage() {
   const [wallet, setWallet] = useState<number>(0);
-  const [addFundsAmount, setAddFundsAmount] = useState<string>('');
   const [spinCost, setSpinCost] = useState<number>(SPIN_COST);
   const [isSpinning, setIsSpinning] = useState<boolean>(false);
   const [rotation, setRotation] = useState<number>(0);
@@ -54,7 +54,6 @@ export default function GamesPage() {
     timestamp: Date;
   }>>([]);
   const [totalWinnings, setTotalWinnings] = useState<number>(0);
-  const [showAddFunds, setShowAddFunds] = useState<boolean>(false);
   // Refs for wheel scroll/flick handling
   const wheelRef = useRef<HTMLDivElement | null>(null);
   const scrollAccumRef = useRef<number>(0);
@@ -142,15 +141,6 @@ export default function GamesPage() {
     }
 
     return { canPlay: true };
-  };
-
-  const handleAddFunds = () => {
-    const amount = parseFloat(addFundsAmount);
-    if (amount > 0) {
-      setWallet(prev => prev + amount);
-      setAddFundsAmount('');
-      setShowAddFunds(false);
-    }
   };
 
   const getRandomSegment = (): WheelSegment => {
@@ -306,60 +296,11 @@ export default function GamesPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-purple-900 via-slate-950 to-black text-white px-4 sm:px-6 lg:px-8">
-      <div className="max-w-6xl mx-auto">
-        {/* Top Wallet Navigation Bar */}
-        <div className="sticky top-0 z-40 bg-gradient-to-r from-slate-900/95 to-slate-950/95 backdrop-blur-md border-b border-slate-700 rounded-b-2xl py-4 px-6 mb-8 flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <Wallet className="w-6 h-6 text-blue-400" />
-            <span className="text-lg font-semibold text-slate-300">Wallet Balance</span>
-          </div>
-          <div className="text-3xl font-bold text-blue-400">
-            KES {wallet.toLocaleString('en-KE', { maximumFractionDigits: 0 })}
-          </div>
-          <div className="flex items-center gap-3">
-            <button
-              onClick={() => setShowAddFunds(!showAddFunds)}
-              className="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-4 rounded-lg transition-all flex items-center gap-2"
-            >
-              <Plus className="w-5 h-5" />
-              Add Funds
-            </button>
-          </div>
-        </div>
+    <div className="min-h-screen bg-gradient-to-b from-purple-900 via-slate-950 to-black text-white px-4 sm:px-6 lg:px-8 pt-40">
+      {/* Games Navigation Bar */}
+      <GamesNavBar balance={wallet} />
 
-        {/* Add Funds Form - Below Wallet Nav */}
-        {showAddFunds && (
-          <div className="mb-8 bg-slate-800/50 border border-slate-700 rounded-2xl p-6 backdrop-blur-md max-w-md mx-auto">
-            <h3 className="text-lg font-bold mb-4">Add Funds to Wallet</h3>
-            <div className="space-y-3">
-              <div>
-                <label className="block text-sm font-medium mb-2 text-slate-300">Amount (KES)</label>
-                <input
-                  type="number"
-                  value={addFundsAmount}
-                  onChange={(e) => setAddFundsAmount(e.target.value)}
-                  placeholder="Enter amount"
-                  className="w-full px-4 py-2 bg-slate-700/50 border border-slate-600 rounded-lg text-white placeholder-slate-400 focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
-                />
-              </div>
-              <div className="grid grid-cols-2 gap-2">
-                <button
-                  onClick={handleAddFunds}
-                  className="bg-green-600 hover:bg-green-700 text-white font-semibold py-2 rounded-lg transition-all"
-                >
-                  Confirm
-                </button>
-                <button
-                  onClick={() => setShowAddFunds(false)}
-                  className="bg-slate-600 hover:bg-slate-700 text-white font-semibold py-2 rounded-lg transition-all"
-                >
-                  Cancel
-                </button>
-              </div>
-            </div>
-          </div>
-        )}
+      <div className="max-w-6xl mx-auto">
 
         {/* Header - Removed text for cleaner look */}
         <div className="text-center mb-12 py-8">
