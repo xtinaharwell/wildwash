@@ -288,10 +288,14 @@ export default function NavBar() {
 
       <div
         ref={mobileMenuRef}
-        className={`md:hidden fixed top-16 left-0 right-0 bottom-0 transition-opacity duration-200 ease-out overflow-y-auto ${
-          mobileOpen ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'
-        }`}>
-        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 pb-4 py-4">
+        className={`md:hidden transition-all duration-200 ease-out overflow-hidden ${
+          mobileOpen ? 'max-h-screen opacity-100' : 'max-h-0 opacity-0'
+        }`}
+        style={{
+          maxHeight: mobileOpen ? '100vh' : '0',
+          overflowY: mobileOpen ? 'auto' : 'hidden'
+        }}>
+        <div className="px-4 sm:px-6 lg:px-8 pb-4 py-4">
           <div className="rounded-xl bg-white/95 dark:bg-black/60 shadow-lg p-4 backdrop-blur-sm">
             <div className="flex flex-col gap-2">
               <Link
