@@ -17,6 +17,9 @@ type Order = {
   code: string;
   createdAt?: string;
   user?: string;
+  userName?: string;
+  userEmail?: string;
+  userPhone?: string;
   serviceName?: string;
   pickupAddress?: string;
   dropoffAddress?: string;
@@ -113,6 +116,11 @@ export default function OrderDetailsPage() {
           code: found.code || `WW-${found.id}`,
           createdAt: found.created_at ?? found.createdAt ?? undefined,
           user: found.user ?? undefined,
+          userName: found.user?.first_name && found.user?.last_name 
+            ? `${found.user.first_name} ${found.user.last_name}`
+            : found.user?.username ?? undefined,
+          userEmail: found.user?.email ?? undefined,
+          userPhone: found.user?.phone ?? found.user?.phone_number ?? undefined,
           serviceName: found.service_name ?? (found.service && typeof found.service === "object" ? found.service.name : undefined),
           pickupAddress: found.pickup_address ?? undefined,
           dropoffAddress: found.dropoff_address ?? undefined,
@@ -242,12 +250,43 @@ export default function OrderDetailsPage() {
               </div>
 
               <div>
-                <h3 className="font-semibold mb-4">Delivery Information</h3>
+                <h3 className="font-semibold mb-4">Customer Information</h3>
+                <div className="space-y-4">
+                  <div>
+                    <div className="text-xs text-slate-500 dark:text-slate-400">Customer Name</div>
+                    <div className="mt-1 font-medium">{order.userName ?? "—"}</div>
+                  </div>
+                  <div>
+                    <div className="text-xs text-slate-500 dark:text-slate-400">Phone</div>
+                    <div className="mt-1 font-medium">
+                      {order.userPhone ? (
+                        <a href={`tel:${order.userPhone}`} className="text-red-600 hover:underline">
+                          {order.userPhone}
+                        </a>
+                      ) : (
+                        "—"
+                      )}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Delivery Information */}
+            <div className="mt-8 grid grid-cols-1 sm:grid-cols-2 gap-6">
+              <div>
+                <h3 className="font-semibold mb-4">Pickup Information</h3>
                 <div className="space-y-4">
                   <div>
                     <div className="text-xs text-slate-500 dark:text-slate-400">Pickup Address</div>
                     <div className="mt-1 font-medium">{order.pickupAddress ?? "—"}</div>
                   </div>
+                </div>
+              </div>
+
+              <div>
+                <h3 className="font-semibold mb-4">Delivery Information</h3>
+                <div className="space-y-4">
                   <div>
                     <div className="text-xs text-slate-500 dark:text-slate-400">Dropoff Address</div>
                     <div className="mt-1 font-medium">{order.dropoffAddress ?? "—"}</div>
