@@ -21,6 +21,7 @@ export default function NavBar() {
   const [scrolled, setScrolled] = useState(false);
   const [profileOpen, setProfileOpen] = useState(false);
   const profileRef = useRef<HTMLDivElement>(null);
+  const mobileMenuRef = useRef<HTMLDivElement>(null);
   const isRider = userRole === 'rider';
 
   const handleLogout = () => {
@@ -48,6 +49,23 @@ export default function NavBar() {
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
+
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (mobileMenuRef.current && !mobileMenuRef.current.contains(event.target as Node)) {
+        // Check if the click was not on the hamburger menu button
+        const target = event.target as HTMLElement;
+        if (!target.closest('button[aria-expanded]')) {
+          setMobileOpen(false);
+        }
+      }
+    }
+    
+    if (mobileOpen) {
+      document.addEventListener('mousedown', handleClickOutside);
+    }
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [mobileOpen]);
 
   return (
     <header
@@ -250,6 +268,7 @@ export default function NavBar() {
       </div>
 
       <div
+        ref={mobileMenuRef}
         className={`md:hidden transition-[max-height,opacity] duration-200 ease-out overflow-hidden ${
           mobileOpen ? 'max-h-[420px] opacity-100' : 'max-h-0 opacity-0'
         }`}>
