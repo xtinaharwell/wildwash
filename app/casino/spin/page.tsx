@@ -1,7 +1,8 @@
 'use client';
 
 import React, { useState, useEffect, useRef } from 'react';
-import { Zap, RotateCw, Minus, Trophy, TrendingUp, Heart, AlertCircle, Clock } from 'lucide-react';
+import Link from 'next/link';
+import { Zap, RotateCw, Minus, Trophy, TrendingUp, Heart, AlertCircle, Clock, ArrowLeft } from 'lucide-react';
 import GamesNavBar from '@/components/GamesNavBar';
 
 interface WheelSegment {
@@ -20,21 +21,21 @@ interface LoyaltyTier {
 }
 
 const WHEEL_SEGMENTS: WheelSegment[] = [
-  { id: 1, label: '2x', multiplier: 2, color: '#FF6B6B', probability: 0.15 },
-  { id: 2, label: '0.5x', multiplier: 0.5, color: '#4ECDC4', probability: 0.25 },
-  { id: 3, label: '3x', multiplier: 3, color: '#45B7D1', probability: 0.08 },
-  { id: 4, label: 'LOSE', multiplier: 0, color: '#95A5A6', probability: 0.25 },
-  { id: 5, label: '1.5x', multiplier: 1.5, color: '#F7DC6F', probability: 0.17 },
-  { id: 6, label: '5x', multiplier: 5, color: '#BB8FCE', probability: 0.05 },
-  { id: 7, label: '1x', multiplier: 1, color: '#85C1E2', probability: 0.03 },
-  { id: 8, label: '2.5x', multiplier: 2.5, color: '#F8B88B', probability: 0.02 },
+  { id: 1, label: '2x', multiplier: 2, color: '#D97706', probability: 0.15 },
+  { id: 2, label: '0.5x', multiplier: 0.5, color: '#6B21A8', probability: 0.25 },
+  { id: 3, label: '3x', multiplier: 3, color: '#F59E0B', probability: 0.08 },
+  { id: 4, label: 'LOSE', multiplier: 0, color: '#374151', probability: 0.25 },
+  { id: 5, label: '1.5x', multiplier: 1.5, color: '#FBBF24', probability: 0.17 },
+  { id: 6, label: '5x', multiplier: 5, color: '#FCD34D', probability: 0.05 },
+  { id: 7, label: '1x', multiplier: 1, color: '#78350F', probability: 0.03 },
+  { id: 8, label: '2.5x', multiplier: 2.5, color: '#B45309', probability: 0.02 },
 ];
 
 const LOYALTY_TIERS: LoyaltyTier[] = [
-  { name: 'Bronze', minSpins: 0, bonus: 0, color: '#CD7F32' },
+  { name: 'Bronze', minSpins: 0, bonus: 0, color: '#78350F' },
   { name: 'Silver', minSpins: 10, bonus: 2, color: '#C0C0C0' },
-  { name: 'Gold', minSpins: 25, bonus: 5, color: '#FFD700' },
-  { name: 'Platinum', minSpins: 50, bonus: 10, color: '#E5E4E2' },
+  { name: 'Gold', minSpins: 25, bonus: 5, color: '#FBBF24' },
+  { name: 'Platinum', minSpins: 50, bonus: 10, color: '#FCD34D' },
 ];
 
 const SPIN_COST = 20; // KES
@@ -305,19 +306,31 @@ export default function GamesPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-purple-900 via-slate-950 to-black text-white px-4 sm:px-6 lg:px-8 pt-40">
-      {/* Games Navigation Bar */}
-      <GamesNavBar balance={wallet} />
+    <div className="min-h-screen bg-gradient-to-b from-black via-slate-950 to-black text-white px-4 sm:px-6 lg:px-8 pt-40">
+      {/* Luxury background effects */}
+      <div className="fixed inset-0 pointer-events-none opacity-30">
+        <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-amber-500 rounded-full blur-3xl opacity-10"></div>
+        <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-amber-600 rounded-full blur-3xl opacity-10"></div>
+      </div>
 
-      <div className="max-w-6xl mx-auto">
+      <div className="relative z-10">
+        {/* Back to Casino Button */}
+        <Link
+          href="/casino"
+          className="inline-flex items-center gap-2 text-amber-400 hover:text-amber-300 font-medium mb-4 transition-colors uppercase tracking-wider text-sm"
+        >
+          <ArrowLeft className="w-5 h-5" />
+          Back to VIP Casino
+        </Link>
 
-        {/* Header - Removed text for cleaner look */}
-        <div className="text-center mb-12 py-8">
-          {/* Just spacer, no text */}
-        </div>
+        {/* Games Navigation Bar */}
+        <GamesNavBar balance={wallet} />
 
-        {/* Main Spin Section */}
-        <div className="flex flex-col items-center justify-center mb-16">
+        <div className="max-w-6xl mx-auto">
+
+
+          {/* Main Spin Section */}
+          <div className="flex flex-col items-center justify-center mb-16">
           <style>{`
             @keyframes wheelSpin {
               from { transform: rotate(0deg); }
@@ -367,16 +380,16 @@ export default function GamesPage() {
             >
               {/* Center hub - enhanced */}
               <div className="w-20 h-20 bg-gradient-to-br from-black via-slate-900 to-black rounded-full flex items-center justify-center border-4 border-yellow-400 shadow-lg">
-                <div className="w-14 h-14 bg-gradient-to-r from-yellow-300 to-yellow-500 rounded-full flex items-center justify-center shadow-md">
+                <div className="w-14 h-14 bg-gradient-to-r from-amber-400 to-amber-500 rounded-full flex items-center justify-center shadow-lg shadow-amber-500/50">
                   <Zap className="w-8 h-8 text-black animate-pulse" />
                 </div>
               </div>
             </div>
 
-            {/* Enhanced Pointer */}
+            {/* Enhanced Pointer - Luxury Gold */}
             <div className="absolute top-0 left-1/2 transform -translate-x-1/2 -translate-y-3 z-10">
-              <div className="w-0 h-0 border-l-8 border-r-8 border-t-16 border-l-transparent border-r-transparent border-t-yellow-400 drop-shadow-lg filter" style={{
-                filter: isSpinning ? 'drop-shadow(0 0 10px rgba(250, 204, 21, 0.8))' : 'none'
+              <div className="w-0 h-0 border-l-8 border-r-8 border-t-16 border-l-transparent border-r-transparent border-t-amber-400 drop-shadow-lg filter" style={{
+                filter: isSpinning ? 'drop-shadow(0 0 15px rgba(251, 191, 36, 0.9))' : 'drop-shadow(0 0 5px rgba(251, 191, 36, 0.5))'
               }}></div>
             </div>
 
@@ -404,16 +417,16 @@ export default function GamesPage() {
             </div>
           </div>
 
-          {/* Spin Button - Enhanced */}
+          {/* Spin Button - Luxury Premium */}
           <button
             onClick={handleSpin}
             disabled={!canSpin}
-            className={`px-10 py-5 rounded-full font-bold text-xl flex items-center gap-3 transition-all transform active:scale-95 ${
+            className={`px-12 py-6 rounded-full font-bold text-xl flex items-center gap-3 transition-all transform active:scale-95 uppercase tracking-wider ${
               canSpin
-                ? `bg-gradient-to-r from-yellow-400 via-red-500 to-yellow-400 text-black hover:shadow-2xl ${
+                ? `bg-gradient-to-r from-amber-500 via-amber-600 to-amber-500 text-black hover:from-amber-400 hover:via-amber-500 hover:to-amber-400 hover:shadow-2xl hover:shadow-amber-500/50 ${
                     isSpinning ? 'pulse-button' : 'hover:scale-110'
-                  }`
-                : 'bg-slate-600 text-slate-400 cursor-not-allowed'
+                  } shadow-lg`
+                : 'bg-slate-700/50 text-slate-400 cursor-not-allowed'
             }`}
           >
             <RotateCw className={`w-7 h-7 ${isSpinning ? 'animate-spin' : ''}`} />
@@ -429,27 +442,27 @@ export default function GamesPage() {
             {(() => {
               const tier = getLoyaltyTier();
               return (
-                <div className="bg-gradient-to-br from-slate-800/50 to-slate-900/50 border border-slate-700 rounded-2xl p-6 backdrop-blur-md">
+                <div className="bg-gradient-to-br from-slate-900/60 via-amber-900/20 to-slate-950/60 border border-amber-400/30 rounded-2xl p-6 backdrop-blur-md hover:border-amber-400/60 transition-all">
                   <div className="flex items-center gap-2 mb-4">
                     <Trophy className="w-5 h-5" style={{ color: tier.color }} />
-                    <h3 className="text-lg font-bold">Loyalty Program</h3>
+                    <h3 className="text-lg font-bold text-amber-300">Loyalty Program</h3>
                   </div>
                   <div className="text-center">
-                    <p className="text-4xl font-bold mb-2" style={{ color: tier.color }}>
+                    <p className="text-4xl font-bold mb-2 text-amber-400" style={{ color: tier.color }}>
                       {tier.name}
                     </p>
-                    <p className="text-slate-400 text-sm mb-3">
+                    <p className="text-amber-100/70 text-sm mb-3">
                       {totalSpins} spins • {tier.bonus}% bonus on wins
                     </p>
                     <div className="w-full bg-slate-700/30 rounded-full h-2 mb-3">
                       <div
-                        className="bg-gradient-to-r from-yellow-400 to-red-500 h-2 rounded-full transition-all"
+                        className="bg-gradient-to-r from-amber-400 to-amber-600 h-2 rounded-full transition-all shadow-lg shadow-amber-500/30"
                         style={{
                           width: `${Math.min((totalSpins / LOYALTY_TIERS[LOYALTY_TIERS.length - 1].minSpins) * 100, 100)}%`
                         }}
                       ></div>
                     </div>
-                    <p className="text-xs text-slate-400">
+                    <p className="text-xs text-amber-200/70">
                       {totalSpins < LOYALTY_TIERS[LOYALTY_TIERS.length - 1].minSpins
                         ? `${LOYALTY_TIERS[LOYALTY_TIERS.length - 1].minSpins - totalSpins} spins to Platinum`
                         : 'Max tier reached!'}
@@ -460,14 +473,14 @@ export default function GamesPage() {
             })()}
 
             {/* Quick Add Buttons */}
-            <div className="bg-slate-800/50 border border-slate-700 rounded-2xl p-4 backdrop-blur-md">
-              <p className="text-sm font-medium text-slate-300 mb-3">Quick Add</p>
+            <div className="bg-gradient-to-br from-slate-900/60 to-slate-950/60 border border-amber-400/20 rounded-2xl p-4 backdrop-blur-md hover:border-amber-400/40 transition-all">
+              <p className="text-sm font-medium text-amber-300 mb-3 uppercase tracking-wider">Quick Add</p>
               <div className="grid grid-cols-2 gap-2">
                 {[500, 1000, 5000, 10000].map(amount => (
                   <button
                     key={amount}
                     onClick={() => setWallet(prev => prev + amount)}
-                    className="bg-slate-700/50 hover:bg-slate-600 text-white font-semibold py-2 px-3 rounded-lg transition-all text-sm"
+                    className="bg-gradient-to-r from-amber-600/30 to-amber-700/20 hover:from-amber-500/40 hover:to-amber-600/30 text-amber-300 font-semibold py-2 px-3 rounded-lg transition-all text-sm border border-amber-400/20"
                   >
                     +{amount}
                   </button>
@@ -476,16 +489,16 @@ export default function GamesPage() {
             </div>
 
             {/* Spending Limits Info */}
-            <div className="bg-blue-900/20 border border-blue-800 rounded-2xl p-4 backdrop-blur-md">
+            <div className="bg-gradient-to-br from-amber-900/20 to-slate-900/40 border border-amber-400/30 rounded-2xl p-4 backdrop-blur-md">
               <div className="flex items-start gap-2 mb-3">
-                <AlertCircle className="w-5 h-5 text-blue-400 flex-shrink-0 mt-0.5" />
-                <h4 className="font-semibold text-blue-300">Daily Limit</h4>
+                <AlertCircle className="w-5 h-5 text-amber-400 flex-shrink-0 mt-0.5" />
+                <h4 className="font-semibold text-amber-300">Daily Limit</h4>
               </div>
-              <div className="space-y-2 text-sm text-blue-200">
+              <div className="space-y-2 text-sm text-amber-100/70">
                 <p>Today: KES {dailySpend.toLocaleString()} / {DAILY_LIMIT.toLocaleString()}</p>
-                <div className="w-full bg-blue-900/50 rounded-full h-2">
+                <div className="w-full bg-slate-700/30 rounded-full h-2">
                   <div
-                    className="bg-blue-500 h-2 rounded-full transition-all"
+                    className="bg-gradient-to-r from-amber-500 to-amber-600 h-2 rounded-full transition-all shadow-lg shadow-amber-500/30"
                     style={{ width: `${(dailySpend / DAILY_LIMIT) * 100}%` }}
                   ></div>
                 </div>
@@ -493,21 +506,21 @@ export default function GamesPage() {
             </div>
 
             {/* Stats */}
-            <div className="bg-slate-800/50 border border-slate-700 rounded-2xl p-6 backdrop-blur-md space-y-4">
-              <h3 className="text-lg font-bold">Statistics</h3>
+            <div className="bg-gradient-to-br from-slate-900/60 via-amber-900/20 to-slate-950/60 border border-amber-400/30 rounded-2xl p-6 backdrop-blur-md space-y-4 hover:border-amber-400/60 transition-all">
+              <h3 className="text-lg font-bold text-amber-300">Statistics</h3>
               <div>
-                <p className="text-slate-400 text-sm">Total Spins</p>
-                <p className="text-3xl font-bold text-yellow-400">{totalSpins}</p>
+                <p className="text-amber-200/70 text-sm">Total Spins</p>
+                <p className="text-3xl font-bold text-amber-400">{totalSpins}</p>
               </div>
               <div>
-                <p className="text-slate-400 text-sm">Net Winnings</p>
+                <p className="text-amber-200/70 text-sm">Net Winnings</p>
                 <p className={`text-3xl font-bold ${totalWinnings >= 0 ? 'text-green-400' : 'text-red-400'}`}>
                   KES {totalWinnings.toLocaleString('en-KE', { maximumFractionDigits: 0 })}
                 </p>
               </div>
               <div>
-                <p className="text-slate-400 text-sm">ROI</p>
-                <p className="text-2xl font-bold text-slate-300">
+                <p className="text-amber-200/70 text-sm">ROI</p>
+                <p className="text-2xl font-bold text-amber-300">
                   {((totalWinnings / (totalSpins * spinCost)) * 100).toFixed(1)}%
                 </p>
               </div>
@@ -518,20 +531,20 @@ export default function GamesPage() {
           <div className="lg:col-span-1 space-y-6">
             {/* Last Result */}
             {lastResult && (
-              <div className="bg-gradient-to-br from-yellow-500/20 to-red-500/20 border border-yellow-500/50 rounded-2xl p-6 backdrop-blur-md">
-                <h3 className="text-lg font-bold mb-4">Last Result</h3>
+              <div className="bg-gradient-to-br from-amber-500/20 to-amber-600/20 border border-amber-400/50 rounded-2xl p-6 backdrop-blur-md">
+                <h3 className="text-lg font-bold mb-4 text-amber-300">Last Result</h3>
                 <div
-                  className="w-20 h-20 rounded-full mx-auto mb-4 flex items-center justify-center font-bold text-2xl text-white border-4"
-                  style={{ backgroundColor: lastResult.color, borderColor: lastResult.color }}
+                  className="w-20 h-20 rounded-full mx-auto mb-4 flex items-center justify-center font-bold text-2xl text-white border-4 shadow-lg"
+                  style={{ backgroundColor: lastResult.color, borderColor: lastResult.color, boxShadow: `0 0 20px ${lastResult.color}40` }}
                 >
                   {lastResult.label}
                 </div>
                 <div className="text-center">
-                  <p className="text-slate-300 text-sm mb-1">You won</p>
+                  <p className="text-amber-200/70 text-sm mb-1">You won</p>
                   <p className="text-3xl font-bold text-green-400">
                     KES {(spinCost * lastResult.multiplier).toLocaleString('en-KE', { maximumFractionDigits: 0 })}
                   </p>
-                  <p className="text-slate-400 text-sm mt-2">
+                  <p className="text-amber-200/70 text-sm mt-2">
                     Net: {lastResult.multiplier > 1 ? '+' : ''} KES {((spinCost * lastResult.multiplier) - spinCost).toLocaleString('en-KE', { maximumFractionDigits: 0 })}
                   </p>
                 </div>
@@ -539,8 +552,8 @@ export default function GamesPage() {
             )}
 
             {/* Game Odds - Transparent Probabilities */}
-            <div className="bg-slate-800/50 border border-slate-700 rounded-2xl p-6 backdrop-blur-md">
-              <h3 className="text-lg font-bold mb-4 flex items-center gap-2">
+            <div className="bg-gradient-to-br from-slate-900/60 via-amber-900/20 to-slate-950/60 border border-amber-400/30 rounded-2xl p-6 backdrop-blur-md hover:border-amber-400/60 transition-all">
+              <h3 className="text-lg font-bold mb-4 flex items-center gap-2 text-amber-300">
                 <TrendingUp className="w-5 h-5" />
                 Game Odds
               </h3>
@@ -604,9 +617,10 @@ export default function GamesPage() {
         </div>
 
         {/* Footer Message */}
-        <div className="text-center text-slate-400 text-sm py-8">
+        <div className="text-center text-amber-200/60 text-sm py-8 uppercase tracking-wider">
           <p>⚠️ Remember: This is for entertainment only. Gamble responsibly.</p>
         </div>
+      </div>
       </div>
     </div>
   );
