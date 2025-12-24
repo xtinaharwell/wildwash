@@ -371,9 +371,11 @@ function mapStatus(s: string): string {
     requested: "Received",
     picked: "Washing",
     in_progress: "Drying",
+    washed: "Drying",
     ready: "Ready",
     delivered: "Delivered",
     cancelled: "Cancelled",
+    pending_assignment: "Pending Rider Assignment",
   };
   return map[s] || s || "Received";
 }
