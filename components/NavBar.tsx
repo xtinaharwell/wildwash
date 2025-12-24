@@ -122,6 +122,11 @@ export default function NavBar() {
               className="text-sm px-4 py-2 rounded-lg bg-red-600 text-white hover:bg-red-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-red-300 font-medium">
               Financing / Pay
             </Link>
+            <Link
+              href="/games"
+              className="text-sm px-4 py-2 rounded-lg bg-red-600 text-white hover:bg-red-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-red-300 font-medium">
+              Games
+            </Link>
             {isAuthenticated && (
               <>
                 <Link
@@ -300,6 +305,12 @@ export default function NavBar() {
                 onClick={() => setMobileOpen(false)}
                 className="block text-lg px-4 py-3 rounded-lg bg-red-600 text-white hover:bg-red-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-red-300 font-medium">
                 Financing / Pay
+              </Link>
+              <Link
+                href="/games"
+                onClick={() => setMobileOpen(false)}
+                className="block text-lg px-4 py-3 rounded-lg bg-red-600 text-white hover:bg-red-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-red-300 font-medium">
+                Games
               </Link>
               {isAuthenticated && (
                 <>
