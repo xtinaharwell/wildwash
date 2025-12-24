@@ -362,20 +362,6 @@ export default function CheckoutForm() {
           <p className="text-slate-600 dark:text-slate-400 mt-2">Complete your payment</p>
         </div>
 
-        {/* Error Message */}
-        {error && (
-          <div className="mb-6 p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg">
-            <p className="text-red-700 dark:text-red-400 text-sm">{error}</p>
-          </div>
-        )}
-
-        {/* Success Message */}
-        {success && (
-          <div className="mb-6 p-4 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg">
-            <p className="text-green-700 dark:text-green-400 text-sm">{success}</p>
-          </div>
-        )}
-
         <form onSubmit={handleSubmit} className="space-y-5">
           {/* Order ID */}
           <div>
@@ -567,6 +553,20 @@ export default function CheckoutForm() {
               </>
             )}
           </button>
+
+          {/* Error Message - Below submit button */}
+          {error && (
+            <div className="mt-4 p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg">
+              <p className="text-red-700 dark:text-red-400 text-sm">{error}</p>
+            </div>
+          )}
+
+          {/* Success Message - Below submit button */}
+          {success && (
+            <div className="mt-4 p-4 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg">
+              <p className="text-green-700 dark:text-green-400 text-sm">{success}</p>
+            </div>
+          )}
 
           {/* Info Message - Dynamic based on payment method */}
           {formData.paymentMethod === 'mpesa' && (
