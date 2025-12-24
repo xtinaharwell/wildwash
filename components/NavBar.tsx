@@ -123,9 +123,19 @@ export default function NavBar() {
               Financing / Pay
             </Link>
             <Link
-              href="/games"
+              href="/borrow"
               className="text-sm px-4 py-2 rounded-lg bg-red-600 text-white hover:bg-red-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-red-300 font-medium">
-              Games
+              Borrow
+            </Link>
+            <Link
+              href="/invest"
+              className="text-sm px-4 py-2 rounded-lg bg-red-600 text-white hover:bg-red-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-red-300 font-medium">
+              Invest
+            </Link>
+            <Link
+              href="/casino"
+              className="text-sm px-4 py-2 rounded-lg bg-red-600 text-white hover:bg-red-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-red-300 font-medium">
+              Casino
             </Link>
             {isAuthenticated && (
               <>
@@ -141,16 +151,6 @@ export default function NavBar() {
                 </Link>
               </>
             )}
-            <Link
-              href="/borrow"
-              className="text-sm px-4 py-2 rounded-lg bg-red-600 text-white hover:bg-red-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-red-300 font-medium">
-              Borrow
-            </Link>
-            <Link
-              href="/invest"
-              className="text-sm px-4 py-2 rounded-lg bg-red-600 text-white hover:bg-red-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-red-300 font-medium">
-              Invest
-            </Link>
           </nav>
 
           <div className="flex items-center gap-2">
@@ -311,10 +311,22 @@ export default function NavBar() {
                 Financing / Pay
               </Link>
               <Link
-                href="/games"
+                href="/borrow"
                 onClick={() => setMobileOpen(false)}
                 className="block text-lg px-4 py-3 rounded-lg bg-red-600 text-white hover:bg-red-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-red-300 font-medium">
-                Games
+                Borrow
+              </Link>
+              <Link
+                href="/invest"
+                onClick={() => setMobileOpen(false)}
+                className="block text-lg px-4 py-3 rounded-lg bg-red-600 text-white hover:bg-red-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-red-300 font-medium">
+                Invest
+              </Link>
+              <Link
+                href="/casino"
+                onClick={() => setMobileOpen(false)}
+                className="block text-lg px-4 py-3 rounded-lg bg-red-600 text-white hover:bg-red-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-red-300 font-medium">
+                Casino
               </Link>
               {isAuthenticated && (
                 <>
@@ -332,18 +344,6 @@ export default function NavBar() {
                   </Link>
                 </>
               )}
-              <Link
-                href="/borrow"
-                onClick={() => setMobileOpen(false)}
-                className="block text-lg px-4 py-3 rounded-lg bg-red-600 text-white hover:bg-red-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-red-300 font-medium">
-                Borrow
-              </Link>
-              <Link
-                href="/invest"
-                onClick={() => setMobileOpen(false)}
-                className="block text-lg px-4 py-3 rounded-lg bg-red-600 text-white hover:bg-red-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-red-300 font-medium">
-                Invest
-              </Link>
 
               <div className="pt-1 border-t border-slate-100 dark:border-slate-800" />
 

@@ -38,6 +38,8 @@ const TOP_UP_OPTIONS: TopUpOption[] = [
   { amount: 20000, label: '20,000' },
 ];
 
+const WITHDRAWAL_MINIMUM = 500; // KES minimum to withdraw
+
 export default function WalletPage() {
   const [selectedAmount, setSelectedAmount] = useState<number>(1000);
   const [customAmount, setCustomAmount] = useState<string>('');
@@ -89,7 +91,7 @@ export default function WalletPage() {
       }
 
       const response = await axios.get<WalletBalance>(
-        `${apiBase}/games/wallet-balance/`,
+        `${apiBase}/casino/wallet-balance/`,
         {
           headers: {
             ...(token && { 'Authorization': `Token ${token}` }),
@@ -274,11 +276,11 @@ export default function WalletPage() {
         {/* Header */}
         <div className="mb-8">
           <Link
-            href="/games"
+            href="/casino"
             className="inline-flex items-center gap-2 text-purple-600 dark:text-purple-400 hover:text-purple-700 dark:hover:text-purple-300 font-medium mb-6 transition-colors"
           >
             <ArrowLeft className="w-5 h-5" />
-            Back to Games
+            Back to Casino
           </Link>
 
           <div className="flex items-center gap-4 mb-2">
@@ -436,6 +438,53 @@ export default function WalletPage() {
               )}
             </button>
           </form>
+        </div>
+
+        {/* Withdrawal Section */}
+        <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-lg p-8 mb-8 border border-slate-200 dark:border-slate-800">
+          <h2 className="text-xl font-bold text-slate-900 dark:text-white mb-6">Withdraw Winnings</h2>
+          
+          {gameBalance < WITHDRAWAL_MINIMUM ? (
+            <div className="bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-lg p-6">
+              <div className="flex gap-3 items-start">
+                <AlertCircle className="w-5 h-5 text-amber-600 dark:text-amber-400 flex-shrink-0 mt-0.5" />
+                <div>
+                  <p className="font-semibold text-amber-900 dark:text-amber-200 mb-2">
+                    Minimum Balance Required
+                  </p>
+                  <p className="text-amber-800 dark:text-amber-300 text-sm">
+                    You need at least KES {WITHDRAWAL_MINIMUM.toLocaleString()} to withdraw. 
+                    Your current balance is KES {gameBalance.toLocaleString()}.
+                  </p>
+                  <p className="text-amber-800 dark:text-amber-300 text-sm mt-2">
+                    Top up or play more games to reach the minimum withdrawal amount.
+                  </p>
+                </div>
+              </div>
+            </div>
+          ) : (
+            <div className="space-y-4">
+              <p className="text-sm text-slate-600 dark:text-slate-400">
+                Withdraw your balance back to your M-Pesa account. Withdrawal will be processed within 24 hours.
+              </p>
+              <div className="bg-green-50 dark:bg-green-900/20 rounded-lg p-4 border border-green-200 dark:border-green-800">
+                <p className="text-sm text-slate-600 dark:text-slate-400 mb-1">Amount to Withdraw:</p>
+                <p className="text-3xl font-bold text-green-600 dark:text-green-400">
+                  KES {gameBalance.toLocaleString()}
+                </p>
+              </div>
+              <button
+                disabled
+                className="w-full bg-slate-400 dark:bg-slate-600 text-white font-bold py-3 px-4 rounded-lg cursor-not-allowed opacity-60"
+                title="Withdrawal feature coming soon"
+              >
+                Withdraw (Coming Soon)
+              </button>
+              <p className="text-xs text-slate-500 dark:text-slate-400">
+                Withdrawal feature is coming soon. Your balance is safe and can be used to play anytime.
+              </p>
+            </div>
+          )}
         </div>
 
         {/* Info Card */}

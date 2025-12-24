@@ -37,7 +37,9 @@ const LOYALTY_TIERS: LoyaltyTier[] = [
   { name: 'Platinum', minSpins: 50, bonus: 10, color: '#E5E4E2' },
 ];
 
-const SPIN_COST = 100; // KES
+const SPIN_COST = 20; // KES
+const INITIAL_BALANCE = 200; // KES starting balance
+const WITHDRAWAL_MINIMUM = 500; // KES minimum to withdraw
 const DAILY_LIMIT = 5000; // KES max spend per day
 const WEEKLY_LIMIT = 20000; // KES max spend per week
 
@@ -77,7 +79,14 @@ export default function GamesPage() {
     const savedWeeklySpend = localStorage.getItem('game_weeklySpend');
     const savedLastPlayDate = localStorage.getItem('game_lastPlayDate');
 
-    if (savedWallet) setWallet(parseFloat(savedWallet));
+    // Set initial balance if no saved wallet exists
+    if (savedWallet) {
+      setWallet(parseFloat(savedWallet));
+    } else {
+      setWallet(INITIAL_BALANCE);
+      localStorage.setItem('game_wallet', INITIAL_BALANCE.toString());
+    }
+    
     if (savedHistory) {
       const history = JSON.parse(savedHistory);
       setGameHistory(history);

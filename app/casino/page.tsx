@@ -22,9 +22,9 @@ const GAMES: GameCard[] = [
     name: 'Spin the Wheel',
     description: 'Spin to win! Multipliers range from 0.5x to 5x. Test your luck with daily limits and loyalty bonuses.',
     icon: '🎡',
-    href: '/games/spin',
+    href: '/casino/spin',
     status: 'active',
-    minBet: 100,
+    minBet: 20,
     maxWin: 50000,
   },
   {
@@ -32,7 +32,7 @@ const GAMES: GameCard[] = [
     name: 'Crash Game',
     description: 'Watch the multiplier climb! Cash out before it crashes to multiply your bet.',
     icon: '📈',
-    href: '/games/crash',
+    href: '/casino/crash',
     status: 'coming-soon',
   },
   {
@@ -40,7 +40,7 @@ const GAMES: GameCard[] = [
     name: 'Pump the Coin',
     description: 'Keep pumping to increase your multiplier, but too many pumps might deflate your winnings.',
     icon: '💨',
-    href: '/games/pump',
+    href: '/casino/pump',
     status: 'coming-soon',
   },
 ];
