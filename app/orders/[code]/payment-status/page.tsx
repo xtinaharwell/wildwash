@@ -251,7 +251,7 @@ export default function PaymentStatusPage() {
 
             <div className="mt-6 space-y-3">
               <Link
-                href="/checkout"
+                href={`/checkout?order_id=${encodeURIComponent(paymentStatus.order_id)}&amount=${encodeURIComponent(String(paymentStatus.amount))}`}
                 className="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-3 px-4 rounded-lg transition duration-200 text-center block"
               >
                 Try Again
@@ -284,7 +284,7 @@ export default function PaymentStatusPage() {
             {pollingCount >= 12 && (
               <div className="mt-6">
                 <Link
-                  href="/checkout"
+                  href={`/checkout?order_id=${encodeURIComponent(paymentStatus?.order_id || orderId)}&amount=${encodeURIComponent(String(paymentStatus?.amount || ''))}`}
                   className="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-3 px-4 rounded-lg transition duration-200 text-center block"
                 >
                   Try Again
