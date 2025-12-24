@@ -13,6 +13,22 @@ interface TopUpOption {
   popular?: boolean;
 }
 
+interface WalletBalance {
+  balance: number;
+  total_deposits?: number;
+  total_winnings?: number;
+  total_losses?: number;
+}
+
+interface PaymentStatusResponse {
+  status: string;
+  amount?: number;
+  phone?: string;
+  initiated_at?: string;
+  completed_at?: string | null;
+  error_message?: string | null;
+}
+
 const TOP_UP_OPTIONS: TopUpOption[] = [
   { amount: 500, label: '500' },
   { amount: 1000, label: '1,000', popular: true },
@@ -72,7 +88,7 @@ export default function WalletPage() {
         }
       }
 
-      const response = await axios.get(
+      const response = await axios.get<WalletBalance>(
         `${apiBase}/games/wallet-balance/`,
         {
           headers: {
@@ -81,7 +97,7 @@ export default function WalletPage() {
         }
       );
 
-      if (response.status === 200 && response.data.balance) {
+      if (response.status === 200 && response.data?.balance) {
         setGameBalance(response.data.balance);
         // Also update localStorage for fallback
         localStorage.setItem('game_wallet', response.data.balance.toString());
@@ -115,7 +131,7 @@ export default function WalletPage() {
         }
 
         // Check payment status
-        const response = await axios.get(
+        const response = await axios.get<PaymentStatusResponse>(
           `${apiBase}/payments/payment-status/?checkout_request_id=${requestId}`,
           {
             headers: {
@@ -227,15 +243,17 @@ export default function WalletPage() {
       );
 
       if (response.status === 200) {
-        const requestId = response.data.checkout_request_id;
-        setCheckoutRequestId(requestId);
+        const requestId = (response.data as { checkout_request_id?: string })?.checkout_request_id;
+        setCheckoutRequestId(requestId || '');
         
         setSuccess(
           `STK push sent to ${phone}. Please check your phone to complete the payment of KES ${amount.toLocaleString()}. Your game balance will be updated automatically.`
         );
         
         // Start polling for payment status
-        pollPaymentStatus(requestId);
+        if (requestId) {
+          pollPaymentStatus(requestId);
+        }
       }
     } catch (err: any) {
       const errorMessage = 
