@@ -20,6 +20,10 @@ interface FormData {
   contact_phone: string;
 }
 
+interface UserData {
+  phone?: string;
+}
+
 export default function TradeInPage() {
   const [tradeIns, setTradeIns] = useState<TradeIn[]>([]);
   const [loadingTradeIns, setLoadingTradeIns] = useState(true);
@@ -57,7 +61,7 @@ export default function TradeInPage() {
           throw new Error('API endpoint not configured');
         }
 
-        const response = await axios.get(`${apiBase}/users/me/`, {
+        const response = await axios.get<UserData>(`${apiBase}/users/me/`, {
           headers: {
             ...(token && { 'Authorization': `Token ${token}` }),
           },
