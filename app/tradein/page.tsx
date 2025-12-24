@@ -24,6 +24,11 @@ interface UserData {
   phone?: string;
 }
 
+interface TradeInListResponse {
+  results?: TradeIn[];
+  [key: string]: any;
+}
+
 export default function TradeInPage() {
   const [tradeIns, setTradeIns] = useState<TradeIn[]>([]);
   const [loadingTradeIns, setLoadingTradeIns] = useState(true);
@@ -104,7 +109,7 @@ export default function TradeInPage() {
           throw new Error('API endpoint not configured');
         }
 
-        const response = await axios.get(`${apiBase}/payments/tradein/`, {
+        const response = await axios.get<TradeInListResponse>(`${apiBase}/payments/tradein/`, {
           headers: {
             ...(token && { 'Authorization': `Token ${token}` }),
           },
@@ -162,7 +167,7 @@ export default function TradeInPage() {
         throw new Error('API endpoint not configured');
       }
 
-      const response = await axios.post(
+      const response = await axios.post<TradeIn>(
         `${apiBase}/payments/tradein/`,
         {
           description: formData.description,
@@ -187,7 +192,7 @@ export default function TradeInPage() {
         setShowForm(false);
 
         // Refresh trade-ins list
-        const updatedResponse = await axios.get(`${apiBase}/payments/tradein/`, {
+        const updatedResponse = await axios.get<TradeInListResponse>(`${apiBase}/payments/tradein/`, {
           headers: {
             ...(token && { 'Authorization': `Token ${token}` }),
           },
