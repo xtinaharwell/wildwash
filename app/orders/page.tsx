@@ -149,32 +149,68 @@ export default function OrdersPage(): React.JSX.Element {
           ) : orders.length === 0 ? (
             <div className="rounded-2xl bg-white/80 dark:bg-white/5 p-6 shadow text-sm text-slate-600">No orders found. Try a different filter or <Link href="/contact" className="underline">contact support</Link>.</div>
           ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {filtered.map((o) => (
-                <article key={o.code} className="rounded-2xl bg-white/80 dark:bg-white/5 p-4 shadow">
-                  <div className="flex items-start justify-between gap-4">
-                    <div>
-                      <div className="text-sm text-slate-500">{new Date(o.date).toLocaleString()}</div>
-                      <div className="font-mono font-semibold text-lg mt-1">{o.code}</div>
-                      <div className="mt-1 text-sm text-slate-600">{o.items} items · {o.weightKg ? `${o.weightKg} kg` : ''} · {o.package}</div>
-                    </div>
+            <div className="grid grid-cols-1 gap-6">
+              {filtered.map((o) => {
+                const statusColors = {
+                  'Received': { bg: 'bg-blue-50 dark:bg-blue-950/20', border: 'border-l-4 border-l-blue-500', badge: 'bg-blue-100 dark:bg-blue-900/40 text-blue-700 dark:text-blue-300' },
+                  'Washing': { bg: 'bg-purple-50 dark:bg-purple-950/20', border: 'border-l-4 border-l-purple-500', badge: 'bg-purple-100 dark:bg-purple-900/40 text-purple-700 dark:text-purple-300' },
+                  'Drying': { bg: 'bg-orange-50 dark:bg-orange-950/20', border: 'border-l-4 border-l-orange-500', badge: 'bg-orange-100 dark:bg-orange-900/40 text-orange-700 dark:text-orange-300' },
+                  'Ready': { bg: 'bg-green-50 dark:bg-green-950/20', border: 'border-l-4 border-l-green-500', badge: 'bg-green-100 dark:bg-green-900/40 text-green-700 dark:text-green-300' },
+                  'Delivered': { bg: 'bg-slate-50 dark:bg-slate-800/20', border: 'border-l-4 border-l-slate-400', badge: 'bg-slate-100 dark:bg-slate-800/40 text-slate-700 dark:text-slate-300' },
+                  'Cancelled': { bg: 'bg-red-50 dark:bg-red-950/20', border: 'border-l-4 border-l-red-500', badge: 'bg-red-100 dark:bg-red-900/40 text-red-700 dark:text-red-300' },
+                };
+                
+                const colors = statusColors[o.status] || statusColors['Received'];
+                
+                return (
+                <article key={o.code} className={`rounded-2xl bg-white/80 dark:bg-white/5 ${colors.bg} ${colors.border} p-6 shadow hover:shadow-lg transition-shadow`}>
+                  <div className="flex items-start justify-between gap-6">
+                    <div className="flex-1">
+                      <div className="flex items-center gap-2 mb-1">
+                        <div className="text-sm text-slate-500">{new Date(o.date).toLocaleString()}</div>
+                        <span className={`inline-block px-2 py-0.5 rounded-full text-xs font-semibold ${colors.badge}`}>
+                          {o.status}
+                        </span>
+                      </div>
+                      <div className="font-mono font-semibold text-2xl mt-2">{o.code}</div>
+                      <div className="mt-2 text-base text-slate-600 dark:text-slate-400">{o.items} items · {o.weightKg ? `${o.weightKg} kg` : ''} · {o.package}</div>
+                      
+                      <div className="mt-4 grid grid-cols-3 gap-4">
+                        <div className="rounded-lg bg-white/50 dark:bg-white/5 p-3 border border-white/20 dark:border-white/10">
+                          <div className="text-xs text-slate-500 uppercase tracking-wide">Amount</div>
+                          <div className="font-semibold text-lg mt-1 text-slate-900 dark:text-slate-100">{o.price}</div>
+                        </div>
 
-                    <div className="text-right">
-                      <div className="text-xs text-slate-500">Status</div>
-                      <div className={`font-semibold ${o.status === 'Delivered' ? 'text-slate-700' : 'text-red-600'}`}>{o.status}</div>
-                      {o.eta && <div className="text-xs text-slate-500 mt-2">ETA</div>}
-                      {o.eta && <div className="font-medium">{o.eta}</div>}
-                      <div className="mt-2 flex items-center gap-2 justify-end">
-                        <Link href={`/orders/${o.code}`} className="text-xs px-2 py-1 rounded bg-slate-100 dark:bg-white/5">Details</Link>
+                        {o.eta && (
+                          <div className="rounded-lg bg-white/50 dark:bg-white/5 p-3 border border-white/20 dark:border-white/10">
+                            <div className="text-xs text-slate-500 uppercase tracking-wide">ETA</div>
+                            <div className="font-semibold text-lg mt-1">{o.eta}</div>
+                          </div>
+                        )}
+                        
+                        <div className="rounded-lg bg-white/50 dark:bg-white/5 p-3 border border-white/20 dark:border-white/10">
+                          <div className="text-xs text-slate-500 uppercase tracking-wide">Items</div>
+                          <div className="font-semibold text-lg mt-1">{o.items}</div>
+                        </div>
                       </div>
                     </div>
                   </div>
 
-                  <div className="mt-3 flex items-center justify-between">
-                    <div className="text-sm text-slate-600">{o.price}</div>
+                  <div className="mt-6 flex items-center gap-3">
+                    <Link 
+                      href={`/orders/${o.code}`} 
+                      className="flex-1 px-4 py-3 rounded-lg bg-slate-100 dark:bg-white/10 hover:bg-slate-200 dark:hover:bg-white/20 text-slate-900 dark:text-slate-100 font-medium text-center transition-colors">
+                      View Details
+                    </Link>
+                    <Link 
+                      href={`/checkout?order_id=${encodeURIComponent(o.code)}&amount=${encodeURIComponent(o.price.replace(/[^0-9.]/g, ''))}`} 
+                      className="flex-1 px-4 py-3 rounded-lg bg-red-600 hover:bg-red-700 text-white font-medium text-center transition-colors">
+                      Pay Now
+                    </Link>
                   </div>
                 </article>
-              ))}
+              );
+              })}
             </div>
           )}
 

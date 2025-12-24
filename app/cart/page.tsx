@@ -45,21 +45,30 @@ export default function CartPage() {
           <div className="mt-8">
             <ul className="space-y-4">
               {cartItems.map((item) => (
-                <li key={item.id} className="flex flex-col sm:flex-row sm:items-center sm:justify-between bg-white/80 dark:bg-white/5 p-4 rounded-lg shadow gap-4 sm:gap-0">
-                  <div className="flex-1">
-                    <h2 className="font-semibold text-base sm:text-lg">{item.name}</h2>
-                    <p className="text-sm text-slate-500">KSh {Number(item.price).toFixed(2)} each</p>
+                <li key={item.id} className="bg-white/80 dark:bg-white/5 p-4 rounded-lg shadow">
+                  <div className="flex items-start justify-between gap-3 mb-3">
+                    <div className="flex-1 min-w-0">
+                      <h2 className="font-semibold text-base sm:text-lg truncate">{item.name}</h2>
+                      <p className="text-sm text-slate-500">KSh {Number(item.price).toFixed(2)} each</p>
+                    </div>
+                    <button 
+                      onClick={() => handleRemoveFromCart(item.id)}
+                      title="Remove item from cart"
+                      className="inline-flex items-center justify-center text-red-600 hover:text-red-800 hover:bg-red-50 dark:hover:bg-red-950/20 rounded-md p-2 transition shrink-0"
+                    >
+                      <Trash2 size={20} />
+                    </button>
                   </div>
                   
-                  <div className="flex flex-col sm:flex-row sm:items-center gap-4 sm:gap-4">
-                    <div className="flex items-center gap-2 bg-slate-100 dark:bg-slate-700 rounded-lg px-2 py-1 w-fit">
+                  <div className="flex items-center justify-between gap-3">
+                    <div className="flex items-center gap-2 bg-slate-100 dark:bg-slate-700 rounded-lg px-2 py-1">
                       <button
                         onClick={() => handleQuantityChange(item.id, (item.quantity || 1) - 1)}
                         className="text-lg font-bold text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-slate-100 w-6 h-6 flex items-center justify-center"
                       >
                         −
                       </button>
-                      <span className="w-8 text-center font-semibold">{item.quantity || 1}</span>
+                      <span className="w-8 text-center font-semibold text-sm">{item.quantity || 1}</span>
                       <button
                         onClick={() => handleQuantityChange(item.id, (item.quantity || 1) + 1)}
                         className="text-lg font-bold text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-slate-100 w-6 h-6 flex items-center justify-center"
@@ -67,36 +76,29 @@ export default function CartPage() {
                         +
                       </button>
                     </div>
-                    <div className="w-full sm:w-24 text-right">
-                      <p className="text-sm text-slate-500">Subtotal</p>
-                      <p className="font-semibold">KSh {(Number(item.price) * (item.quantity || 1)).toFixed(2)}</p>
+                    <div className="text-right">
+                      <p className="text-xs text-slate-500">Subtotal</p>
+                      <p className="font-semibold text-sm">KSh {(Number(item.price) * (item.quantity || 1)).toFixed(2)}</p>
                     </div>
-                    <button 
-                      onClick={() => handleRemoveFromCart(item.id)}
-                      title="Remove item from cart"
-                      className="inline-flex items-center justify-center text-red-600 hover:text-red-800 hover:bg-red-50 dark:hover:bg-red-950/20 rounded-md p-2 transition"
-                    >
-                      <Trash2 size={20} />
-                    </button>
                   </div>
                 </li>
               ))}
             </ul>
 
             <div className="mt-8 pt-4 border-t border-slate-200 dark:border-slate-700">
-                <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-2">
-                    <h2 className="text-xl font-bold">Estimated Total:</h2>
-                    <p className="text-xl font-bold">KSh {totalPrice.toFixed(2)}</p>
+                <div className="flex justify-between items-center gap-4 mb-6">
+                    <h2 className="text-xl font-bold">Total:</h2>
+                    <p className="text-2xl font-bold text-red-600">KSh {totalPrice.toFixed(2)}</p>
                 </div>
             </div>
 
-            <div className="mt-8 flex flex-col sm:flex-row gap-4 sm:justify-between">
-              <button onClick={handleClearCart} className="text-slate-500 hover:text-slate-700 font-medium order-2 sm:order-1">
-                Clear Cart
-              </button>
-              <Link href="/book" className="bg-red-600 text-white px-6 py-3 rounded-md font-medium text-center order-1 sm:order-2">
+            <div className="mt-6 flex flex-col gap-3">
+              <Link href="/book" className="bg-red-600 text-white px-6 py-3 rounded-lg font-medium text-center hover:bg-red-700 transition w-full">
                 Book / Schedule Pick Up
               </Link>
+              <button onClick={handleClearCart} className="text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-300 font-medium py-2 transition">
+                Clear Cart
+              </button>
             </div>
           </div>
         )}

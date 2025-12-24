@@ -26,43 +26,85 @@ export default function CheckoutForm() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
+  const [loadingUserData, setLoadingUserData] = useState(true);
 
   // Auto-fill form from query params and user data on mount
   useEffect(() => {
     const orderId = searchParams.get('order_id');
     const amount = searchParams.get('amount');
     
-    let userPhone = '';
-    let userFirstName = '';
-    let userLastName = '';
-
-    // Try to get user data from localStorage
-    if (typeof window !== 'undefined') {
+    const fetchUserData = async () => {
       try {
-        const userJson = localStorage.getItem('user');
-        if (userJson) {
-          const user = JSON.parse(userJson);
-          userPhone = user.phone || '';
-          userFirstName = user.first_name || user.firstName || '';
-          userLastName = user.last_name || user.lastName || '';
+        let token = null;
+        if (typeof window !== 'undefined') {
+          const authState = localStorage.getItem('wildwash_auth_state');
+          if (authState) {
+            try {
+              const parsed = JSON.parse(authState);
+              token = parsed.token;
+            } catch (e) {
+              console.error('Error parsing auth state:', e);
+            }
+          }
         }
-      } catch (e) {
-        console.error('Error parsing user data:', e);
-      }
-    }
 
-    setFormData(prev => ({
-      ...prev,
-      order_id: orderId || prev.order_id,
-      amount: amount || prev.amount,
-      phone: userPhone || prev.phone,
-      firstName: userFirstName || prev.firstName,
-      lastName: userLastName || prev.lastName,
-    }));
+        const apiBase = process.env.NEXT_PUBLIC_API_BASE;
+        if (!apiBase) {
+          throw new Error('API endpoint not configured');
+        }
+
+        const response = await axios.get(`${apiBase}/users/me/`, {
+          headers: {
+            ...(token && { 'Authorization': `Token ${token}` }),
+          },
+        });
+
+        const user = response.data;
+        setFormData(prev => ({
+          ...prev,
+          order_id: orderId || prev.order_id,
+          amount: amount || prev.amount,
+          phone: user.phone || '',
+          firstName: user.first_name || '',
+          lastName: user.last_name || '',
+        }));
+      } catch (err) {
+        console.error('Error fetching user data:', err);
+        // Fallback: try to load from localStorage
+        try {
+          const userJson = localStorage.getItem('wildwash_auth_state');
+          if (userJson) {
+            const authData = JSON.parse(userJson);
+            const user = authData.user;
+            setFormData(prev => ({
+              ...prev,
+              order_id: orderId || prev.order_id,
+              amount: amount || prev.amount,
+              phone: user.phone || '',
+              firstName: user.first_name || '',
+              lastName: user.last_name || '',
+            }));
+          }
+        } catch (e) {
+          console.error('Error loading from localStorage:', e);
+          setFormData(prev => ({
+            ...prev,
+            order_id: orderId || prev.order_id,
+            amount: amount || prev.amount,
+          }));
+        }
+      } finally {
+        setLoadingUserData(false);
+      }
+    };
+
+    fetchUserData();
   }, [searchParams]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
+    // Don't allow editing amount field
+    if (name === 'amount') return;
     setFormData(prev => ({
       ...prev,
       [name]: value
@@ -71,19 +113,13 @@ export default function CheckoutForm() {
 
   const validateForm = (): boolean => {
     if (!formData.amount || !formData.phone || !formData.order_id) {
-      setError('Amount, phone number, and order ID are required');
+      setError('Phone number and order ID are required');
       return false;
     }
 
     // Validate phone number
     if (!isValidPhoneNumber(formData.phone)) {
       setError('Invalid phone number. Use format: 254712345678 or 0712345678');
-      return false;
-    }
-
-    // Validate amount
-    if (isNaN(Number(formData.amount)) || Number(formData.amount) <= 0) {
-      setError('Amount must be a valid positive number');
       return false;
     }
 
@@ -222,14 +258,15 @@ export default function CheckoutForm() {
                 id="amount"
                 name="amount"
                 value={formData.amount}
-                onChange={handleChange}
                 placeholder="0.00"
                 step="0.01"
                 min="1"
-                className="block w-full pl-14 pr-4 py-3 border border-slate-200 dark:border-slate-700 rounded-full bg-white dark:bg-slate-900 focus:ring-2 focus:ring-red-500 focus:border-transparent outline-none text-sm"
-                disabled={loading}
+                className="block w-full pl-14 pr-4 py-3 border border-slate-200 dark:border-slate-700 rounded-full bg-slate-50 dark:bg-slate-900/50 text-slate-900 dark:text-slate-100 cursor-not-allowed opacity-75 text-sm"
+                disabled={true}
+                readOnly={true}
               />
             </div>
+            <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">This amount is fixed for your order</p>
           </div>
 
           {/* Phone Number */}
@@ -287,16 +324,16 @@ export default function CheckoutForm() {
           {/* Submit Button */}
           <button
             type="submit"
-            disabled={loading}
+            disabled={loading || loadingUserData}
             className="w-full bg-red-600 hover:bg-red-700 disabled:bg-red-400 text-white font-semibold py-3 px-4 rounded-full transition-all duration-300 transform hover:scale-105 active:scale-95 flex items-center justify-center mt-6"
           >
-            {loading ? (
+            {loading || loadingUserData ? (
               <>
                 <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
                   <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                   <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                 </svg>
-                Processing...
+                {loadingUserData ? 'Loading...' : 'Processing...'}
               </>
             ) : (
               'Pay with M-Pesa'

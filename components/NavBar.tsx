@@ -257,6 +257,12 @@ export default function NavBar() {
           <div className="mt-2 rounded-xl bg-white/95 dark:bg-black/60 shadow-lg p-4 backdrop-blur-sm">
             <div className="flex flex-col gap-2">
               <Link
+                href="/invest"
+                onClick={() => setMobileOpen(false)}
+                className="block text-lg px-4 py-3 rounded-lg bg-red-600 text-white hover:bg-red-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-red-300 font-medium">
+                Invest
+              </Link>
+              <Link
                 href="/borrow"
                 onClick={() => setMobileOpen(false)}
                 className="block text-lg px-4 py-3 rounded-lg bg-red-600 text-white hover:bg-red-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-red-300 font-medium">
