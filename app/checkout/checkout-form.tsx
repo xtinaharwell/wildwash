@@ -12,6 +12,12 @@ interface CheckoutForm {
   lastName: string;
 }
 
+interface UserData {
+  phone?: string;
+  first_name?: string;
+  last_name?: string;
+}
+
 export default function CheckoutForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -53,7 +59,7 @@ export default function CheckoutForm() {
           throw new Error('API endpoint not configured');
         }
 
-        const response = await axios.get(`${apiBase}/users/me/`, {
+        const response = await axios.get<UserData>(`${apiBase}/users/me/`, {
           headers: {
             ...(token && { 'Authorization': `Token ${token}` }),
           },
@@ -74,16 +80,20 @@ export default function CheckoutForm() {
         try {
           const userJson = localStorage.getItem('wildwash_auth_state');
           if (userJson) {
-            const authData = JSON.parse(userJson);
+            const authData = JSON.parse(userJson) as { user?: UserData };
             const user = authData.user;
-            setFormData(prev => ({
-              ...prev,
-              order_id: orderId || prev.order_id,
-              amount: amount || prev.amount,
-              phone: user.phone || '',
-              firstName: user.first_name || '',
-              lastName: user.last_name || '',
-            }));
+            if (user) {
+              setFormData(prev => ({
+                ...prev,
+                order_id: orderId || prev.order_id,
+                amount: amount || prev.amount,
+                phone: user.phone || '',
+                firstName: user.first_name || '',
+                lastName: user.last_name || '',
+              }));
+            } else {
+              throw new Error('No user data in auth state');
+            }
           }
         } catch (e) {
           console.error('Error loading from localStorage:', e);
