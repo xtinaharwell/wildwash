@@ -1,0 +1,221 @@
+"use client";
+
+import React, { useEffect, useState } from "react";
+import { ChevronDownIcon, BellIcon } from "@heroicons/react/24/outline";
+import { Spinner } from "@/components";
+
+interface Service {
+  id: number;
+  name: string;
+  category: string;
+  price: string;
+  description: string;
+}
+
+export default function ServicesPage() {
+  const [open, setOpen] = useState<string | null>(null);
+  const [notif, setNotif] = useState({ push: true, sms: false, email: false });
+  const [sent, setSent] = useState<string | null>(null);
+  const [services, setServices] = useState<Service[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  const toggle = (id: string) => setOpen((o) => (o === id ? null : id));
+
+  useEffect(() => {
+    async function loadServices() {
+      try {
+        setLoading(true);
+        const res = await fetch(`${process.env.NEXT_PUBLIC_API_BASE}/services/`);
+        if (!res.ok) throw new Error("Failed to fetch services");
+        const data = await res.json();
+        setServices(data);
+      } catch (err) {
+        setError((err as Error).message);
+      } finally {
+        setLoading(false);
+      }
+    }
+    loadServices();
+  }, []);
+
+  function simulateNotify() {
+    setSent(null);
+    setTimeout(() => {
+      setSent(
+        `Rider notified via: ${Object.entries(notif)
+          .filter(([, v]) => v)
+          .map(([k]) => k.toUpperCase())
+          .join(", ") || "none"}`
+      );
+    }, 700);
+  }
+
+  const grouped = groupByCategory(services);
+
+  return (
+    <div className="min-h-screen bg-gradient-to-b from-white via-[#f8fafc] to-[#eef2ff] dark:from-[#071025] dark:via-[#041022] dark:to-[#011018] text-slate-900 dark:text-slate-100 py-12">
+      <div className="max-w-6xl mx-auto px-4">
+        <header className="mb-8">
+          <h1 className="text-3xl font-extrabold">Services — What we offer</h1>
+          <p className="mt-2 text-slate-600 dark:text-slate-300">
+            Choose a service category to see available packages and pricing. Tap a package to expand details and request it from the booking flow.
+          </p>
+        </header>
+
+        {loading ? (
+          <div className="flex justify-center py-20">
+            <Spinner className="w-8 h-8" />
+          </div>
+        ) : error ? (
+          <div className="text-center text-red-600">Error: {error}</div>
+        ) : services.length === 0 ? (
+          <div className="text-center text-slate-500">No services available yet.</div>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {Object.entries(grouped).map(([category, list]) => (
+              <section key={category} className="rounded-2xl bg-white/80 dark:bg-white/5 p-4 shadow">
+                <h2 className="text-xl font-semibold capitalize">
+                  {categoryLabel(category)}
+                </h2>
+                <p className="text-sm text-slate-500 mt-1">{getBlurb(category)}</p>
+
+                <div className="mt-4 space-y-3">
+                  {list.map((s) => (
+                    <article key={s.id} className="border border-slate-100 dark:border-slate-800 rounded-lg overflow-hidden">
+                      <button
+                        aria-expanded={open === s.id.toString()}
+                        onClick={() => toggle(s.id.toString())}
+                        className="w-full flex items-center justify-between px-4 py-3 text-left hover:bg-slate-50 dark:hover:bg-white/5 focus:outline-none"
+                      >
+                        <div>
+                          <div className="font-medium">{s.name}</div>
+                          <div className="text-sm text-slate-500 mt-1">KSh {s.price}</div>
+                        </div>
+                        <ChevronDownIcon
+                          className={`w-5 h-5 transition-transform ${
+                            open === s.id.toString() ? "rotate-180" : "rotate-0"
+                          }`}
+                        />
+                      </button>
+
+                      <div
+                        className={`${
+                          open === s.id.toString() ? "max-h-96 p-4" : "max-h-0 p-0"
+                        } transition-[max-height,padding] duration-300 overflow-hidden bg-white/50 dark:bg-white/3`}
+                      >
+                        <p className="text-sm text-slate-700 dark:text-slate-300 mb-2">
+                          {s.description}
+                        </p>
+                        <div className="text-sm text-slate-600">
+                          ETA: <span className="font-semibold">{getETA(s.category)}</span>
+                        </div>
+                        <a
+                          href="/book"
+                          className="mt-3 inline-flex items-center gap-2 bg-red-600 text-white px-3 py-2 rounded-md text-sm font-medium"
+                        >
+                          Request
+                        </a>
+                      </div>
+                    </article>
+                  ))}
+                </div>
+              </section>
+            ))}
+          </div>
+        )}
+
+        {/* Rider notification section */}
+        <section className="mt-8 rounded-2xl bg-white/90 dark:bg-white/5 p-6 shadow">
+          <h3 className="text-xl font-semibold flex items-center gap-2">
+            <BellIcon className="w-5 h-5 text-red-600" /> Rider notifications & outputs
+          </h3>
+          <p className="mt-2 text-sm text-slate-600 dark:text-slate-300">
+            When a pickup or delivery is requested, Wild Wash generates the following outputs and then notifies the rider.
+          </p>
+
+          <div className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <h4 className="font-semibold">Outputs</h4>
+              <ul className="mt-2 list-disc list-inside text-sm text-slate-700 dark:text-slate-300">
+                <li>Order receipt (PDF)</li>
+                <li>Tracking code</li>
+                <li>ETA & status updates</li>
+              </ul>
+            </div>
+
+            <div>
+            </div>
+          </div>
+        </section>
+
+      </div>
+    </div>
+  );
+}
+
+/* --- Helpers --- */
+function groupByCategory(services: Service[]) {
+  return services.reduce((acc, s) => {
+    acc[s.category] = acc[s.category] || [];
+    acc[s.category].push(s);
+    return acc;
+  }, {} as Record<string, Service[]>);
+}
+
+function categoryLabel(key: string) {
+  switch (key) {
+    case "laundry":
+      return "Laundry";
+    case "duvet":
+      return "Duvet Cleaning";
+    case "carpet":
+      return "Carpet Cleaning";
+    case "house":
+      return "House Cleaning";
+    case "fumigation":
+      return "Fumigation";
+    case "installation":
+      return "TV Mounting & Hot Shower Installation";
+    default:
+      return key;
+  }
+}
+
+function getBlurb(key: string) {
+  switch (key) {
+    case "laundry":
+      return "Wash, dry, fold, and special-care options for everyday clothes.";
+    case "duvet":
+      return "Cleaning for duvets, blankets, and bedding.";
+    case "carpet":
+      return "Spot or full carpet cleaning with steam options.";
+    case "house":
+      return "Standard and deep cleaning for homes.";
+    case "fumigation":
+      return "Certified pest control and sanitisation.";
+    case "installation":
+      return "Mounting and installation services.";
+    default:
+      return "";
+  }
+}
+
+function getETA(key: string) {
+  switch (key) {
+    case "laundry":
+      return "24–48h";
+    case "duvet":
+      return "48–72h";
+    case "carpet":
+      return "24–48h";
+    case "house":
+      return "2–4 hrs";
+    case "fumigation":
+      return "Same-day";
+    case "installation":
+      return "Same-day / next-day";
+    default:
+      return "Varies";
+  }
+}

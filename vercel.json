@@ -1,0 +1,8 @@
+{
+  "env": {
+    "NEXT_PUBLIC_API_URL": "https://api.wildwash.com"
+  },
+  "buildCommand": "npm run build",
+  "outputDirectory": ".next",
+  "framework": "nextjs"
+}
