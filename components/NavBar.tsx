@@ -123,11 +123,18 @@ export default function NavBar() {
               Financing / Pay
             </Link>
             {isAuthenticated && (
-              <Link
-                href="/bnpl"
-                className="text-sm px-4 py-2 rounded-lg bg-red-600 text-white hover:bg-red-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-red-300 font-medium">
-                BNPL
-              </Link>
+              <>
+                <Link
+                  href="/bnpl"
+                  className="text-sm px-4 py-2 rounded-lg bg-red-600 text-white hover:bg-red-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-red-300 font-medium">
+                  BNPL
+                </Link>
+                <Link
+                  href="/tradein"
+                  className="text-sm px-4 py-2 rounded-lg bg-red-600 text-white hover:bg-red-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-red-300 font-medium">
+                  Trade-In
+                </Link>
+              </>
             )}
             <Link
               href="/borrow"
@@ -295,12 +302,20 @@ export default function NavBar() {
                 Financing / Pay
               </Link>
               {isAuthenticated && (
-                <Link
-                  href="/bnpl"
-                  onClick={() => setMobileOpen(false)}
-                  className="block text-lg px-4 py-3 rounded-lg bg-red-600 text-white hover:bg-red-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-red-300 font-medium">
-                  BNPL
-                </Link>
+                <>
+                  <Link
+                    href="/bnpl"
+                    onClick={() => setMobileOpen(false)}
+                    className="block text-lg px-4 py-3 rounded-lg bg-red-600 text-white hover:bg-red-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-red-300 font-medium">
+                    BNPL
+                  </Link>
+                  <Link
+                    href="/tradein"
+                    onClick={() => setMobileOpen(false)}
+                    className="block text-lg px-4 py-3 rounded-lg bg-red-600 text-white hover:bg-red-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-red-300 font-medium">
+                    Trade-In
+                  </Link>
+                </>
               )}
               <Link
                 href="/borrow"
