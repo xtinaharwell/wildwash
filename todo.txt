@@ -1,0 +1,11 @@
+Add Leave Note to rider feature
+Messaging within the app
+
+Make user mark his or her location on the map so as to keep long, lat of the user for the rider page
+
+loading orders for the specific rider
+
+assigning orders to a rider according to location
+
+
+show staff orders according to location
