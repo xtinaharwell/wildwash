@@ -9,6 +9,8 @@ import {
   CheckBadgeIcon,
   TrashIcon,
   WrenchIcon,
+  SparklesIcon,
+  ArrowTrendingUpIcon,
 } from "@heroicons/react/24/outline";
 import { useAppDispatch } from "@/redux/hooks";
 import { addToCart } from "@/redux/features/cartSlice";
@@ -40,7 +42,7 @@ function getIconForCategory(category: string) {
     case "installation":
       return WrenchIcon;
     default:
-      return CubeTransparentIcon;
+      return SparklesIcon;
   }
 }
 
@@ -51,6 +53,7 @@ export default function HomePage() {
   const [services, setServices] = useState<Service[]>([]);
   const [loading, setLoading] = useState(true);
   const [addedItem, setAddedItem] = useState<number | null>(null);
+  const [isScrolled, setIsScrolled] = useState(false);
 
   useEffect(() => {
     let mounted = true;
@@ -88,6 +91,14 @@ export default function HomePage() {
     };
   }, []);
 
+  useEffect(() => {
+    const handleScroll = () => {
+      setIsScrolled(window.scrollY > 20);
+    };
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
+
   const handleAddToCart = (service: Service) => {
     const { icon, ...cartService } = service as any;
     const finalCartService = { ...cartService, price: String(cartService.price), description: cartService.description || "" };
@@ -119,108 +130,206 @@ export default function HomePage() {
   };
 
   return (
-    <div className="min-h-screen bg-white dark:bg-slate-950 text-slate-900 dark:text-slate-100">
-      <div className="max-w-4xl mx-auto px-4 sm:px-6 py-10">
+    <div className="min-h-screen bg-gradient-to-b from-slate-50 to-white dark:from-slate-950 dark:to-slate-900 text-slate-900 dark:text-slate-100">
 
-        {/* Search */}
-        <div className="mb-8 max-w-md mx-auto">
-          <div className="relative">
-            <MagnifyingGlassIcon className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
-            <input
-              type="text"
-              placeholder="Search services..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full pl-10 pr-4 py-3 text-sm border border-slate-200 dark:border-slate-700 rounded-full bg-white dark:bg-slate-900 focus:ring-2 focus:ring-red-500 focus:border-transparent outline-none"
-            />
+      <div className="max-w-6xl mx-auto px-4 sm:px-6 pb-20">
+        {/* Search Section with floating effect */}
+        <div className={`sticky top-24 z-10 mb-10 transition-all duration-300 ${
+          isScrolled ? 'scale-[0.98] opacity-95' : 'scale-100 opacity-100'
+        }`}>
+          <div className="max-w-xl mx-auto">
+            <div className="relative group">
+              <div className="absolute -inset-1 bg-gradient-to-r from-red-600 to-orange-500 rounded-full blur opacity-20 group-hover:opacity-30 transition duration-500" />
+              <div className="relative">
+                <MagnifyingGlassIcon className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
+                <input
+                  type="text"
+                  placeholder="Search services..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="w-full pl-12 pr-4 py-4 text-base border-0 rounded-full bg-white/80 dark:bg-slate-800/80 backdrop-blur-sm shadow-lg focus:ring-2 focus:ring-red-500 focus:outline-none placeholder-slate-400"
+                />
+              </div>
+            </div>
           </div>
         </div>
 
-        {/* Filters */}
-        <div className="mb-8 flex flex-wrap gap-2 justify-center">
-          <button
-            onClick={() => setSelectedCategory(null)}
-            className={`px-4 py-2 rounded-full text-sm font-medium transition-all ${
-              selectedCategory === null
-                ? "bg-red-600 text-white shadow-md"
-                : "bg-slate-200 dark:bg-slate-800 text-slate-900 dark:text-slate-100 hover:bg-slate-300 dark:hover:bg-slate-700"
-            }`}
-          >
-            All Services
-          </button>
-          {categories.map((cat) => (
+        {/* Categories - Minimal horizontal scroll */}
+        <div className="mb-12">
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-xl font-light text-slate-900 dark:text-slate-100">
+              Categories
+            </h2>
             <button
-              key={cat}
-              onClick={() => setSelectedCategory(cat)}
-              className={`px-4 py-2 rounded-full text-sm font-medium transition-all ${
-                selectedCategory === cat
-                  ? "bg-red-600 text-white shadow-md"
-                  : "bg-slate-200 dark:bg-slate-800 text-slate-900 dark:text-slate-100 hover:bg-slate-300 dark:hover:bg-slate-700"
-              }`}
+              onClick={() => setSelectedCategory(null)}
+              className="text-sm text-red-600 dark:text-red-400 hover:text-red-700 dark:hover:text-red-300 transition-colors"
             >
-              {categoryLabels[cat]}
+              View all
             </button>
-          ))}
+          </div>
+          
+          <div className="flex space-x-3 overflow-x-auto pb-4 -mx-4 px-4 scrollbar-hide">
+            {categories.map((cat) => {
+              const Icon = getIconForCategory(cat);
+              return (
+                <button
+                  key={cat}
+                  onClick={() => setSelectedCategory(selectedCategory === cat ? null : cat)}
+                  className={`flex-shrink-0 flex flex-col items-center p-4 rounded-2xl transition-all duration-300 ${
+                    selectedCategory === cat
+                      ? "bg-gradient-to-br from-red-600 to-orange-500 text-white shadow-lg scale-105"
+                      : "bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:shadow-md hover:scale-[1.02]"
+                  }`}
+                >
+                  <Icon className={`w-6 h-6 mb-2 ${
+                    selectedCategory === cat ? "text-white" : "text-red-500 dark:text-red-400"
+                  }`} />
+                  <span className="text-xs font-medium whitespace-nowrap">
+                    {categoryLabels[cat]}
+                  </span>
+                </button>
+              );
+            })}
+          </div>
         </div>
 
-        {/* Spacious grid: 2 columns on mobile, 3 on desktop */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-          {loading && (
-            <div className="col-span-full text-center py-8">
-              <p className="text-sm text-slate-500 dark:text-slate-400">Loading services...</p>
-            </div>
-          )}
-
-          {!loading && filteredServices.length === 0 && (
-            <div className="col-span-full text-center py-8">
-              <p className="text-sm text-slate-500 dark:text-slate-400">{searchTerm ? "No matches" : "No services"}</p>
-            </div>
-          )}
-
-          {!loading &&
-            filteredServices.map((service) => (
-              <article
-                key={service.id}
-                className="rounded-xl bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 overflow-hidden hover:shadow-md transition-shadow duration-200 flex flex-col"
+        {/* Services Grid */}
+        <div>
+          <div className="flex items-center justify-between mb-8">
+            <h2 className="text-2xl font-light text-slate-900 dark:text-slate-100">
+              Services
+              <span className="ml-2 text-sm font-normal text-slate-500 dark:text-slate-400">
+                ({filteredServices.length})
+              </span>
+            </h2>
+            
+            {selectedCategory && (
+              <button
+                onClick={() => setSelectedCategory(null)}
+                className="text-sm text-red-600 dark:text-red-400 hover:text-red-700 dark:hover:text-red-300 flex items-center gap-1 transition-colors"
               >
-                {/* Icon/Image */}
-                <div className="h-32 bg-gradient-to-br from-red-50 to-red-100 dark:from-red-950/20 dark:to-red-900/20 flex items-center justify-center">
-                  {service.image_url ? (
-                    // eslint-disable-next-line @next/next/no-img-element
-                    <img src={service.image_url} alt={service.name} className="w-full h-full object-cover" />
-                  ) : service.icon ? (
-                    <service.icon className="w-16 h-16 text-red-600 dark:text-red-400" />
-                  ) : (
-                    <CubeTransparentIcon className="w-16 h-16 text-red-600 dark:text-red-400" />
-                  )}
-                </div>
+                Clear filter
+                <ArrowTrendingUpIcon className="w-4 h-4" />
+              </button>
+            )}
+          </div>
 
-                {/* Content */}
-                <div className="p-4 flex flex-col flex-1">
-                  <h3 className="text-base font-semibold text-slate-900 dark:text-slate-50 line-clamp-2">{service.name}</h3>
-                  <p className="text-sm text-slate-600 dark:text-slate-400 mt-2 line-clamp-2 flex-1">{service.description}</p>
-
-                  <div className="mt-4 flex items-center justify-between gap-3">
-                    <span className="text-lg font-bold text-red-600 dark:text-red-400">
-                      KSh {Number(service.price).toLocaleString()}
-                    </span>
+          {loading ? (
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+              {[...Array(6)].map((_, i) => (
+                <div
+                  key={i}
+                  className="rounded-2xl bg-gradient-to-br from-slate-100 to-slate-50 dark:from-slate-800/50 dark:to-slate-900/50 animate-pulse"
+                >
+                  <div className="h-48 bg-slate-200 dark:bg-slate-700 rounded-t-2xl" />
+                  <div className="p-6">
+                    <div className="h-4 bg-slate-200 dark:bg-slate-700 rounded-full mb-3" />
+                    <div className="h-3 bg-slate-200 dark:bg-slate-700 rounded-full mb-2" />
+                    <div className="h-3 bg-slate-200 dark:bg-slate-700 rounded-full mb-4" />
+                    <div className="h-10 bg-slate-200 dark:bg-slate-700 rounded-full" />
                   </div>
-
-                  <button
-                    onClick={() => handleAddToCart(service)}
-                    className={`w-full mt-4 font-medium text-sm rounded-lg transition-all duration-300 transform py-2 ${
-                      addedItem === service.id
-                        ? "bg-green-500 text-white shadow-lg animate-pulse-bounce"
-                        : "bg-red-600 text-white hover:bg-red-700 hover:shadow-lg hover:scale-105 active:scale-95"
-                    }`}
-                  >
-                    {addedItem === service.id ? "✓ Added!" : "Add to Cart"}
-                  </button>
                 </div>
-              </article>
-            ))}
+              ))}
+            </div>
+          ) : filteredServices.length === 0 ? (
+            <div className="text-center py-16">
+              <div className="w-24 h-24 mx-auto mb-6 rounded-full bg-gradient-to-br from-red-50 to-orange-50 dark:from-red-950/20 dark:to-orange-950/20 flex items-center justify-center">
+                <MagnifyingGlassIcon className="w-12 h-12 text-red-400 dark:text-red-500" />
+              </div>
+              <h3 className="text-xl font-medium text-slate-900 dark:text-slate-100 mb-2">
+                No services found
+              </h3>
+              <p className="text-slate-600 dark:text-slate-400 max-w-md mx-auto">
+                {searchTerm 
+                  ? `No matches for "${searchTerm}". Try a different search term.`
+                  : "No services available at the moment."}
+              </p>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+              {filteredServices.map((service) => (
+                <div
+                  key={service.id}
+                  className="group relative"
+                >
+                  {/* Background glow effect */}
+                  <div className="absolute -inset-0.5 bg-gradient-to-br from-red-600 to-orange-500 rounded-2xl blur opacity-0 group-hover:opacity-20 transition duration-500" />
+                  
+                  <div className="relative rounded-2xl bg-gradient-to-b from-white to-slate-50 dark:from-slate-800 dark:to-slate-900 border border-slate-200 dark:border-slate-700 overflow-hidden hover:shadow-xl transition-all duration-300 hover:-translate-y-1">
+                    {/* Image/Icon Header */}
+                    <div className="relative h-48 overflow-hidden bg-gradient-to-br from-slate-100 to-slate-50 dark:from-slate-800 dark:to-slate-900">
+                      {service.image_url ? (
+                        <img
+                          src={service.image_url}
+                          alt={service.name}
+                          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                        />
+                      ) : (
+                        <div className="w-full h-full flex items-center justify-center">
+                          {service.icon ? (
+                            <service.icon className="w-20 h-20 text-red-500 dark:text-red-400 opacity-50 group-hover:opacity-100 transition-opacity duration-300" />
+                          ) : (
+                            <SparklesIcon className="w-20 h-20 text-red-500 dark:text-red-400 opacity-50 group-hover:opacity-100 transition-opacity duration-300" />
+                          )}
+                        </div>
+                      )}
+                      
+                      {/* Category badge */}
+                      {service.category && (
+                        <div className="absolute top-4 left-4">
+                          <span className="px-3 py-1 text-xs font-medium rounded-full bg-white/90 dark:bg-slate-800/90 backdrop-blur-sm text-slate-700 dark:text-slate-300">
+                            {categoryLabels[service.category] || service.category}
+                          </span>
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Content */}
+                    <div className="p-6">
+                      <h3 className="text-lg font-medium text-slate-900 dark:text-slate-100 mb-3 line-clamp-1 group-hover:text-red-600 dark:group-hover:text-red-400 transition-colors">
+                        {service.name}
+                      </h3>
+                      
+                      <p className="text-sm text-slate-600 dark:text-slate-400 mb-4 line-clamp-2 leading-relaxed">
+                        {service.description}
+                      </p>
+
+                      <div className="flex items-center justify-between mb-4">
+                        <div>
+                          <div className="text-sm text-slate-500 dark:text-slate-400 mb-1">Starting from</div>
+                          <div className="text-2xl font-bold text-red-600 dark:text-red-400">
+                            KSh {Number(service.price).toLocaleString()}
+                          </div>
+                        </div>
+                        
+                        <div className={`px-3 py-1 rounded-full text-sm font-medium transition-all duration-300 ${
+                          addedItem === service.id
+                            ? "bg-green-500 text-white"
+                            : "bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400"
+                        }`}>
+                          {addedItem === service.id ? "✓ Added" : "Add"}
+                        </div>
+                      </div>
+
+                      <button
+                        onClick={() => handleAddToCart(service)}
+                        className={`w-full py-3 rounded-xl font-medium transition-all duration-300 ${
+                          addedItem === service.id
+                            ? "bg-gradient-to-r from-green-500 to-emerald-500 text-white shadow-lg animate-pulse"
+                            : "bg-gradient-to-r from-red-600 to-orange-500 text-white hover:shadow-lg hover:shadow-red-500/25 hover:scale-[1.02] active:scale-[0.98]"
+                        }`}
+                      >
+                        {addedItem === service.id ? "✓ Added to Cart" : "Add to Cart"}
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
       </div>
     </div>
   );
 }
+
