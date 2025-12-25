@@ -575,20 +575,20 @@ export default function GamesPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-black via-slate-950 to-black text-white px-4 sm:px-6 lg:px-8">
+    <div className="min-h-screen bg-gradient-to-b from-black via-slate-950 to-black text-white relative">
       {/* Luxury background effects */}
       <div className="fixed inset-0 pointer-events-none opacity-30 z-0">
         <div className="absolute top-1/4 left-1/4 w-72 h-72 bg-amber-500 rounded-full blur-3xl opacity-10"></div>
         <div className="absolute bottom-1/4 right-1/4 w-72 h-72 bg-amber-600 rounded-full blur-3xl opacity-10"></div>
       </div>
 
-      <div className="relative z-10 pt-8">
+      <div className="relative z-10 pt-4 sm:pt-8 px-3 sm:px-6 lg:px-8 pb-8">
         {/* Back to Casino Button */}
         <Link
           href="/casino"
-          className="inline-flex items-center gap-2 text-amber-400 hover:text-amber-300 font-medium mb-6 transition-colors uppercase tracking-wider text-sm"
+          className="inline-flex items-center gap-2 text-amber-400 hover:text-amber-300 font-medium mb-4 sm:mb-6 transition-colors uppercase tracking-wider text-xs sm:text-sm"
         >
-          <ArrowLeft className="w-5 h-5" />
+          <ArrowLeft className="w-4 h-4 sm:w-5 sm:h-5" />
           Back to VIP Casino
         </Link>
 
@@ -596,11 +596,11 @@ export default function GamesPage() {
         <GamesNavBar balance={wallet} />
 
         {/* Custom Tab Navigation */}
-        <div className="max-w-7xl mx-auto mt-6">
-          <div className="flex gap-2 mb-6 border-b border-slate-700">
+        <div className="max-w-7xl mx-auto mt-4 sm:mt-6">
+          <div className="flex gap-1 sm:gap-2 mb-4 sm:mb-6 border-b border-slate-700 overflow-x-auto">
             <button
               onClick={() => setActiveTab('spin')}
-              className={`px-6 py-3 font-semibold uppercase tracking-wider transition-all ${
+              className={`px-3 sm:px-6 py-2 sm:py-3 font-semibold uppercase tracking-wider transition-all text-xs sm:text-sm whitespace-nowrap ${
                 activeTab === 'spin'
                   ? 'text-amber-400 border-b-2 border-amber-400'
                   : 'text-slate-400 hover:text-slate-300'
@@ -610,29 +610,29 @@ export default function GamesPage() {
             </button>
             <button
               onClick={() => setActiveTab('history')}
-              className={`px-6 py-3 font-semibold uppercase tracking-wider transition-all ${
+              className={`px-3 sm:px-6 py-2 sm:py-3 font-semibold uppercase tracking-wider transition-all text-xs sm:text-sm whitespace-nowrap ${
                 activeTab === 'history'
                   ? 'text-amber-400 border-b-2 border-amber-400'
                   : 'text-slate-400 hover:text-slate-300'
               }`}
             >
-              Game History
+              History
             </button>
             <button
               onClick={() => setActiveTab('stats')}
-              className={`px-6 py-3 font-semibold uppercase tracking-wider transition-all ${
+              className={`px-3 sm:px-6 py-2 sm:py-3 font-semibold uppercase tracking-wider transition-all text-xs sm:text-sm whitespace-nowrap ${
                 activeTab === 'stats'
                   ? 'text-amber-400 border-b-2 border-amber-400'
                   : 'text-slate-400 hover:text-slate-300'
               }`}
             >
-              Stats & Limits
+              Stats
             </button>
           </div>
 
         {/* Tab Content - Spin Wheel */}
         {activeTab === 'spin' && (
-        <div className="max-w-7xl mx-auto mt-6">
+        <div className="max-w-7xl mx-auto mt-4 sm:mt-6">
               {/* Main Spin Section with Side Stats */}
               <style>{`
                 @keyframes wheelSpin {
@@ -659,21 +659,21 @@ export default function GamesPage() {
               `}</style>
 
               {/* TOP SECTION - Net Wins & Multi-Spin (Compact Horizontal) */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4 mb-6 sm:mb-8">
                 {/* Net Winnings Card */}
-                <div className={`bg-gradient-to-br ${totalWinnings >= 0 ? 'from-emerald-900/40 to-emerald-950/40 border-emerald-400/40' : 'from-red-900/40 to-red-950/40 border-red-400/40'} border rounded-xl p-6 backdrop-blur-md`}>
-                  <p className={`${totalWinnings >= 0 ? 'text-emerald-200/70' : 'text-red-200/70'} text-xs font-semibold uppercase tracking-wider mb-2`}>Net Wins</p>
-                  <p className={`text-4xl font-bold ${totalWinnings >= 0 ? 'text-emerald-400' : 'text-red-400'}`}>{totalWinnings}</p>
-                  <p className={`${totalWinnings >= 0 ? 'text-emerald-200/50' : 'text-red-200/50'} text-xs mt-2`}>KES</p>
+                <div className={`bg-gradient-to-br ${totalWinnings >= 0 ? 'from-emerald-900/40 to-emerald-950/40 border-emerald-400/40' : 'from-red-900/40 to-red-950/40 border-red-400/40'} border rounded-xl p-4 sm:p-6 backdrop-blur-md`}>
+                  <p className={`${totalWinnings >= 0 ? 'text-emerald-200/70' : 'text-red-200/70'} text-xs font-semibold uppercase tracking-wider mb-1 sm:mb-2`}>Net Wins</p>
+                  <p className={`text-3xl sm:text-4xl font-bold ${totalWinnings >= 0 ? 'text-emerald-400' : 'text-red-400'}`}>{totalWinnings}</p>
+                  <p className={`${totalWinnings >= 0 ? 'text-emerald-200/50' : 'text-red-200/50'} text-xs mt-1 sm:mt-2`}>KES</p>
                 </div>
 
                 {/* Multi-Spin Quick Purchase Card */}
-                <div className="bg-gradient-to-br from-slate-900/60 to-slate-950/60 border border-amber-400/30 rounded-xl p-6 backdrop-blur-md">
-                  <h4 className="text-amber-300 font-bold uppercase tracking-wider mb-4 text-sm">Quick Multi-Spin</h4>
+                <div className="bg-gradient-to-br from-slate-900/60 to-slate-950/60 border border-amber-400/30 rounded-xl p-4 sm:p-6 backdrop-blur-md">
+                  <h4 className="text-amber-300 font-bold uppercase tracking-wider mb-3 sm:mb-4 text-xs sm:text-sm">Quick Multi-Spin</h4>
                   
-                  <div className="flex items-center justify-between gap-3">
+                  <div className="flex items-center justify-between gap-2 sm:gap-3 flex-col sm:flex-row">
                     {/* Counter */}
-                    <div className="flex items-center justify-center gap-2 bg-slate-800/40 rounded-lg p-2">
+                    <div className="flex items-center justify-center gap-2 bg-slate-800/40 rounded-lg p-2 w-full sm:w-auto">
                       <button
                         onClick={() => setMultiSpinCount(prev => Math.max(1, prev - 1))}
                         disabled={isSpinning || isMultiSpinMode || multiSpinCount <= 1}
@@ -682,7 +682,7 @@ export default function GamesPage() {
                         −
                       </button>
                       <div className="text-center min-w-12">
-                        <span className="text-xl font-bold text-amber-400">{multiSpinCount}</span>
+                        <span className="text-lg sm:text-xl font-bold text-amber-400">{multiSpinCount}</span>
                       </div>
                       <button
                         onClick={() => setMultiSpinCount(prev => Math.min(50, prev + 1))}
@@ -694,12 +694,12 @@ export default function GamesPage() {
                     </div>
 
                     {/* Cost & Button */}
-                    <div className="flex-1">
+                    <div className="flex-1 w-full sm:w-auto">
                       <p className="text-amber-200/70 text-xs mb-1">Cost: <span className="font-bold text-amber-400">KES {(spinCost * multiSpinCount).toLocaleString()}</span></p>
                       <button
                         onClick={handleMultiSpin}
                         disabled={!canMultiSpin}
-                        className={`w-full py-2 rounded-lg font-bold uppercase tracking-wider transition-all text-sm ${
+                        className={`w-full py-2 rounded-lg font-bold uppercase tracking-wider transition-all text-xs sm:text-sm ${
                           canMultiSpin
                             ? 'bg-gradient-to-r from-purple-600 via-purple-700 to-purple-600 text-white hover:from-purple-500 hover:via-purple-600 hover:to-purple-500 hover:shadow-lg hover:shadow-purple-500/50 shadow-md'
                             : 'bg-slate-700/50 text-slate-400 cursor-not-allowed'
@@ -716,27 +716,27 @@ export default function GamesPage() {
               </div>
 
               {/* MIDDLE SECTION - Wheel with Surrounding Stats (Desktop Grid / Mobile Stack) */}
-              <div className="w-full flex flex-col lg:grid lg:grid-cols-3 gap-6 mb-8 items-center justify-center">
+              <div className="w-full flex flex-col lg:grid lg:grid-cols-3 gap-4 sm:gap-6 mb-6 sm:mb-8 items-center justify-center">
                 {/* MOBILE: Stats Row - Above Wheel (lg:hidden) */}
-                <div className="w-full lg:hidden grid grid-cols-4 gap-3 max-w-4xl px-4 col-span-3">
+                <div className="w-full lg:hidden grid grid-cols-4 gap-2 sm:gap-3 max-w-4xl px-0 col-span-3">
                   {/* Current Balance */}
-                  <div className="bg-gradient-to-br from-green-900/40 to-green-950/40 border border-green-400/40 rounded-lg p-3 backdrop-blur-md text-center">
-                    <p className="text-green-200/70 text-xs font-semibold uppercase tracking-wider mb-1">Balance</p>
-                    <p className="text-2xl font-bold text-green-400">{wallet}</p>
+                  <div className="bg-gradient-to-br from-green-900/40 to-green-950/40 border border-green-400/40 rounded-lg p-2 sm:p-3 backdrop-blur-md text-center">
+                    <p className="text-green-200/70 text-xs font-semibold uppercase tracking-wider mb-0.5 sm:mb-1">Balance</p>
+                    <p className="text-xl sm:text-2xl font-bold text-green-400">{wallet}</p>
                     <p className="text-green-200/50 text-xs">KES</p>
                   </div>
 
                   {/* Total Spins */}
-                  <div className="bg-gradient-to-br from-blue-900/40 to-blue-950/40 border border-blue-400/40 rounded-lg p-3 backdrop-blur-md text-center">
-                    <p className="text-blue-200/70 text-xs font-semibold uppercase tracking-wider mb-1">Spins</p>
-                    <p className="text-2xl font-bold text-blue-400">{totalSpins}</p>
+                  <div className="bg-gradient-to-br from-blue-900/40 to-blue-950/40 border border-blue-400/40 rounded-lg p-2 sm:p-3 backdrop-blur-md text-center">
+                    <p className="text-blue-200/70 text-xs font-semibold uppercase tracking-wider mb-0.5 sm:mb-1">Spins</p>
+                    <p className="text-xl sm:text-2xl font-bold text-blue-400">{totalSpins}</p>
                     <p className="text-blue-200/50 text-xs">Total</p>
                   </div>
 
                   {/* ROI */}
-                  <div className="bg-gradient-to-br from-purple-900/40 to-purple-950/40 border border-purple-400/40 rounded-lg p-3 backdrop-blur-md text-center">
-                    <p className="text-purple-200/70 text-xs font-semibold uppercase tracking-wider mb-1">ROI</p>
-                    <p className="text-2xl font-bold text-purple-400">
+                  <div className="bg-gradient-to-br from-purple-900/40 to-purple-950/40 border border-purple-400/40 rounded-lg p-2 sm:p-3 backdrop-blur-md text-center">
+                    <p className="text-purple-200/70 text-xs font-semibold uppercase tracking-wider mb-0.5 sm:mb-1">ROI</p>
+                    <p className="text-xl sm:text-2xl font-bold text-purple-400">
                       {totalSpins > 0 ? ((totalWinnings / (totalSpins * spinCost)) * 100).toFixed(0) : 0}%
                     </p>
                     <p className="text-purple-200/50 text-xs">Return</p>
@@ -746,9 +746,9 @@ export default function GamesPage() {
                   {(() => {
                     const tier = getLoyaltyTier();
                     return (
-                      <div className="bg-gradient-to-br from-amber-900/40 to-amber-950/40 border border-amber-400/40 rounded-lg p-3 backdrop-blur-md text-center">
-                        <p className="text-amber-200/70 text-xs font-semibold uppercase tracking-wider mb-1">Tier</p>
-                        <p className="text-2xl font-bold" style={{ color: tier.color }}>{tier.name}</p>
+                      <div className="bg-gradient-to-br from-amber-900/40 to-amber-950/40 border border-amber-400/40 rounded-lg p-2 sm:p-3 backdrop-blur-md text-center">
+                        <p className="text-amber-200/70 text-xs font-semibold uppercase tracking-wider mb-0.5 sm:mb-1">Tier</p>
+                        <p className="text-xl sm:text-2xl font-bold" style={{ color: tier.color }}>{tier.name}</p>
                         <p className="text-amber-200/50 text-xs">+{tier.bonus}%</p>
                       </div>
                     );
@@ -773,8 +773,8 @@ export default function GamesPage() {
                 </div>
 
                 {/* CENTER - WHEEL (Large & Centered) */}
-                <div className="flex flex-col items-center justify-center lg:col-span-1">
-                  <div className={`relative w-80 h-80 mb-6 flex-shrink-0 ${isSpinning ? 'wheel-glow' : ''}`}>
+                <div className="flex flex-col items-center justify-center lg:col-span-1 w-full">
+                  <div className={`relative w-64 h-64 sm:w-80 sm:h-80 mb-4 sm:mb-6 flex-shrink-0 ${isSpinning ? 'wheel-glow' : ''}`}>
                     {/* Outer ring glow effect */}
                     {isSpinning && (
                       <div className="absolute inset-0 rounded-full bg-gradient-to-r from-yellow-400 via-red-500 to-yellow-400 opacity-20 blur-xl animate-pulse"></div>
@@ -848,14 +848,14 @@ export default function GamesPage() {
                   <button
                     onClick={handleSpin}
                     disabled={!canSpin}
-                    className={`w-40 py-3 rounded-full font-bold text-lg flex items-center justify-center gap-2 transition-all uppercase tracking-wider ${
+                    className={`w-32 sm:w-40 py-2 sm:py-3 rounded-full font-bold text-sm sm:text-lg flex items-center justify-center gap-2 transition-all uppercase tracking-wider ${
                       canSpin
                         ? `bg-gradient-to-r from-amber-500 via-amber-600 to-amber-500 text-black hover:from-amber-400 hover:via-amber-500 hover:to-amber-400 hover:shadow-2xl hover:shadow-amber-500/50 shadow-lg`
                         : 'bg-slate-700/50 text-slate-400 cursor-not-allowed'
                     }`}
                   >
-                    <RotateCw className={`w-6 h-6 ${isSpinning ? 'animate-spin' : ''}`} />
-                    <span className="text-sm">{isSpinning ? 'SPINNING...' : 'SPIN'}</span>
+                    <RotateCw className={`w-4 h-4 sm:w-6 sm:h-6 ${isSpinning ? 'animate-spin' : ''}`} />
+                    <span className="text-xs sm:text-sm">{isSpinning ? 'SPINNING...' : 'SPIN'}</span>
                   </button>
                 </div>
 
@@ -888,61 +888,61 @@ export default function GamesPage() {
 
         {/* Tab Content - Game History */}
         {activeTab === 'history' && (
-          <div className="bg-slate-800/50 border border-slate-700 rounded-2xl p-5 backdrop-blur-md">
+          <div className="bg-slate-800/50 border border-slate-700 rounded-2xl p-4 sm:p-5 backdrop-blur-md max-w-7xl mx-auto">
             {/* Recent Spins History */}
             {gameHistory.length > 0 ? (
               gameHistory.map((entry, index) => (
-                <div key={index} className="flex justify-between items-center py-3 border-b border-slate-700 last:border-0">
+                <div key={index} className="flex justify-between items-center py-2 sm:py-3 border-b border-slate-700 last:border-0 text-xs sm:text-base gap-2">
                   <span className="text-slate-300">Spin {entry.spin}</span>
                   <span className="font-semibold text-amber-400">{entry.result.label}</span>
-                  <span className={entry.winnings > spinCost ? 'text-green-400' : 'text-red-400'}>
+                  <span className={entry.winnings > spinCost ? 'text-green-400 font-bold' : 'text-red-400 font-bold'}>
                     {entry.winnings - spinCost > 0 ? '+' : ''}{entry.winnings - spinCost} KES
                   </span>
                 </div>
               ))
             ) : (
-              <p className="text-slate-400 text-center py-8">No spins yet. Start playing to see your history!</p>
+              <p className="text-slate-400 text-center py-8 text-sm">No spins yet. Start playing to see your history!</p>
             )}
           </div>
         )}
 
         {/* Tab Content - Stats & Limits */}
         {activeTab === 'stats' && (
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6 max-w-7xl mx-auto">
             {/* Loyalty Tier & Spending Limits */}
-            <div className="space-y-6">
+            <div className="space-y-4 sm:space-y-6">
               {/* Loyalty Tier */}
               {(() => {
                 const tier = getLoyaltyTier();
                 return (
-                  <div className="bg-gradient-to-br from-amber-900/20 to-amber-950/40 border border-amber-400/40 rounded-2xl p-6 backdrop-blur-md">
-                    <div className="flex items-center gap-3 mb-4">
-                      <Trophy className="w-6 h-6 text-amber-400" />
-                      <h3 className="text-xl font-bold text-amber-300">Loyalty Tier</h3>
+                  <div className="bg-gradient-to-br from-amber-900/20 to-amber-950/40 border border-amber-400/40 rounded-2xl p-4 sm:p-6 backdrop-blur-md">
+                    <div className="flex items-center gap-3 mb-3 sm:mb-4">
+                      <Trophy className="w-5 h-5 sm:w-6 sm:h-6 text-amber-400" />
+                      <h3 className="text-lg sm:text-xl font-bold text-amber-300">Loyalty Tier</h3>
                     </div>
-                    <p className="text-4xl font-bold mb-2" style={{ color: tier.color }}>{tier.name}</p>
-                    <p className="text-slate-300 mb-4">Next milestone: {tier.minSpins} spins</p>
+                    <p className="text-3xl sm:text-4xl font-bold mb-2" style={{ color: tier.color }}>{tier.name}</p>
+                    <p className="text-slate-300 mb-3 sm:mb-4 text-sm">Next milestone: {tier.minSpins} spins</p>
                     <div className="w-full bg-slate-700 rounded-full h-2">
                       <div 
                         className="bg-amber-400 h-2 rounded-full transition-all"
                         style={{ width: `${Math.min((totalSpins / tier.minSpins) * 100, 100)}%` }}
                       ></div>
                     </div>
-                    <p className="text-amber-200/70 text-sm mt-3">Bonus: +{tier.bonus}% on all winnings</p>
+                    <p className="text-amber-200/70 text-xs sm:text-sm mt-3">Bonus: +{tier.bonus}% on all winnings</p>
                   </div>
                 );
               })()}
 
               {/* Daily & Weekly Limits */}
-              <div className="bg-gradient-to-br from-amber-900/20 to-slate-900/40 border border-amber-400/30 rounded-2xl p-6 backdrop-blur-md">
-                <div className="flex items-start gap-3 mb-4">
-                  <AlertCircle className="w-6 h-6 text-amber-400 flex-shrink-0 mt-0.5" />
-                  <h3 className="text-xl font-bold text-amber-300">Spending Limits</h3>
+              <div className="bg-gradient-to-br from-amber-900/20 to-slate-900/40 border border-amber-400/30 rounded-2xl p-4 sm:p-6 backdrop-blur-md">
+                <div className="flex items-start gap-3 mb-3 sm:mb-4">
+                  <AlertCircle className="w-5 h-5 sm:w-6 sm:h-6 text-amber-400 flex-shrink-0 mt-0.5" />
+                  <h3 className="text-lg sm:text-xl font-bold text-amber-300">Spending Limits</h3>
                 </div>
                 
-                <div className="mb-5">
-                  <div className="flex justify-between mb-2">
-                    <span className="text-slate-300 text-sm">Daily Limit</span>
+                <div className="mb-4 sm:mb-5">
+                  <div className="flex justify-between mb-2 text-xs sm:text-sm">
+                    <span className="text-slate-300">Daily Limit</span>
                     <span className="text-amber-400 font-semibold">{dailySpend} / {DAILY_LIMIT} KES</span>
                   </div>
                   <div className="w-full bg-slate-700 rounded-full h-2">
@@ -954,8 +954,8 @@ export default function GamesPage() {
                 </div>
 
                 <div>
-                  <div className="flex justify-between mb-2">
-                    <span className="text-slate-300 text-sm">Weekly Limit</span>
+                  <div className="flex justify-between mb-2 text-xs sm:text-sm">
+                    <span className="text-slate-300">Weekly Limit</span>
                     <span className="text-amber-400 font-semibold">{weeklySpend} / {WEEKLY_LIMIT} KES</span>
                   </div>
                   <div className="w-full bg-slate-700 rounded-full h-2">
@@ -969,14 +969,14 @@ export default function GamesPage() {
             </div>
 
             {/* Game Stats & Odds */}
-            <div className="space-y-6">
+            <div className="space-y-4 sm:space-y-6">
               {/* Overall Stats */}
-              <div className="bg-gradient-to-br from-blue-900/20 to-blue-950/40 border border-blue-400/40 rounded-2xl p-6 backdrop-blur-md">
-                <h3 className="text-xl font-bold text-blue-300 mb-4 flex items-center gap-2">
-                  <TrendingUp className="w-6 h-6" />
+              <div className="bg-gradient-to-br from-blue-900/20 to-blue-950/40 border border-blue-400/40 rounded-2xl p-4 sm:p-6 backdrop-blur-md">
+                <h3 className="text-lg sm:text-xl font-bold text-blue-300 mb-3 sm:mb-4 flex items-center gap-2">
+                  <TrendingUp className="w-5 h-5 sm:w-6 sm:h-6" />
                   Your Stats
                 </h3>
-                <div className="space-y-3">
+                <div className="space-y-2 sm:space-y-3 text-sm">
                   <div className="flex justify-between items-center">
                     <span className="text-slate-300">Total Spins</span>
                     <span className="text-blue-400 font-bold">{totalSpins}</span>
@@ -991,7 +991,7 @@ export default function GamesPage() {
                       {totalWinnings >= 0 ? '+' : ''}{totalWinnings} KES
                     </span>
                   </div>
-                  <div className="flex justify-between items-center pt-3 border-t border-blue-400/20">
+                  <div className="flex justify-between items-center pt-2 sm:pt-3 border-t border-blue-400/20">
                     <span className="text-slate-300">ROI</span>
                     <span className={`font-bold ${totalSpins > 0 && ((totalWinnings / (totalSpins * spinCost)) * 100) > 0 ? 'text-green-400' : 'text-red-400'}`}>
                       {totalSpins > 0 ? ((totalWinnings / (totalSpins * spinCost)) * 100).toFixed(1) : 0}%
@@ -1001,17 +1001,17 @@ export default function GamesPage() {
               </div>
 
               {/* Game Odds */}
-              <div className="bg-gradient-to-br from-slate-900/60 via-blue-900/20 to-slate-950/60 border border-blue-400/30 rounded-2xl p-6 backdrop-blur-md">
-                <h3 className="text-lg font-bold mb-4 flex items-center gap-2 text-blue-300">
-                  <TrendingUp className="w-5 h-5" />
+              <div className="bg-gradient-to-br from-slate-900/60 via-blue-900/20 to-slate-950/60 border border-blue-400/30 rounded-2xl p-4 sm:p-6 backdrop-blur-md">
+                <h3 className="text-base sm:text-lg font-bold mb-3 sm:mb-4 flex items-center gap-2 text-blue-300">
+                  <TrendingUp className="w-4 h-4 sm:w-5 sm:h-5" />
                   Game Odds
                 </h3>
-                <div className="space-y-2.5 text-sm">
+                <div className="space-y-2 text-xs sm:text-sm">
                   {WHEEL_SEGMENTS.map((seg) => (
                     <div key={seg.id} className="flex justify-between items-center">
                       <span className="text-slate-300">{seg.label}</span>
                       <div className="flex items-center gap-2">
-                        <div className="w-20 bg-slate-700 rounded-full h-1.5">
+                        <div className="w-16 sm:w-20 bg-slate-700 rounded-full h-1.5">
                           <div 
                             className="h-1.5 rounded-full bg-amber-400"
                             style={{ width: `${seg.probability * 100}%` }}
@@ -1022,7 +1022,7 @@ export default function GamesPage() {
                     </div>
                   ))}
                 </div>
-                <p className="text-xs text-slate-400 mt-4 border-t border-blue-400/20 pt-3">
+                <p className="text-xs text-slate-400 mt-3 sm:mt-4 border-t border-blue-400/20 pt-2 sm:pt-3">
                   ✓ All odds are fair and transparent
                 </p>
               </div>
@@ -1031,7 +1031,7 @@ export default function GamesPage() {
         )}
         </div>
 
-        <div className="text-center text-amber-200/60 text-sm py-8 uppercase tracking-wider">
+        <div className="text-center text-amber-200/60 text-xs sm:text-sm py-6 sm:py-8 uppercase tracking-wider max-w-7xl mx-auto mt-4 sm:mt-8">
           <p>⚠️ Remember: This is for entertainment only. Gamble responsibly.</p>
         </div>
       </div>

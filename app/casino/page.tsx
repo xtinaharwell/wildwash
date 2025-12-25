@@ -231,16 +231,19 @@ export default function GamesPage() {
 
   // Main casino UI (after password unlock)
   return (
-    <div className="min-h-screen bg-gradient-to-b from-black via-slate-950 to-black">
-      {/* Luxury background elements */}
-      <div className="fixed inset-0 pointer-events-none opacity-30">
+    <div className="min-h-screen bg-gradient-to-b from-black via-slate-950 to-black relative">
+      {/* Luxury background elements - fixed */}
+      <div className="fixed inset-0 pointer-events-none opacity-30 z-0">
         <div className="absolute top-0 left-1/4 w-96 h-96 bg-amber-500 rounded-full blur-3xl opacity-20"></div>
         <div className="absolute bottom-1/2 right-1/4 w-96 h-96 bg-amber-600 rounded-full blur-3xl opacity-10"></div>
       </div>
 
       <div className="relative z-10">
-        {/* Unlock button in top right */}
-        <div className="fixed top-4 right-4 z-50">
+        {/* Games Navigation Bar */}
+        <GamesNavBar balance={balance} />
+
+        {/* Exit VIP Button - Positioned below navbar, not fixed */}
+        <div className="px-4 sm:px-6 lg:px-8 pt-4 pb-2 flex justify-end">
           <button
             onClick={handleLogout}
             className="bg-gradient-to-r from-red-600 to-red-700 hover:from-red-500 hover:to-red-600 text-white font-semibold py-2 px-4 rounded-lg transition-all text-sm shadow-lg"
@@ -249,15 +252,12 @@ export default function GamesPage() {
           </button>
         </div>
 
-        {/* Games Navigation Bar */}
-        <GamesNavBar balance={balance} />
-
         {/* Main Content */}
-        <div className="pt-32 pb-12 px-4 sm:px-6 lg:px-8">
+        <div className="pb-12 px-4 sm:px-6 lg:px-8">
           <div className="max-w-6xl w-full mx-auto">
 
             {/* Games Grid */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 mb-12">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 lg:gap-8 mb-8 sm:mb-12">
               {GAMES.map((game) => (
                 <div
                   key={game.id}
@@ -287,26 +287,26 @@ export default function GamesPage() {
                   )}
 
                   {/* Content */}
-                  <div className="p-8">
+                  <div className="p-6 sm:p-8">
                     {/* Icon */}
-                    <div className="text-6xl mb-6 transform group-hover:scale-110 transition-transform">{game.icon}</div>
+                    <div className="text-5xl sm:text-6xl mb-4 sm:mb-6 transform group-hover:scale-110 transition-transform">{game.icon}</div>
 
                     {/* Title & Description */}
-                    <h3 className="text-2xl font-bold text-amber-300 mb-3" style={{ fontFamily: 'Georgia, serif' }}>{game.name}</h3>
-                    <p className="text-amber-100/70 text-sm mb-6 line-clamp-3 leading-relaxed">
+                    <h3 className="text-xl sm:text-2xl font-bold text-amber-300 mb-2 sm:mb-3" style={{ fontFamily: 'Georgia, serif' }}>{game.name}</h3>
+                    <p className="text-amber-100/70 text-xs sm:text-sm mb-4 sm:mb-6 line-clamp-3 leading-relaxed">
                       {game.description}
                     </p>
 
                     {/* Game Stats */}
                     {game.minBet && game.maxWin && (
-                      <div className="grid grid-cols-2 gap-4 mb-6 py-4 border-t border-b border-amber-400/20">
+                      <div className="grid grid-cols-2 gap-3 sm:gap-4 mb-4 sm:mb-6 py-3 sm:py-4 border-t border-b border-amber-400/20">
                         <div>
                           <p className="text-xs text-amber-400/60 uppercase tracking-wider">Min Bet</p>
-                          <p className="font-semibold text-amber-300 text-lg">KES {game.minBet}</p>
+                          <p className="font-semibold text-amber-300 text-base sm:text-lg">KES {game.minBet}</p>
                         </div>
                         <div>
                           <p className="text-xs text-amber-400/60 uppercase tracking-wider">Max Win</p>
-                          <p className="font-semibold text-amber-300 text-lg">KES {game.maxWin?.toLocaleString()}</p>
+                          <p className="font-semibold text-amber-300 text-base sm:text-lg">KES {game.maxWin?.toLocaleString()}</p>
                         </div>
                       </div>
                     )}
@@ -315,14 +315,14 @@ export default function GamesPage() {
                     {game.status === 'active' ? (
                       <Link
                         href={game.href}
-                        className="block w-full bg-gradient-to-r from-amber-500 via-amber-600 to-amber-500 hover:from-amber-400 hover:via-amber-500 hover:to-amber-400 text-black font-bold py-4 px-4 rounded-lg transition-all duration-200 text-center uppercase tracking-wider text-sm shadow-lg hover:shadow-amber-500/50 active:scale-95"
+                        className="block w-full bg-gradient-to-r from-amber-500 via-amber-600 to-amber-500 hover:from-amber-400 hover:via-amber-500 hover:to-amber-400 text-black font-bold py-3 sm:py-4 px-4 rounded-lg transition-all duration-200 text-center uppercase tracking-wider text-xs sm:text-sm shadow-lg hover:shadow-amber-500/50 active:scale-95"
                       >
                         Play Now
                       </Link>
                     ) : (
                       <button
                         disabled
-                        className="w-full bg-slate-700/50 text-slate-400 font-bold py-4 px-4 rounded-lg cursor-not-allowed uppercase tracking-wider text-sm"
+                        className="w-full bg-slate-700/50 text-slate-400 font-bold py-3 sm:py-4 px-4 rounded-lg cursor-not-allowed uppercase tracking-wider text-xs sm:text-sm"
                       >
                         Coming Soon
                       </button>
@@ -333,23 +333,23 @@ export default function GamesPage() {
             </div>
 
             {/* Responsible Gaming Section - Luxury Theme */}
-            <div className="bg-gradient-to-r from-slate-900/60 via-amber-900/20 to-slate-900/60 border border-amber-400/30 rounded-2xl p-8 backdrop-blur-md">
-              <h2 className="text-2xl font-bold text-amber-300 mb-6" style={{ fontFamily: 'Georgia, serif' }}>Play Responsibly</h2>
-              <ul className="space-y-3 text-amber-100/80">
+            <div className="bg-gradient-to-r from-slate-900/60 via-amber-900/20 to-slate-900/60 border border-amber-400/30 rounded-2xl p-6 sm:p-8 backdrop-blur-md">
+              <h2 className="text-xl sm:text-2xl font-bold text-amber-300 mb-4 sm:mb-6" style={{ fontFamily: 'Georgia, serif' }}>Play Responsibly</h2>
+              <ul className="space-y-2 sm:space-y-3 text-amber-100/80 text-sm sm:text-base">
                 <li className="flex gap-3">
-                  <span className="text-amber-400 font-bold">★</span>
+                  <span className="text-amber-400 font-bold flex-shrink-0">★</span>
                   <span>Set a budget before you play and stick to it</span>
                 </li>
                 <li className="flex gap-3">
-                  <span className="text-amber-400 font-bold">★</span>
+                  <span className="text-amber-400 font-bold flex-shrink-0">★</span>
                   <span>Never chase losses - take breaks when needed</span>
                 </li>
                 <li className="flex gap-3">
-                  <span className="text-amber-400 font-bold">★</span>
+                  <span className="text-amber-400 font-bold flex-shrink-0">★</span>
                   <span>Games of chance carry no guarantees of winning</span>
                 </li>
                 <li className="flex gap-3">
-                  <span className="text-amber-400 font-bold">★</span>
+                  <span className="text-amber-400 font-bold flex-shrink-0">★</span>
                   <span>The house always has an edge - play for entertainment</span>
                 </li>
               </ul>
