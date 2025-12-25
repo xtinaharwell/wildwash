@@ -54,7 +54,7 @@ export default function CartPage() {
                     <button 
                       onClick={() => handleRemoveFromCart(item.id)}
                       title="Remove item from cart"
-                      className="inline-flex items-center justify-center text-red-600 hover:text-red-800 hover:bg-red-50 dark:hover:bg-red-950/20 rounded-md p-2 transition shrink-0"
+                      className="inline-flex items-center justify-center text-red-600 hover:text-red-800 hover:bg-red-50 dark:hover:bg-red-950/20 rounded p-2 transition shrink-0"
                     >
                       <Trash2 size={20} />
                     </button>

@@ -380,9 +380,7 @@ export default function BorrowPage(): React.JSX.Element {
                 My Loans
               </Link>
             </div>
-            <p className="text-lg text-slate-600 dark:text-slate-300 max-w-2xl">
-              Borrow money using your pending orders or other assets as collateral. Quick approval, flexible repayment terms, and competitive rates.
-            </p>
+
           </header>
 
           {/* Progress Indicator */}

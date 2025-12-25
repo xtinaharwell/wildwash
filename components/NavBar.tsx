@@ -133,52 +133,52 @@ export default function NavBar() {
             </div>
           </div>
 
-          <nav className="hidden md:flex items-center gap-1">
+          <nav className="hidden md:flex items-center gap-0.5">
             <Link
               href="/offers"
-              className="text-sm px-3 py-2 rounded-lg bg-red-600 text-white hover:bg-red-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-red-300 font-medium transition-colors">
+              className="text-xs xl:text-sm px-2 xl:px-3 py-2 rounded-lg bg-red-600 text-white hover:bg-red-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-red-300 font-medium transition-colors whitespace-nowrap">
               Offers
             </Link>
             <Link
               href="/financing"
-              className="text-sm px-3 py-2 rounded-lg bg-red-600 text-white hover:bg-red-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-red-300 font-medium transition-colors">
+              className="text-xs xl:text-sm px-2 xl:px-3 py-2 rounded-lg bg-red-600 text-white hover:bg-red-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-red-300 font-medium transition-colors whitespace-nowrap">
               Financing
             </Link>
             <Link
               href="/borrow"
-              className="text-sm px-3 py-2 rounded-lg bg-red-600 text-white hover:bg-red-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-red-300 font-medium transition-colors">
+              className="text-xs xl:text-sm px-2 xl:px-3 py-2 rounded-lg bg-red-600 text-white hover:bg-red-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-red-300 font-medium transition-colors whitespace-nowrap">
               Borrow
             </Link>
             <Link
               href="/invest"
-              className="text-sm px-3 py-2 rounded-lg bg-red-600 text-white hover:bg-red-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-red-300 font-medium transition-colors">
+              className="text-xs xl:text-sm px-2 xl:px-3 py-2 rounded-lg bg-red-600 text-white hover:bg-red-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-red-300 font-medium transition-colors whitespace-nowrap">
               Invest
             </Link>
             {isAuthenticated && (
               <>
                 <Link
                   href="/bnpl"
-                  className="text-sm px-3 py-2 rounded-lg bg-red-600 text-white hover:bg-red-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-red-300 font-medium transition-colors">
+                  className="text-xs xl:text-sm px-2 xl:px-3 py-2 rounded-lg bg-red-600 text-white hover:bg-red-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-red-300 font-medium transition-colors whitespace-nowrap">
                   BNPL
                 </Link>
                 <Link
                   href="/tradein"
-                  className="text-sm px-3 py-2 rounded-lg bg-red-600 text-white hover:bg-red-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-red-300 font-medium transition-colors">
+                  className="text-xs xl:text-sm px-2 xl:px-3 py-2 rounded-lg bg-red-600 text-white hover:bg-red-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-red-300 font-medium transition-colors whitespace-nowrap">
                   Trade-In
                 </Link>
               </>
             )}
             <Link
               href="/casino"
-              className="text-sm px-3 py-2 rounded-lg bg-red-600 text-white hover:bg-red-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-red-300 font-medium transition-colors">
+              className="text-xs xl:text-sm px-2 xl:px-3 py-2 rounded-lg bg-red-600 text-white hover:bg-red-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-red-300 font-medium transition-colors whitespace-nowrap">
               Casino
             </Link>
           </nav>
 
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1 sm:gap-2">
             <Link
               href="/cart"
-              className="relative p-2 rounded-full hover:bg-slate-100 dark:hover:bg-white/5 focus:outline-none focus-visible:ring-2 focus-visible:ring-red-300">
+              className="relative p-2 rounded hover:bg-slate-100 dark:hover:bg-white/5 focus:outline-none focus-visible:ring-2 focus-visible:ring-red-300">
               <svg
                 xmlns="http://www.w3.org/2000/svg"
                 fill="none"
@@ -203,7 +203,7 @@ export default function NavBar() {
             {isAuthenticated && (
               <Link
                 href="/orders"
-                className="p-2 rounded-full hover:bg-slate-100 dark:hover:bg-white/5 focus:outline-none focus-visible:ring-2 focus-visible:ring-red-300"
+                className="p-2 rounded hover:bg-slate-100 dark:hover:bg-white/5 focus:outline-none focus-visible:ring-2 focus-visible:ring-red-300"
                 title="Your orders">
                 <svg
                   xmlns="http://www.w3.org/2000/svg"
@@ -225,7 +225,7 @@ export default function NavBar() {
             {isRider && isAuthenticated && (
               <Link
                 href="/rider"
-                className="relative p-2 rounded-full hover:bg-slate-100 dark:hover:bg-white/5 focus:outline-none focus-visible:ring-2 focus-visible:ring-red-300"
+                className="relative p-2 rounded hover:bg-slate-100 dark:hover:bg-white/5 focus:outline-none focus-visible:ring-2 focus-visible:ring-red-300"
                 title="Available orders">
                 <svg
                   xmlns="http://www.w3.org/2000/svg"
@@ -252,7 +252,7 @@ export default function NavBar() {
               <div className="relative" ref={profileRef}>
                 <button
                   onClick={() => setProfileOpen(!profileOpen)}
-                  className="inline-flex items-center justify-center w-10 h-10 rounded-full bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-red-300">
+                  className="inline-flex items-center justify-center w-10 h-10 rounded bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-red-300">
                   <svg
                     xmlns="http://www.w3.org/2000/svg"
                     fill="none"

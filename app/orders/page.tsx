@@ -199,12 +199,12 @@ export default function OrdersPage(): React.JSX.Element {
                   <div className="mt-6 flex items-center gap-3">
                     <Link 
                       href={`/orders/${o.code}`} 
-                      className="flex-1 px-4 py-3 rounded-lg bg-slate-100 dark:bg-white/10 hover:bg-slate-200 dark:hover:bg-white/20 text-slate-900 dark:text-slate-100 font-medium text-center transition-colors">
+                      className="flex-1 px-4 py-3 rounded bg-slate-100 dark:bg-white/10 hover:bg-slate-200 dark:hover:bg-white/20 text-slate-900 dark:text-slate-100 font-medium text-center transition-colors">
                       View Details
                     </Link>
                     <Link 
                       href={`/checkout?order_id=${encodeURIComponent(o.code)}&amount=${encodeURIComponent(o.price.replace(/[^0-9.]/g, ''))}`} 
-                      className="flex-1 px-4 py-3 rounded-lg bg-red-600 hover:bg-red-700 text-white font-medium text-center transition-colors">
+                      className="flex-1 px-4 py-3 rounded bg-red-600 hover:bg-red-700 text-white font-medium text-center transition-colors">
                       Pay Now
                     </Link>
                   </div>

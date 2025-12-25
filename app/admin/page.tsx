@@ -735,7 +735,7 @@ export default function AdminPage(): React.ReactElement {
                   setStartDate('');
                   setEndDate('');
                 }} 
-                className="text-sm px-3 py-2 text-slate-500 hover:text-slate-900 dark:hover:text-slate-300 transition-colors duration-200 flex items-center gap-2"
+                className="text-sm px-3 py-2 text-slate-500 hover:text-slate-900 dark:hover:text-slate-300 transition-colors duration-200 flex items-center gap-2 rounded-full"
               >
                 <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="animate-spin-once">
                   <path d="M21 12a9 9 0 1 1-9-9c2.52 0 4.93 1 6.74 2.74L21 8" />
@@ -896,7 +896,7 @@ export default function AdminPage(): React.ReactElement {
                   setLoanStatusFilter('');
                   fetchLoans();
                 }} 
-                className="px-4 py-2 bg-slate-300 dark:bg-slate-700 rounded-lg hover:bg-slate-400 dark:hover:bg-slate-600 transition-all font-medium text-sm"
+                className="px-4 py-2 bg-slate-300 dark:bg-slate-700 rounded-full hover:bg-slate-400 dark:hover:bg-slate-600 transition-all font-medium text-sm"
               >
                 Clear Filters
               </button>
@@ -1156,7 +1156,7 @@ export default function AdminPage(): React.ReactElement {
               <div className="p-6 border-t border-slate-200 dark:border-slate-700 flex justify-end gap-3 sticky bottom-0 bg-white dark:bg-slate-900">
                 <button
                   onClick={() => setSelectedLoan(null)}
-                  className="px-6 py-2 bg-slate-200 dark:bg-slate-700 text-slate-900 dark:text-slate-100 rounded-lg hover:bg-slate-300 dark:hover:bg-slate-600 transition-all font-medium"
+                  className="px-6 py-2 bg-slate-200 dark:bg-slate-700 text-slate-900 dark:text-slate-100 rounded-full hover:bg-slate-300 dark:hover:bg-slate-600 transition-all font-medium"
                 >
                   Close
                 </button>
@@ -1272,7 +1272,7 @@ export default function AdminPage(): React.ReactElement {
                   setUserRoleFilter('');
                   setUserJoinDateFilter('');
                 }} 
-                className="text-sm px-3 py-2 text-slate-500 hover:text-slate-900 dark:hover:text-slate-300 transition-colors duration-200 flex items-center gap-2"
+                className="text-sm px-3 py-2 text-slate-500 hover:text-slate-900 dark:hover:text-slate-300 transition-colors duration-200 flex items-center gap-2 rounded-full"
               >
                 <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="animate-spin-once">
                   <path d="M21 12a9 9 0 1 1-9-9c2.52 0 4.93 1 6.74 2.74L21 8" />
@@ -1356,8 +1356,8 @@ export default function AdminPage(): React.ReactElement {
                   setTradeInStatusFilter('');
                   fetchTradeIns();
                 }} 
-                className="px-4 py-2 bg-slate-300 dark:bg-slate-700 rounded-lg hover:bg-slate-400 dark:hover:bg-slate-600 transition-all font-medium text-sm"
-              >
+                className="px-4 py-2 bg-slate-300 dark:bg-slate-700 rounded-full hover:bg-slate-400 dark:hover:bg-slate-600 transition-all font-medium text-sm"
+                           >
                 Clear Filters
               </button>
             </div>
@@ -1443,7 +1443,7 @@ export default function AdminPage(): React.ReactElement {
                   setBnplSearchQuery('');
                   fetchBNPL();
                 }} 
-                className="px-4 py-2 bg-slate-300 dark:bg-slate-700 rounded-lg hover:bg-slate-400 dark:hover:bg-slate-600 transition-all font-medium text-sm"
+                className="px-4 py-2 bg-slate-300 dark:bg-slate-700 rounded-full hover:bg-slate-400 dark:hover:bg-slate-600 transition-all font-medium text-sm"
               >
                 Clear Filters
               </button>

@@ -476,7 +476,7 @@ export default function CheckoutForm() {
               <button
                 type="button"
                 onClick={() => handlePaymentMethodChange('mpesa')}
-                className={`p-2 rounded-lg border-2 transition-all flex flex-col items-center gap-1 text-center ${
+                className={`p-2 rounded border-2 transition-all flex flex-col items-center gap-1 text-center ${
                   formData.paymentMethod === 'mpesa'
                     ? 'border-red-500 bg-red-50 dark:bg-red-900/20'
                     : 'border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 hover:border-red-300 dark:hover:border-red-700'
@@ -490,7 +490,7 @@ export default function CheckoutForm() {
               <button
                 type="button"
                 onClick={() => handlePaymentMethodChange('bnpl')}
-                className={`p-2 rounded-lg border-2 transition-all flex flex-col items-center gap-1 text-center ${
+                className={`p-2 rounded border-2 transition-all flex flex-col items-center gap-1 text-center ${
                   formData.paymentMethod === 'bnpl'
                     ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20'
                     : 'border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 hover:border-blue-300 dark:hover:border-blue-700'
@@ -504,7 +504,7 @@ export default function CheckoutForm() {
               <button
                 type="button"
                 onClick={() => handlePaymentMethodChange('tradein')}
-                className={`p-2 rounded-lg border-2 transition-all flex flex-col items-center gap-1 text-center ${
+                className={`p-2 rounded border-2 transition-all flex flex-col items-center gap-1 text-center ${
                   formData.paymentMethod === 'tradein'
                     ? 'border-purple-500 bg-purple-50 dark:bg-purple-900/20'
                     : 'border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 hover:border-purple-300 dark:hover:border-purple-700'
@@ -518,7 +518,7 @@ export default function CheckoutForm() {
               <button
                 type="button"
                 onClick={() => handlePaymentMethodChange('gift')}
-                className={`p-2 rounded-lg border-2 transition-all flex flex-col items-center gap-1 text-center ${
+                className={`p-2 rounded border-2 transition-all flex flex-col items-center gap-1 text-center ${
                   formData.paymentMethod === 'gift'
                     ? 'border-pink-500 bg-pink-50 dark:bg-pink-900/20'
                     : 'border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 hover:border-pink-300 dark:hover:border-pink-700'
@@ -534,7 +534,7 @@ export default function CheckoutForm() {
           <button
             type="submit"
             disabled={loading || loadingUserData}
-            className="w-full bg-red-600 hover:bg-red-700 disabled:bg-red-400 text-white font-semibold py-3 px-4 rounded-full transition-all duration-300 transform hover:scale-105 active:scale-95 flex items-center justify-center mt-6"
+            className="w-full bg-red-600 hover:bg-red-700 disabled:bg-red-400 text-white font-semibold py-3 px-4 rounded-lg transition-all duration-300 transform hover:scale-105 active:scale-95 flex items-center justify-center mt-6"
           >
             {loading || loadingUserData ? (
               <>

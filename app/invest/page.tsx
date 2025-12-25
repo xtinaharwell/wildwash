@@ -2,9 +2,28 @@
 
 import React, { useState } from 'react';
 import Link from 'next/link';
+import { useSelector } from 'react-redux';
+import type { RootState } from '@/redux/store';
+
+interface InvestmentConfirmation {
+  amount: number;
+  plan: string;
+  paymentStatus: 'pending' | 'success' | 'failed';
+  expectedReturn: number;
+  expectedMonthlyReturn: number;
+  lockupPeriod: string;
+  maturityDate: string;
+}
 
 export default function InvestPage(): React.ReactElement {
   const [selectedPlan, setSelectedPlan] = useState<string | null>(null);
+  const [investmentAmount, setInvestmentAmount] = useState<string>('');
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [investmentConfirmation, setInvestmentConfirmation] = useState<InvestmentConfirmation | null>(null);
+  
+  const isAuthenticated = useSelector((state: RootState) => state.auth.isAuthenticated);
+  const userPhone = useSelector((state: RootState) => state.auth.user?.phone);
 
   const investmentPlans = [
     {
@@ -60,38 +79,81 @@ export default function InvestPage(): React.ReactElement {
     }
   ];
 
-  const benefits = [
-    {
-      icon: '📈',
-      title: 'Competitive Returns',
-      description: 'Earn attractive returns on your investment with transparent and predictable payouts'
-    },
-    {
-      icon: '🔒',
-      title: 'Secure Investment',
-      description: 'Your capital is protected by our robust business model and financial safeguards'
-    },
-    {
-      icon: '💳',
-      title: 'Easy Withdrawals',
-      description: 'Flexible withdrawal options with quick processing times'
-    },
-    {
-      icon: '📊',
-      title: 'Real-time Dashboard',
-      description: 'Track your investments and returns in real-time through our investor portal'
-    },
-    {
-      icon: '🤝',
-      title: 'Dedicated Support',
-      description: 'Get personalized support from our investor relations team'
-    },
-    {
-      icon: '🌍',
-      title: 'Growing Business',
-      description: 'Invest in a rapidly expanding laundry, cleaning & fumigation service platform'
+
+  const calculateExpectedReturns = (amount: number, returnPercentage: string, months: number) => {
+    const percentage = parseFloat(returnPercentage);
+    const totalReturn = (amount * percentage) / 100;
+    const monthlyReturn = totalReturn / 12;
+    return { totalReturn, monthlyReturn };
+  };
+
+  const calculateMaturityDate = (plan: any) => {
+    const now = new Date();
+    const months = plan.id === 'starter' ? 12 : plan.id === 'professional' ? 18 : 24;
+    now.setMonth(now.getMonth() + months);
+    return now.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
+  };
+
+  const handleInvest = async (plan: any) => {
+    if (!isAuthenticated) {
+      setError('Please login to invest');
+      return;
     }
-  ];
+
+    const amount = parseFloat(investmentAmount);
+    if (!amount || amount < plan.minInvestment) {
+      setError(`Minimum investment is KSh ${plan.minInvestment.toLocaleString()}`);
+      return;
+    }
+
+    setIsLoading(true);
+    setError(null);
+
+    try {
+      // Initiate STK push
+      const response = await fetch('/api/payments/stk-push', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          phone: userPhone,
+          amount: amount,
+          accountReference: `INVEST-${plan.id.toUpperCase()}`,
+          transactionDesc: `Wild Wash Investment - ${plan.name} Plan`,
+          investmentPlan: plan.id,
+          investmentAmount: amount
+        })
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to initiate payment');
+      }
+
+      const data = await response.json();
+
+      // Calculate returns
+      const months = plan.id === 'starter' ? 12 : plan.id === 'professional' ? 18 : 24;
+      const { totalReturn, monthlyReturn } = calculateExpectedReturns(amount, plan.expectedReturn, months);
+      const maturityDate = calculateMaturityDate(plan);
+
+      // Show confirmation
+      setInvestmentConfirmation({
+        amount,
+        plan: plan.name,
+        paymentStatus: 'pending',
+        expectedReturn: totalReturn,
+        expectedMonthlyReturn: monthlyReturn,
+        lockupPeriod: plan.term,
+        maturityDate
+      });
+
+      setSelectedPlan(null);
+      setInvestmentAmount('');
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'An error occurred');
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   const steps = [
     {
@@ -118,35 +180,125 @@ export default function InvestPage(): React.ReactElement {
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-white via-slate-50 to-slate-100 dark:from-slate-900 dark:via-slate-800 dark:to-slate-900">
-      {/* Header */}
-      <div className="bg-gradient-to-r from-red-600 to-red-700 dark:from-red-700 dark:to-red-800 text-white pt-32 pb-16">
-        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
-          <h1 className="text-4xl md:text-5xl font-bold mb-4">Invest in Wild Wash</h1>
-          <p className="text-lg md:text-xl text-red-50 max-w-2xl">
-            Grow your wealth by investing in Kenya's fastest-growing laundry, cleaning & fumigation service platform
-          </p>
+      {/* Investment Confirmation Modal */}
+      {investmentConfirmation && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white dark:bg-slate-800 rounded-lg max-w-md w-full p-6 shadow-xl">
+            <div className="text-center mb-6">
+              <div className="inline-flex items-center justify-center w-16 h-16 bg-green-100 dark:bg-green-900/20 rounded-full mb-4">
+                <svg className="w-8 h-8 text-green-600 dark:text-green-400" fill="currentColor" viewBox="0 0 20 20">
+                  <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                </svg>
+              </div>
+              <h2 className="text-2xl font-bold text-slate-900 dark:text-slate-100 mb-2">Investment Confirmed!</h2>
+              <p className="text-sm text-slate-600 dark:text-slate-400">STK push sent to your phone</p>
+            </div>
+
+            <div className="space-y-4 mb-6 bg-slate-50 dark:bg-slate-700/50 rounded-lg p-4">
+              <div className="flex justify-between items-center">
+                <span className="text-slate-700 dark:text-slate-300">Plan:</span>
+                <span className="font-semibold text-slate-900 dark:text-slate-100">{investmentConfirmation.plan}</span>
+              </div>
+              <div className="flex justify-between items-center">
+                <span className="text-slate-700 dark:text-slate-300">Investment Amount:</span>
+                <span className="font-semibold text-slate-900 dark:text-slate-100">KSh {investmentConfirmation.amount.toLocaleString()}</span>
+              </div>
+              <div className="flex justify-between items-center">
+                <span className="text-slate-700 dark:text-slate-300">Lockup Period:</span>
+                <span className="font-semibold text-slate-900 dark:text-slate-100">{investmentConfirmation.lockupPeriod}</span>
+              </div>
+              <div className="flex justify-between items-center">
+                <span className="text-slate-700 dark:text-slate-300">Maturity Date:</span>
+                <span className="font-semibold text-slate-900 dark:text-slate-100">{investmentConfirmation.maturityDate}</span>
+              </div>
+              <div className="border-t border-slate-200 dark:border-slate-600 pt-4 mt-4">
+                <div className="flex justify-between items-center mb-2">
+                  <span className="text-slate-700 dark:text-slate-300">Expected Annual Return:</span>
+                  <span className="font-semibold text-green-600 dark:text-green-400">+KSh {investmentConfirmation.expectedReturn.toLocaleString(undefined, { maximumFractionDigits: 0 })}</span>
+                </div>
+                <div className="flex justify-between items-center">
+                  <span className="text-slate-700 dark:text-slate-300">Expected Monthly Return:</span>
+                  <span className="font-semibold text-green-600 dark:text-green-400">+KSh {investmentConfirmation.expectedMonthlyReturn.toLocaleString(undefined, { maximumFractionDigits: 0 })}</span>
+                </div>
+              </div>
+            </div>
+
+            <div className="space-y-3">
+              <button
+                onClick={() => setInvestmentConfirmation(null)}
+                className="w-full bg-red-600 hover:bg-red-700 text-white font-semibold py-2 px-4 rounded-lg transition-colors">
+                View Investment Dashboard
+              </button>
+              <button
+                onClick={() => setInvestmentConfirmation(null)}
+                className="w-full bg-slate-100 hover:bg-slate-200 dark:bg-slate-700 dark:hover:bg-slate-600 text-slate-900 dark:text-slate-100 font-semibold py-2 px-4 rounded-lg transition-colors">
+                Go Back
+              </button>
+            </div>
+          </div>
         </div>
-      </div>
+      )}
+
+      {/* Investment Amount Modal */}
+      {selectedPlan && !investmentConfirmation && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white dark:bg-slate-800 rounded-lg max-w-md w-full p-6 shadow-xl">
+            <h2 className="text-2xl font-bold text-slate-900 dark:text-slate-100 mb-4">Enter Investment Amount</h2>
+            
+            {error && (
+              <div className="mb-4 p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg">
+                <p className="text-sm text-red-700 dark:text-red-400">{error}</p>
+              </div>
+            )}
+
+            <div className="mb-6">
+              <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">Amount (KSh)</label>
+              <input
+                type="number"
+                value={investmentAmount}
+                onChange={(e) => {
+                  setInvestmentAmount(e.target.value);
+                  setError(null);
+                }}
+                placeholder="Enter amount"
+                className="w-full px-4 py-2 border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-red-500"
+              />
+              <p className="mt-2 text-xs text-slate-500 dark:text-slate-400">
+                Minimum: KSh {investmentPlans.find(p => p.id === selectedPlan)?.minInvestment.toLocaleString()}
+              </p>
+            </div>
+
+            <div className="space-y-3">
+              <button
+                onClick={() => {
+                  const plan = investmentPlans.find(p => p.id === selectedPlan);
+                  if (plan) handleInvest(plan);
+                }}
+                disabled={isLoading || !investmentAmount}
+                className="w-full bg-red-600 hover:bg-red-700 disabled:bg-red-400 text-white font-semibold py-2 px-4 rounded-lg transition-colors flex items-center justify-center gap-2">
+                {isLoading && <svg className="animate-spin h-5 w-5" fill="none" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" /><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" /></svg>}
+                {isLoading ? 'Processing...' : 'Continue'}
+              </button>
+              <button
+                onClick={() => {
+                  setSelectedPlan(null);
+                  setInvestmentAmount('');
+                  setError(null);
+                }}
+                className="w-full bg-slate-100 hover:bg-slate-200 dark:bg-slate-700 dark:hover:bg-slate-600 text-slate-900 dark:text-slate-100 font-semibold py-2 px-4 rounded-lg transition-colors">
+                Cancel
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {!investmentConfirmation && (
+        <>
+
 
       <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
-        {/* Why Invest Section */}
-        <section className="py-16">
-          <h2 className="text-3xl font-bold text-slate-900 dark:text-slate-100 mb-12 text-center">Why Invest in Wild Wash?</h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-            {benefits.map((benefit, index) => (
-              <div
-                key={index}
-                className="bg-white dark:bg-slate-800 rounded-lg p-6 shadow-md border border-slate-200 dark:border-slate-700 hover:shadow-lg transition-shadow"
-              >
-                <div className="text-4xl mb-4">{benefit.icon}</div>
-                <h3 className="text-xl font-semibold text-slate-900 dark:text-slate-100 mb-2">{benefit.title}</h3>
-                <p className="text-slate-600 dark:text-slate-400">{benefit.description}</p>
-              </div>
-            ))}
-          </div>
-        </section>
 
-        {/* Investment Plans */}
         <section className="py-16">
           <h2 className="text-3xl font-bold text-slate-900 dark:text-slate-100 mb-12 text-center">Investment Plans</h2>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
@@ -200,7 +352,13 @@ export default function InvestPage(): React.ReactElement {
                   </div>
 
                   <button
-                    onClick={() => setSelectedPlan(plan.id)}
+                    onClick={() => {
+                      if (!isAuthenticated) {
+                        setError('Please login to invest');
+                        return;
+                      }
+                      setSelectedPlan(plan.id);
+                    }}
                     className={`w-full py-2 rounded-lg text-white font-medium transition-colors ${
                       buttonClasses[plan.color as keyof typeof buttonClasses]
                     }`}
@@ -312,6 +470,8 @@ export default function InvestPage(): React.ReactElement {
           </div>
         </section>
       </div>
+        </>
+      )}
     </div>
   );
 }
