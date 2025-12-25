@@ -28,6 +28,22 @@ interface LoyaltyTier {
   color: string;
 }
 
+interface MultiSpinResponse {
+  spins: Array<{
+    result: WheelSegment;
+    winnings: number;
+  }>;
+  summary: {
+    total_spins: number;
+    total_winnings: number;
+    total_cost: number;
+  };
+  balance: {
+    current: number;
+    total_winnings: number;
+  };
+}
+
 const WHEEL_SEGMENTS: WheelSegment[] = [
   { id: 1, label: '2x', multiplier: 2, color: '#D97706', probability: 0.15 },
   { id: 2, label: '0.5x', multiplier: 0.5, color: '#6B21A8', probability: 0.25 },
@@ -102,7 +118,7 @@ export default function GamesPage() {
         }
       }
 
-      const response = await axios.get(
+      const response = await axios.get<WalletBalance>(
         `${apiBase}/casino/wallet-balance/`,
         {
           headers: {
@@ -324,7 +340,7 @@ export default function GamesPage() {
         }
       }
 
-      const response = await axios.post(
+      const response = await axios.post<WalletBalance>(
         `${apiBase}/casino/wallet/record_spin/`,
         {
           spin_cost: cost,
@@ -387,7 +403,7 @@ export default function GamesPage() {
       }
 
       // Call backend for multi-spin
-      const response = await axios.post(
+      const response = await axios.post<MultiSpinResponse>(
         `${apiBase}/casino/wallet/multi_spin/`,
         {
           num_spins: multiSpinCount,
