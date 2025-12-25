@@ -19,8 +19,10 @@ export default function NavBar() {
   const { availableOrdersCount } = useRiderOrderNotifications();
   const [mobileOpen, setMobileOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
+  const [appsOpen, setAppsOpen] = useState(false);
   const [profileOpen, setProfileOpen] = useState(false);
   const profileRef = useRef<HTMLDivElement>(null);
+  const appsRef = useRef<HTMLButtonElement>(null);
   const mobileMenuRef = useRef<HTMLDivElement>(null);
   const isRider = userRole === 'rider';
 
@@ -44,6 +46,9 @@ export default function NavBar() {
     function handleClickOutside(event: MouseEvent) {
       if (profileRef.current && !profileRef.current.contains(event.target as Node)) {
         setProfileOpen(false);
+      }
+      if (appsRef.current && !appsRef.current.contains(event.target as Node)) {
+        setAppsOpen(false);
       }
     }
     document.addEventListener('mousedown', handleClickOutside);
@@ -78,20 +83,26 @@ export default function NavBar() {
         <div className="flex items-center justify-between h-16">
           <div className="flex items-center gap-3">
             <button
-              onClick={() => setMobileOpen((s) => !s)}
-              aria-expanded={mobileOpen}
-              aria-label={mobileOpen ? 'Close menu' : 'Open menu'}
-              className="md:hidden inline-flex items-center justify-center p-2 rounded-lg hover:bg-slate-100 dark:hover:bg-white/5 focus:outline-none focus-visible:ring-2 focus-visible:ring-red-300">
+              onClick={() => setAppsOpen((s) => !s)}
+              aria-expanded={appsOpen}
+              aria-label={appsOpen ? 'Close apps' : 'Open apps'}
+              className="relative p-2 rounded-lg hover:bg-slate-100 dark:hover:bg-white/5 focus:outline-none focus-visible:ring-2 focus-visible:ring-red-300"
+              ref={appsRef}
+              title="Apps">
+              {/* Google-style app grid icon */}
               <svg
-                className={`w-6 h-6 transition-transform ${mobileOpen ? 'rotate-90' : 'rotate-0'}`}
+                className="w-6 h-6"
                 viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor">
-                {mobileOpen ? (
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                ) : (
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
-                )}
+                fill="currentColor">
+                <rect x="2" y="2" width="4" height="4" rx="0.5" />
+                <rect x="10" y="2" width="4" height="4" rx="0.5" />
+                <rect x="18" y="2" width="4" height="4" rx="0.5" />
+                <rect x="2" y="10" width="4" height="4" rx="0.5" />
+                <rect x="10" y="10" width="4" height="4" rx="0.5" />
+                <rect x="18" y="10" width="4" height="4" rx="0.5" />
+                <rect x="2" y="18" width="4" height="4" rx="0.5" />
+                <rect x="10" y="18" width="4" height="4" rx="0.5" />
+                <rect x="18" y="18" width="4" height="4" rx="0.5" />
               </svg>
             </button>
             <div className="w-12 h-12 rounded-2xl bg-red-500/95 flex items-center justify-center shadow-md shrink-0">
@@ -111,46 +122,46 @@ export default function NavBar() {
             </div>
           </div>
 
-          <nav className="hidden md:flex items-center gap-3">
+          <nav className="hidden md:flex items-center gap-1">
             <Link
               href="/offers"
-              className="text-sm px-4 py-2 rounded-lg bg-red-600 text-white hover:bg-red-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-red-300 font-medium">
+              className="text-sm px-3 py-2 rounded-lg bg-red-600 text-white hover:bg-red-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-red-300 font-medium transition-colors">
               Offers
             </Link>
             <Link
               href="/financing"
-              className="text-sm px-4 py-2 rounded-lg bg-red-600 text-white hover:bg-red-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-red-300 font-medium">
-              Financing / Pay
+              className="text-sm px-3 py-2 rounded-lg bg-red-600 text-white hover:bg-red-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-red-300 font-medium transition-colors">
+              Financing
             </Link>
             <Link
               href="/borrow"
-              className="text-sm px-4 py-2 rounded-lg bg-red-600 text-white hover:bg-red-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-red-300 font-medium">
+              className="text-sm px-3 py-2 rounded-lg bg-red-600 text-white hover:bg-red-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-red-300 font-medium transition-colors">
               Borrow
             </Link>
             <Link
               href="/invest"
-              className="text-sm px-4 py-2 rounded-lg bg-red-600 text-white hover:bg-red-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-red-300 font-medium">
+              className="text-sm px-3 py-2 rounded-lg bg-red-600 text-white hover:bg-red-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-red-300 font-medium transition-colors">
               Invest
-            </Link>
-            <Link
-              href="/casino"
-              className="text-sm px-4 py-2 rounded-lg bg-red-600 text-white hover:bg-red-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-red-300 font-medium">
-              Casino
             </Link>
             {isAuthenticated && (
               <>
                 <Link
                   href="/bnpl"
-                  className="text-sm px-4 py-2 rounded-lg bg-red-600 text-white hover:bg-red-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-red-300 font-medium">
+                  className="text-sm px-3 py-2 rounded-lg bg-red-600 text-white hover:bg-red-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-red-300 font-medium transition-colors">
                   BNPL
                 </Link>
                 <Link
                   href="/tradein"
-                  className="text-sm px-4 py-2 rounded-lg bg-red-600 text-white hover:bg-red-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-red-300 font-medium">
+                  className="text-sm px-3 py-2 rounded-lg bg-red-600 text-white hover:bg-red-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-red-300 font-medium transition-colors">
                   Trade-In
                 </Link>
               </>
             )}
+            <Link
+              href="/casino"
+              className="text-sm px-3 py-2 rounded-lg bg-red-600 text-white hover:bg-red-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-red-300 font-medium transition-colors">
+              Casino
+            </Link>
           </nav>
 
           <div className="flex items-center gap-2">
@@ -286,91 +297,107 @@ export default function NavBar() {
         </div>
       </div>
 
-      <div
-        ref={mobileMenuRef}
-        className={`md:hidden transition-all duration-200 ease-out overflow-hidden ${
-          mobileOpen ? 'max-h-screen opacity-100' : 'max-h-0 opacity-0'
-        }`}
-        style={{
-          maxHeight: mobileOpen ? '100vh' : '0',
-          overflowY: mobileOpen ? 'auto' : 'hidden'
-        }}>
-        <div className="px-4 sm:px-6 lg:px-8 pb-4 py-4">
-          <div className="rounded-xl bg-white/95 dark:bg-black/60 shadow-lg p-4 backdrop-blur-sm">
-            <div className="flex flex-col gap-2">
-              <Link
-                href="/offers"
-                onClick={() => setMobileOpen(false)}
-                className="block text-lg px-4 py-3 rounded-lg bg-red-600 text-white hover:bg-red-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-red-300 font-medium">
-                Offers
-              </Link>
-              <Link
-                href="/financing"
-                onClick={() => setMobileOpen(false)}
-                className="block text-lg px-4 py-3 rounded-lg bg-red-600 text-white hover:bg-red-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-red-300 font-medium">
-                Financing / Pay
-              </Link>
-              <Link
-                href="/borrow"
-                onClick={() => setMobileOpen(false)}
-                className="block text-lg px-4 py-3 rounded-lg bg-red-600 text-white hover:bg-red-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-red-300 font-medium">
-                Borrow
-              </Link>
-              <Link
-                href="/invest"
-                onClick={() => setMobileOpen(false)}
-                className="block text-lg px-4 py-3 rounded-lg bg-red-600 text-white hover:bg-red-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-red-300 font-medium">
-                Invest
-              </Link>
-              <Link
-                href="/casino"
-                onClick={() => setMobileOpen(false)}
-                className="block text-lg px-4 py-3 rounded-lg bg-red-600 text-white hover:bg-red-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-red-300 font-medium">
-                Casino
-              </Link>
-              {isAuthenticated && (
-                <>
-                  <Link
-                    href="/bnpl"
-                    onClick={() => setMobileOpen(false)}
-                    className="block text-lg px-4 py-3 rounded-lg bg-red-600 text-white hover:bg-red-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-red-300 font-medium">
-                    BNPL
-                  </Link>
-                  <Link
-                    href="/tradein"
-                    onClick={() => setMobileOpen(false)}
-                    className="block text-lg px-4 py-3 rounded-lg bg-red-600 text-white hover:bg-red-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-red-300 font-medium">
-                    Trade-In
-                  </Link>
-                </>
-              )}
+      {/* App Grid Dropdown */}
+      {appsOpen && (
+        <div className="fixed top-16 left-4 z-40 bg-white dark:bg-slate-800 rounded-2xl shadow-2xl p-4 w-96 border border-slate-200 dark:border-slate-700">
+          <div className="grid grid-cols-3 gap-3">
+            {/* Offers */}
+            <Link
+              href="/offers"
+              className="flex flex-col items-center justify-center p-4 rounded-xl bg-gradient-to-br from-blue-50 to-blue-100 dark:from-blue-900/30 dark:to-blue-800/30 hover:from-blue-100 hover:to-blue-200 dark:hover:from-blue-900/50 dark:hover:to-blue-800/50 transition-colors group"
+              onClick={() => {
+                setAppsOpen(false);
+              }}>
+              <svg className="w-8 h-8 text-blue-600 dark:text-blue-400 mb-2 group-hover:scale-110 transition-transform" fill="currentColor" viewBox="0 0 24 24">
+                <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.42 0-8-3.58-8-8s3.58-8 8-8 8 3.58 8 8-3.58 8-8 8zm3.5-9c.83 0 1.5-.67 1.5-1.5S16.33 8 15.5 8 14 8.67 14 9.5s.67 1.5 1.5 1.5zm-7 0c.83 0 1.5-.67 1.5-1.5S9.33 8 8.5 8 7 8.67 7 9.5 7.67 11 8.5 11zm3.5 6.5c2.33 0 4.31-1.46 5.11-3.5H6.89c.8 2.04 2.78 3.5 5.11 3.5z"/>
+              </svg>
+              <span className="text-xs font-medium text-center">Offers</span>
+            </Link>
 
-              <div className="pt-1 border-t border-slate-100 dark:border-slate-800" />
+            {/* Financing */}
+            <Link
+              href="/financing"
+              className="flex flex-col items-center justify-center p-4 rounded-xl bg-gradient-to-br from-green-50 to-green-100 dark:from-green-900/30 dark:to-green-800/30 hover:from-green-100 hover:to-green-200 dark:hover:from-green-900/50 dark:hover:to-green-800/50 transition-colors group"
+              onClick={() => {
+                setAppsOpen(false);
+              }}>
+              <svg className="w-8 h-8 text-green-600 dark:text-green-400 mb-2 group-hover:scale-110 transition-transform" fill="currentColor" viewBox="0 0 24 24">
+                <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.42 0-8-3.58-8-8s3.58-8 8-8 8 3.58 8 8-3.58 8-8 8zm0-13c-2.76 0-5 2.24-5 5s2.24 5 5 5 5-2.24 5-5-2.24-5-5-5z"/>
+              </svg>
+              <span className="text-xs font-medium text-center">Financing</span>
+            </Link>
 
-              <div className="flex gap-3 mt-2 justify-center">
-                <Link
-                  href="/rider"
-                  onClick={() => setMobileOpen(false)}
-                  className="text-sm px-3 py-2 rounded-md hover:underline focus:outline-none focus-visible:ring-2 focus-visible:ring-red-300">
-                  Rider
-                </Link>
-                <Link
-                  href="/staff"
-                  onClick={() => setMobileOpen(false)}
-                  className="text-sm px-3 py-2 rounded-md hover:underline focus:outline-none focus-visible:ring-2 focus-visible:ring-red-300">
-                  Staff
-                </Link>
-                <Link
-                  href="/admin"
-                  onClick={() => setMobileOpen(false)}
-                  className="text-sm px-3 py-2 rounded-md hover:underline focus:outline-none focus-visible:ring-2 focus-visible:ring-red-300">
-                  Admin
-                </Link>
-              </div>
-            </div>
+            {/* Borrow */}
+            <Link
+              href="/borrow"
+              className="flex flex-col items-center justify-center p-4 rounded-xl bg-gradient-to-br from-purple-50 to-purple-100 dark:from-purple-900/30 dark:to-purple-800/30 hover:from-purple-100 hover:to-purple-200 dark:hover:from-purple-900/50 dark:hover:to-purple-800/50 transition-colors group"
+              onClick={() => {
+                setAppsOpen(false);
+              }}>
+              <svg className="w-8 h-8 text-purple-600 dark:text-purple-400 mb-2 group-hover:scale-110 transition-transform" fill="currentColor" viewBox="0 0 24 24">
+                <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.42 0-8-3.58-8-8s3.58-8 8-8 8 3.58 8 8-3.58 8-8 8zm3-8c0 1.66-1.34 3-3 3s-3-1.34-3-3 1.34-3 3-3 3 1.34 3 3z"/>
+              </svg>
+              <span className="text-xs font-medium text-center">Borrow</span>
+            </Link>
+
+            {/* Invest */}
+            <Link
+              href="/invest"
+              className="flex flex-col items-center justify-center p-4 rounded-xl bg-gradient-to-br from-orange-50 to-orange-100 dark:from-orange-900/30 dark:to-orange-800/30 hover:from-orange-100 hover:to-orange-200 dark:hover:from-orange-900/50 dark:hover:to-orange-800/50 transition-colors group"
+              onClick={() => {
+                setAppsOpen(false);
+              }}>
+              <svg className="w-8 h-8 text-orange-600 dark:text-orange-400 mb-2 group-hover:scale-110 transition-transform" fill="currentColor" viewBox="0 0 24 24">
+                <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.42 0-8-3.58-8-8s3.58-8 8-8 8 3.58 8 8-3.58 8-8 8zm0-14c-3.31 0-6 2.69-6 6s2.69 6 6 6 6-2.69 6-6-2.69-6-6-6z"/>
+              </svg>
+              <span className="text-xs font-medium text-center">Invest</span>
+            </Link>
+
+            {/* BNPL - only for authenticated users */}
+            {isAuthenticated && (
+              <Link
+                href="/bnpl"
+                className="flex flex-col items-center justify-center p-4 rounded-xl bg-gradient-to-br from-pink-50 to-pink-100 dark:from-pink-900/30 dark:to-pink-800/30 hover:from-pink-100 hover:to-pink-200 dark:hover:from-pink-900/50 dark:hover:to-pink-800/50 transition-colors group"
+                onClick={() => {
+                  setAppsOpen(false);
+                }}>
+                <svg className="w-8 h-8 text-pink-600 dark:text-pink-400 mb-2 group-hover:scale-110 transition-transform" fill="currentColor" viewBox="0 0 24 24">
+                  <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.42 0-8-3.58-8-8s3.58-8 8-8 8 3.58 8 8-3.58 8-8 8zm0-13c-2.76 0-5 2.24-5 5s2.24 5 5 5 5-2.24 5-5-2.24-5-5-5z"/>
+                </svg>
+                <span className="text-xs font-medium text-center">BNPL</span>
+              </Link>
+            )}
+
+            {/* Trade-In - only for authenticated users */}
+            {isAuthenticated && (
+              <Link
+                href="/tradein"
+                className="flex flex-col items-center justify-center p-4 rounded-xl bg-gradient-to-br from-cyan-50 to-cyan-100 dark:from-cyan-900/30 dark:to-cyan-800/30 hover:from-cyan-100 hover:to-cyan-200 dark:hover:from-cyan-900/50 dark:hover:to-cyan-800/50 transition-colors group"
+                onClick={() => {
+                  setAppsOpen(false);
+                }}>
+                <svg className="w-8 h-8 text-cyan-600 dark:text-cyan-400 mb-2 group-hover:scale-110 transition-transform" fill="currentColor" viewBox="0 0 24 24">
+                  <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.42 0-8-3.58-8-8s3.58-8 8-8 8 3.58 8 8-3.58 8-8 8zm0-13c-2.76 0-5 2.24-5 5s2.24 5 5 5 5-2.24 5-5-2.24-5-5-5z"/>
+                </svg>
+                <span className="text-xs font-medium text-center">Trade-In</span>
+              </Link>
+            )}
+
+            {/* Casino */}
+            <Link
+              href="/casino"
+              className="flex flex-col items-center justify-center p-4 rounded-xl bg-gradient-to-br from-amber-50 to-amber-100 dark:from-amber-900/30 dark:to-amber-800/30 hover:from-amber-100 hover:to-amber-200 dark:hover:from-amber-900/50 dark:hover:to-amber-800/50 transition-colors group"
+              onClick={() => {
+                setAppsOpen(false);
+              }}>
+              <svg className="w-8 h-8 text-amber-600 dark:text-amber-400 mb-2 group-hover:scale-110 transition-transform" fill="currentColor" viewBox="0 0 24 24">
+                <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.42 0-8-3.58-8-8s3.58-8 8-8 8 3.58 8 8-3.58 8-8 8zm0-13c-2.76 0-5 2.24-5 5s2.24 5 5 5 5-2.24 5-5-2.24-5-5-5z"/>
+              </svg>
+              <span className="text-xs font-medium text-center">Casino</span>
+            </Link>
           </div>
         </div>
-      </div>
+      )}
     </header>
   );
 }

@@ -18,8 +18,8 @@ export default function GamesNavBar({ balance }: GamesNavBarProps) {
   if (!mounted) return null;
 
   return (
-    <div className="fixed top-20 left-0 right-0 z-40 bg-gradient-to-r from-black via-slate-900 to-black border-b-2 border-amber-400/40 shadow-2xl shadow-amber-600/20 backdrop-blur-md">
-      <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+    <div className="fixed top-16 left-0 right-0 z-40 w-full bg-gradient-to-r from-black via-slate-900 to-black border-b-2 border-amber-400/40 shadow-2xl shadow-amber-600/20 backdrop-blur-md">
+      <div className="w-full px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-20">
           {/* Casino Badge / Title - VIP */}
           <div className="flex items-center gap-4">

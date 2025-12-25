@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { Gamepad2, Loader, Lock, Eye, EyeOff } from 'lucide-react';
+import axios from 'axios';
 import GamesNavBar from '@/components/GamesNavBar';
 
 interface GameCard {
@@ -54,6 +55,49 @@ export default function GamesPage() {
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [passwordError, setPasswordError] = useState('');
+  const [loadingBalance, setLoadingBalance] = useState(true);
+
+  const apiBase = process.env.NEXT_PUBLIC_API_BASE || 'https://api.wildwash.app/api';
+
+  // Fetch balance from backend
+  const fetchBalance = async () => {
+    try {
+      setLoadingBalance(true);
+      const authState = localStorage.getItem('wildwash_auth_state');
+      let token = null;
+      if (authState) {
+        try {
+          const parsed = JSON.parse(authState);
+          token = parsed.token;
+        } catch (e) {
+          // Token parsing failed
+        }
+      }
+
+      const response = await axios.get(
+        `${apiBase}/casino/wallet-balance/`,
+        {
+          headers: {
+            ...(token && { 'Authorization': `Token ${token}` }),
+          },
+        }
+      );
+
+      if (response.data?.balance !== undefined) {
+        setBalance(response.data.balance);
+        // Update localStorage for backup
+        localStorage.setItem('game_wallet', response.data.balance.toString());
+      }
+    } catch (err) {
+      // Fallback to localStorage if API fails
+      const savedBalance = localStorage.getItem('game_wallet');
+      if (savedBalance) {
+        setBalance(parseFloat(savedBalance));
+      }
+    } finally {
+      setLoadingBalance(false);
+    }
+  };
 
   useEffect(() => {
     setMounted(true);
@@ -63,11 +107,8 @@ export default function GamesPage() {
       setIsUnlocked(true);
     }
 
-    // Load balance from localStorage
-    const savedBalance = localStorage.getItem('game_wallet');
-    if (savedBalance) {
-      setBalance(parseFloat(savedBalance));
-    }
+    // Fetch balance from database
+    fetchBalance();
 
     // Listen for storage changes (when other tabs/windows update the balance)
     const handleStorageChange = (e: StorageEvent) => {

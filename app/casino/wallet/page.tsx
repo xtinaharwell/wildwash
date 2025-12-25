@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { ArrowLeft, Wallet, Send, Loader, AlertCircle, CheckCircle, Crown } from 'lucide-react';
+import { ArrowLeft, Wallet, Send, Loader, AlertCircle, CheckCircle, Crown, RefreshCw } from 'lucide-react';
 import { useSelector } from 'react-redux';
 import type { RootState } from '@/redux/store';
 import axios from 'axios';
@@ -45,6 +45,7 @@ export default function WalletPage() {
   const [customAmount, setCustomAmount] = useState<string>('');
   const [phone, setPhone] = useState<string>('');
   const [loading, setLoading] = useState(false);
+  const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState<string>('');
   const [success, setSuccess] = useState<string>('');
   const [showCustomInput, setShowCustomInput] = useState(false);
@@ -99,7 +100,7 @@ export default function WalletPage() {
         }
       );
 
-      if (response.status === 200 && response.data?.balance) {
+      if (response.status === 200 && response.data?.balance !== undefined) {
         setGameBalance(response.data.balance);
         // Also update localStorage for fallback
         localStorage.setItem('game_wallet', response.data.balance.toString());
@@ -111,6 +112,13 @@ export default function WalletPage() {
         setGameBalance(parseFloat(savedBalance));
       }
     }
+  };
+
+  // Manual refresh function
+  const handleRefreshBalance = async () => {
+    setRefreshing(true);
+    await fetchGameBalance();
+    setRefreshing(false);
   };
 
   // Poll for payment status
@@ -275,58 +283,68 @@ export default function WalletPage() {
 
       <div className="max-w-2xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
         {/* Compact Header */}
-        <div className="pt-6 mb-4">
+        <div className="pt-10 mb-8">
           <Link
             href="/casino"
-            className="inline-flex items-center gap-2 text-amber-400 hover:text-amber-300 font-medium transition-colors text-xs"
+            className="inline-flex items-center gap-2 text-amber-400 hover:text-amber-300 font-medium transition-colors text-sm"
           >
             <ArrowLeft className="w-4 h-4" />
             Back
           </Link>
 
-          <h1 className="text-2xl font-bold text-amber-300 mt-2" style={{ fontFamily: 'Georgia, serif' }}>Add Funds</h1>
+          <h1 className="text-3xl font-bold text-amber-300 mt-4" style={{ fontFamily: 'Georgia, serif' }}>Add Funds</h1>
         </div>
 
         {/* Current Balance - Compact Card */}
-        <div className="bg-gradient-to-br from-slate-900/60 via-amber-950/20 to-slate-950/60 rounded-xl p-4 mb-4 shadow-lg border border-amber-400/30 backdrop-blur-sm relative overflow-hidden">
+        <div className="bg-gradient-to-br from-slate-900/60 via-amber-950/20 to-slate-950/60 rounded-xl p-6 mb-8 shadow-lg border border-amber-400/30 backdrop-blur-sm relative overflow-hidden">
           <div className="absolute inset-0 bg-gradient-to-br from-amber-500/5 to-transparent pointer-events-none rounded-xl"></div>
           <div className="relative z-10 flex items-end justify-between">
             <div>
-              <p className="text-amber-200/70 text-xs mb-1">Balance</p>
-              <p className="text-3xl font-bold text-amber-300" style={{ fontFamily: 'Georgia, serif' }}>
+              <p className="text-amber-200/70 text-sm mb-2">Current Balance</p>
+              <p className="text-4xl font-bold text-amber-300" style={{ fontFamily: 'Georgia, serif' }}>
                 KES {gameBalance.toLocaleString('en-US', { maximumFractionDigits: 0 })}
               </p>
             </div>
-            <div className="w-16 h-16 rounded-full bg-gradient-to-br from-amber-500 to-amber-600 flex items-center justify-center shadow-lg shadow-amber-500/40 flex-shrink-0">
-              <Wallet className="w-6 h-6 text-slate-950" />
+            <div className="flex items-center gap-3">
+              <button
+                onClick={handleRefreshBalance}
+                disabled={refreshing}
+                className="p-3 rounded-full bg-amber-500/20 hover:bg-amber-500/30 disabled:opacity-50 transition-all"
+                title="Refresh balance"
+              >
+                <RefreshCw className={`w-6 h-6 text-amber-400 ${refreshing ? 'animate-spin' : ''}`} />
+              </button>
+              <div className="w-20 h-20 rounded-full bg-gradient-to-br from-amber-500 to-amber-600 flex items-center justify-center shadow-lg shadow-amber-500/40 flex-shrink-0">
+                <Wallet className="w-8 h-8 text-slate-950" />
+              </div>
             </div>
           </div>
         </div>
 
         {/* Messages */}
         {error && (
-          <div className="mb-4 bg-red-950/40 border border-red-500/50 rounded-lg p-3 flex gap-2 backdrop-blur-sm">
-            <AlertCircle className="w-4 h-4 text-red-400 flex-shrink-0 mt-0.5" />
-            <p className="text-red-200 text-xs">{error}</p>
+          <div className="mb-6 bg-red-950/40 border border-red-500/50 rounded-lg p-4 flex gap-3 backdrop-blur-sm">
+            <AlertCircle className="w-5 h-5 text-red-400 flex-shrink-0 mt-0.5" />
+            <p className="text-red-200 text-sm">{error}</p>
           </div>
         )}
 
         {success && (
-          <div className="mb-4 bg-green-950/40 border border-green-500/50 rounded-lg p-3 flex gap-2 backdrop-blur-sm">
-            <CheckCircle className="w-4 h-4 text-green-400 flex-shrink-0 mt-0.5" />
-            <p className="text-green-200 text-xs">{success}</p>
+          <div className="mb-6 bg-green-950/40 border border-green-500/50 rounded-lg p-4 flex gap-3 backdrop-blur-sm">
+            <CheckCircle className="w-5 h-5 text-green-400 flex-shrink-0 mt-0.5" />
+            <p className="text-green-200 text-sm">{success}</p>
           </div>
         )}
 
         {/* Top-up Form */}
-        <div className="bg-gradient-to-br from-slate-900/60 via-slate-900/40 to-slate-950/60 rounded-xl shadow-lg p-5 mb-4 border border-amber-400/30 backdrop-blur-sm">
-          <form onSubmit={handleInitiateTopUp} className="space-y-4">
+        <div className="bg-gradient-to-br from-slate-900/60 via-slate-900/40 to-slate-950/60 rounded-xl shadow-lg p-8 mb-8 border border-amber-400/30 backdrop-blur-sm">
+          <form onSubmit={handleInitiateTopUp} className="space-y-6">
             {/* Quick Amount Options */}
             <div>
-              <label className="block text-xs font-medium text-amber-300/90 mb-2">
-                Amount
+              <label className="block text-sm font-semibold text-amber-300 mb-4">
+                Select Amount
               </label>
-              <div className="grid grid-cols-3 gap-2">
+              <div className="grid grid-cols-3 gap-3">
                 {TOP_UP_OPTIONS.map((option) => (
                   <button
                     key={option.amount}
@@ -337,7 +355,7 @@ export default function WalletPage() {
                       setShowCustomInput(false);
                     }}
                     disabled={loading || checkoutRequestId !== ''}
-                    className={`relative p-2 rounded-lg font-medium transition-all duration-200 disabled:opacity-50 text-xs ${
+                    className={`relative p-3 rounded-lg font-semibold transition-all duration-200 disabled:opacity-50 text-sm ${
                       selectedAmount === option.amount && !customAmount
                         ? 'bg-gradient-to-br from-amber-500 to-amber-600 text-slate-950 shadow-lg shadow-amber-500/40 scale-105 font-bold'
                         : 'bg-slate-800/50 text-amber-300 border border-amber-400/30 hover:border-amber-400/60 hover:bg-slate-800/70'
@@ -354,13 +372,13 @@ export default function WalletPage() {
               <button
                 type="button"
                 onClick={() => setShowCustomInput(!showCustomInput)}
-                className="text-xs text-amber-400 hover:text-amber-300 font-medium transition-colors"
+                className="text-sm text-amber-400 hover:text-amber-300 font-semibold transition-colors"
               >
                 {showCustomInput ? '× Custom' : '+ Custom'}
               </button>
 
               {showCustomInput && (
-                <div className="mt-2">
+                <div className="mt-3">
                   <input
                     type="number"
                     value={customAmount}
@@ -372,7 +390,7 @@ export default function WalletPage() {
                     min="10"
                     max="1000000"
                     disabled={loading || checkoutRequestId !== ''}
-                    className="w-full px-3 py-2 border border-amber-400/30 rounded-lg bg-slate-800/50 text-amber-300 placeholder-amber-200/40 focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-amber-400/60 disabled:opacity-50 transition-all text-xs"
+                    className="w-full px-4 py-3 border border-amber-400/30 rounded-lg bg-slate-800/50 text-amber-300 placeholder-amber-200/40 focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-amber-400/60 disabled:opacity-50 transition-all text-sm"
                   />
                 </div>
               )}
@@ -380,8 +398,8 @@ export default function WalletPage() {
 
             {/* Phone Number */}
             <div>
-              <label className="block text-xs font-medium text-amber-300/90 mb-1">
-                Phone
+              <label className="block text-sm font-semibold text-amber-300 mb-2">
+                M-Pesa Phone Number
               </label>
               <input
                 type="tel"
@@ -389,14 +407,14 @@ export default function WalletPage() {
                 onChange={(e) => setPhone(e.target.value)}
                 placeholder="254712345678"
                 disabled={loading || checkoutRequestId !== ''}
-                className="w-full px-3 py-2 border border-amber-400/30 rounded-lg bg-slate-800/50 text-amber-300 placeholder-amber-200/40 focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-amber-400/60 disabled:opacity-50 transition-all text-xs"
+                className="w-full px-4 py-3 border border-amber-400/30 rounded-lg bg-slate-800/50 text-amber-300 placeholder-amber-200/40 focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-amber-400/60 disabled:opacity-50 transition-all text-sm"
               />
             </div>
 
             {/* Amount Display */}
-            <div className="bg-gradient-to-br from-amber-950/40 to-slate-950/40 rounded-lg p-3 border border-amber-400/40 backdrop-blur-sm">
-              <p className="text-xs text-amber-200/60 mb-1">Amount</p>
-              <p className="text-2xl font-bold text-amber-300" style={{ fontFamily: 'Georgia, serif' }}>
+            <div className="bg-gradient-to-br from-amber-950/40 to-slate-950/40 rounded-lg p-5 border border-amber-400/40 backdrop-blur-sm">
+              <p className="text-sm text-amber-200/60 mb-2">Total Amount</p>
+              <p className="text-3xl font-bold text-amber-300" style={{ fontFamily: 'Georgia, serif' }}>
                 KES {getTopUpAmount().toLocaleString()}
               </p>
             </div>
@@ -405,21 +423,21 @@ export default function WalletPage() {
             <button
               type="submit"
               disabled={loading || checkoutRequestId !== ''}
-              className="w-full bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 disabled:opacity-50 disabled:cursor-not-allowed text-slate-950 font-bold py-3 px-4 rounded-lg transition-all duration-200 flex items-center justify-center gap-2 shadow-lg shadow-amber-500/30 hover:shadow-amber-500/50 active:scale-95 text-sm"
+              className="w-full bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 disabled:opacity-50 disabled:cursor-not-allowed text-slate-950 font-bold py-4 px-6 rounded-lg transition-all duration-200 flex items-center justify-center gap-3 shadow-lg shadow-amber-500/30 hover:shadow-amber-500/50 active:scale-95 text-base"
             >
               {loading ? (
                 <>
-                  <Loader className="w-4 h-4 animate-spin" />
+                  <Loader className="w-5 h-5 animate-spin" />
                   Processing...
                 </>
               ) : checkoutRequestId ? (
                 <>
-                  <Loader className="w-4 h-4 animate-spin" />
+                  <Loader className="w-5 h-5 animate-spin" />
                   Confirming...
                 </>
               ) : (
                 <>
-                  <Send className="w-4 h-4" />
+                  <Send className="w-5 h-5" />
                   Send Payment
                 </>
               )}
@@ -428,26 +446,26 @@ export default function WalletPage() {
         </div>
 
         {/* Withdrawal Section */}
-        <div className="bg-gradient-to-br from-slate-900/60 via-slate-900/40 to-slate-950/60 rounded-xl shadow-lg p-5 mb-4 border border-amber-400/30 backdrop-blur-sm">
-          <h2 className="text-sm font-bold text-amber-300 mb-3" style={{ fontFamily: 'Georgia, serif' }}>Withdraw</h2>
+        <div className="bg-gradient-to-br from-slate-900/60 via-slate-900/40 to-slate-950/60 rounded-xl shadow-lg p-8 mb-8 border border-amber-400/30 backdrop-blur-sm">
+          <h2 className="text-lg font-bold text-amber-300 mb-5" style={{ fontFamily: 'Georgia, serif' }}>Withdraw Winnings</h2>
           
           {gameBalance < WITHDRAWAL_MINIMUM ? (
-            <div className="bg-amber-950/50 border border-amber-500/50 rounded-lg p-3 backdrop-blur-sm text-xs">
+            <div className="bg-amber-950/50 border border-amber-500/50 rounded-lg p-5 backdrop-blur-sm text-sm">
               <p className="text-amber-200/80">
-                Min KES {WITHDRAWAL_MINIMUM.toLocaleString()} to withdraw. Current: KES {gameBalance.toLocaleString()}
+                Minimum KES {WITHDRAWAL_MINIMUM.toLocaleString()} required to withdraw. Current balance: KES {gameBalance.toLocaleString()}
               </p>
             </div>
           ) : (
-            <div className="space-y-3">
-              <div className="bg-gradient-to-br from-green-950/40 to-slate-950/40 rounded-lg p-3 border border-green-500/40 backdrop-blur-sm">
-                <p className="text-xs text-green-300/70 mb-1">Available</p>
-                <p className="text-xl font-bold text-green-400" style={{ fontFamily: 'Georgia, serif' }}>
+            <div className="space-y-4">
+              <div className="bg-gradient-to-br from-green-950/40 to-slate-950/40 rounded-lg p-5 border border-green-500/40 backdrop-blur-sm">
+                <p className="text-sm text-green-300/70 mb-2">Available to Withdraw</p>
+                <p className="text-2xl font-bold text-green-400" style={{ fontFamily: 'Georgia, serif' }}>
                   KES {gameBalance.toLocaleString()}
                 </p>
               </div>
               <button
                 disabled
-                className="w-full bg-slate-700/50 text-amber-200/50 font-bold py-2 px-4 rounded-lg cursor-not-allowed opacity-60 text-xs border border-slate-600/50"
+                className="w-full bg-slate-700/50 text-amber-200/50 font-bold py-3 px-6 rounded-lg cursor-not-allowed opacity-60 text-sm border border-slate-600/50"
                 title="Coming soon"
               >
                 Withdraw (Coming Soon)
@@ -457,16 +475,16 @@ export default function WalletPage() {
         </div>
 
         {/* Info Card */}
-        <div className="bg-gradient-to-br from-slate-900/60 to-slate-950/60 border border-amber-400/30 rounded-lg p-4 backdrop-blur-sm">
-          <h3 className="font-semibold text-amber-300 mb-2 text-xs" style={{ fontFamily: 'Georgia, serif' }}>
+        <div className="bg-gradient-to-br from-slate-900/60 to-slate-950/60 border border-amber-400/30 rounded-lg p-8 backdrop-blur-sm">
+          <h3 className="font-semibold text-amber-300 mb-4 text-lg" style={{ fontFamily: 'Georgia, serif' }}>
             How It Works
           </h3>
-          <ol className="space-y-1 text-xs text-amber-200/80 list-decimal list-inside">
-            <li>Pick amount or enter custom</li>
-            <li>Enter M-Pesa phone number</li>
+          <ol className="space-y-3 text-sm text-amber-200/80 list-decimal list-inside">
+            <li>Pick an amount or enter a custom amount</li>
+            <li>Enter your M-Pesa phone number</li>
             <li>Click "Send Payment"</li>
-            <li>Confirm STK prompt on phone</li>
-            <li>Balance updates automatically</li>
+            <li>Confirm the STK prompt on your phone</li>
+            <li>Your balance updates automatically</li>
           </ol>
         </div>
       </div>

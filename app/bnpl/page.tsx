@@ -231,16 +231,6 @@ export default function BNPLPage() {
   return (
     <div className="min-h-screen bg-gradient-to-b from-white via-slate-50 to-slate-100 dark:from-slate-950 dark:via-slate-900 dark:to-slate-900 text-slate-900 dark:text-slate-100 py-8 px-4 sm:px-6 lg:px-8">
       <div className="max-w-2xl w-full mx-auto">
-        {/* Header */}
-        <div className="text-center mb-8">
-          <div className="flex items-center justify-center gap-2 mb-4">
-            <CreditCard className="w-8 h-8 text-red-600" />
-            <h1 className="text-3xl font-bold">BNPL Management</h1>
-          </div>
-          <p className="text-slate-600 dark:text-slate-400">
-            Manage your Buy Now, Pay Later account and clear your balance
-          </p>
-        </div>
 
         {/* Error Message */}
         {error && (
@@ -316,9 +306,6 @@ export default function BNPLPage() {
         {bnplStatus.current_balance > 0 && (
           <div className="rounded-2xl bg-white dark:bg-slate-900 p-6 shadow-sm">
             <h2 className="text-xl font-semibold mb-4">Clear Your Balance</h2>
-            <p className="text-slate-600 dark:text-slate-400 mb-6">
-              Pay towards your BNPL balance using M-Pesa. You owe KES {bnplStatus.current_balance.toLocaleString()}.
-            </p>
 
             <form onSubmit={handlePaymentSubmit} className="space-y-5">
               {/* Phone Number */}
