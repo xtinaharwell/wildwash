@@ -332,6 +332,55 @@ export default function GamesPage() {
               ))}
             </div>
 
+            {/* User Profile & History Section */}
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
+              {/* User Profile Card */}
+              <div className="lg:col-span-2 bg-gradient-to-br from-slate-900/60 via-amber-900/20 to-slate-950/60 border border-amber-400/30 rounded-2xl p-6 sm:p-8 backdrop-blur-md">
+                <div className="flex items-start justify-between mb-6">
+                  <div>
+                    <h2 className="text-2xl font-bold text-amber-300 mb-2" style={{ fontFamily: 'Georgia, serif' }}>Your Account</h2>
+                    <p className="text-amber-100/70 text-sm">Track your gaming progress and statistics</p>
+                  </div>
+                  <div className="text-4xl">👤</div>
+                </div>
+                
+                <div className="space-y-4">
+                  {/* Current Balance */}
+                  <div className="bg-slate-900/50 rounded-lg p-4 border border-amber-400/20">
+                    <p className="text-amber-400/60 text-xs uppercase tracking-widest mb-1">Current Balance</p>
+                    <p className="text-2xl font-bold text-amber-300">KES {balance.toLocaleString()}</p>
+                  </div>
+                  
+                  {/* Quick Stats */}
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="bg-slate-900/50 rounded-lg p-4 border border-amber-400/20">
+                      <p className="text-amber-400/60 text-xs uppercase tracking-widest mb-2">Responsible Gaming</p>
+                      <p className="text-amber-300 font-semibold">Enabled</p>
+                    </div>
+                    <div className="bg-slate-900/50 rounded-lg p-4 border border-amber-400/20">
+                      <p className="text-amber-400/60 text-xs uppercase tracking-widest mb-2">Status</p>
+                      <p className="text-green-400 font-semibold">Active</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* View History Card */}
+              <div className="bg-gradient-to-br from-amber-900/30 via-amber-900/20 to-slate-950/60 border border-amber-400/50 rounded-2xl p-6 sm:p-8 backdrop-blur-md flex flex-col justify-between hover:border-amber-400 transition-all">
+                <div>
+                  <h3 className="text-xl font-bold text-amber-300 mb-2" style={{ fontFamily: 'Georgia, serif' }}>Game History</h3>
+                  <p className="text-amber-100/70 text-sm mb-6">View your complete spin history and detailed statistics</p>
+                </div>
+                
+                <Link
+                  href="/casino/history"
+                  className="block w-full bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-black font-bold py-3 px-4 rounded-lg transition-all duration-200 text-center uppercase tracking-wider text-sm shadow-lg hover:shadow-amber-500/50 active:scale-95"
+                >
+                  View History
+                </Link>
+              </div>
+            </div>
+
             {/* Responsible Gaming Section - Luxury Theme */}
             <div className="bg-gradient-to-r from-slate-900/60 via-amber-900/20 to-slate-900/60 border border-amber-400/30 rounded-2xl p-6 sm:p-8 backdrop-blur-md">
               <h2 className="text-xl sm:text-2xl font-bold text-amber-300 mb-4 sm:mb-6" style={{ fontFamily: 'Georgia, serif' }}>Play Responsibly</h2>

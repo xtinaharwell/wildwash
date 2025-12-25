@@ -85,7 +85,6 @@ export default function OffersPage() {
       <div className="max-w-4xl mx-auto px-4">
         <header className="mb-6">
           <h1 className="text-3xl font-extrabold">Offers — This week</h1>
-          <p className="mt-2 text-sm text-slate-600 dark:text-slate-300">Hand-picked deals and a safe way to split payment with Buy Now Pay Later.</p>
         </header>
 
         <section className="mb-6 flex gap-3 items-center">
