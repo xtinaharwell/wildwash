@@ -17,7 +17,7 @@ export default function AdminLoginPage() {
 }
 
 function AdminLoginContent() {
-  const [username, setUsername] = useState("");
+  const [phoneNumber, setPhoneNumber] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState("");
@@ -56,7 +56,7 @@ function AdminLoginContent() {
 
     const result = await handleLogin(
       LOGIN_ENDPOINTS.ADMIN,
-      { username, password },
+      { phoneNumber, password },
       dispatch
     );
 
@@ -91,16 +91,17 @@ function AdminLoginContent() {
 
           <div className="space-y-4">
             <div>
-              <label htmlFor="username" className="block text-sm font-medium text-slate-700 dark:text-slate-300">
-                Username
+              <label htmlFor="phoneNumber" className="block text-sm font-medium text-slate-700 dark:text-slate-300">
+                Phone Number
               </label>
               <input
-                id="username"
-                name="username"
-                type="text"
+                id="phoneNumber"
+                name="phoneNumber"
+                type="tel"
                 required
-                value={username}
-                onChange={(e) => setUsername(e.target.value)}
+                value={phoneNumber}
+                onChange={(e) => setPhoneNumber(e.target.value)}
+                placeholder="+254712345678"
                 className="mt-1 block w-full px-3 py-2 bg-white dark:bg-slate-700 border border-slate-300 dark:border-slate-600 rounded-lg text-sm shadow-sm placeholder-slate-400
                          focus:outline-none focus:border-red-500 focus:ring-1 focus:ring-red-500"
               />

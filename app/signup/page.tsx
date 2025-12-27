@@ -111,7 +111,7 @@ export default function SignupPage() {
               value={formData.phone}
               onChange={handleChange}
               className="mt-1 w-full rounded-md border dark:border-slate-800 bg-white dark:bg-slate-900 px-3 py-2 text-sm"
-              placeholder="+254 123456789"
+              placeholder="07123456789"
               autoComplete="tel"
             />
           </div>

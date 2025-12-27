@@ -11,7 +11,7 @@ import type { RootState } from "@/redux/store";
 export default function LoginPage() {
   const router = useRouter();
   const dispatch = useDispatch();
-  const [username, setUsername] = useState("");
+  const [phoneNumber, setPhoneNumber] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -67,7 +67,7 @@ export default function LoginPage() {
     
     const result = await handleLogin(
       LOGIN_ENDPOINTS.USER,
-      { username, password },
+      { phoneNumber, password },
       dispatch
     );
 
@@ -97,13 +97,14 @@ export default function LoginPage() {
 
         <form onSubmit={handleSubmit} className="rounded-2xl bg-white/80 dark:bg-white/5 p-6 shadow space-y-4">
           <div>
-            <label className="text-xs text-slate-500">Username</label>
+            <label className="text-xs text-slate-500">Phone Number</label>
             <input
-              value={username}
-              onChange={(e) => setUsername(e.target.value)}
+              value={phoneNumber}
+              onChange={(e) => setPhoneNumber(e.target.value)}
               className="mt-1 w-full rounded-md border dark:border-slate-800 bg-white dark:bg-slate-900 px-3 py-2 text-sm"
-              placeholder="username"
-              autoComplete="username"
+              placeholder="+254712345678"
+              autoComplete="tel"
+              type="tel"
             />
           </div>
 
@@ -150,7 +151,7 @@ export default function LoginPage() {
             <button
               type="button"
               onClick={() => {
-                setUsername("");
+                setPhoneNumber("");
                 setPassword("");
                 setError(null);
               }}

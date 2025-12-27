@@ -11,6 +11,7 @@ import {
   WrenchIcon,
   SparklesIcon,
   ArrowTrendingUpIcon,
+  Squares2X2Icon,
 } from "@heroicons/react/24/outline";
 import { useAppDispatch } from "@/redux/hooks";
 import { addToCart } from "@/redux/features/cartSlice";
@@ -156,19 +157,27 @@ export default function HomePage() {
 
         {/* Categories - Minimal horizontal scroll */}
         <div className="mb-12">
-          <div className="flex items-center justify-between mb-4">
-            <h2 className="text-xl font-light text-slate-900 dark:text-slate-100">
-              Categories
-            </h2>
-            <button
-              onClick={() => setSelectedCategory(null)}
-              className="text-sm text-red-600 dark:text-red-400 hover:text-red-700 dark:hover:text-red-300 transition-colors"
-            >
-              View all
-            </button>
-          </div>
+          <h2 className="text-xl font-light text-slate-900 dark:text-slate-100 mb-4">
+            Categories
+          </h2>
           
           <div className="flex space-x-3 overflow-x-auto pb-4 -mx-4 px-4 scrollbar-hide">
+            <button
+              onClick={() => setSelectedCategory(null)}
+              className={`flex-shrink-0 flex flex-col items-center p-4 rounded-2xl transition-all duration-300 ${
+                selectedCategory === null
+                  ? "bg-gradient-to-br from-red-600 to-orange-500 text-white shadow-lg scale-105"
+                  : "bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:shadow-md hover:scale-[1.02]"
+              }`}
+              title="View all services"
+            >
+              <Squares2X2Icon className={`w-6 h-6 mb-2 ${
+                selectedCategory === null ? "text-white" : "text-red-500 dark:text-red-400"
+              }`} />
+              <span className="text-xs font-medium whitespace-nowrap">
+                All
+              </span>
+            </button>
             {categories.map((cat) => {
               const Icon = getIconForCategory(cat);
               return (
@@ -215,7 +224,7 @@ export default function HomePage() {
           </div>
 
           {loading ? (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+            <div className="grid grid-cols-2 lg:grid-cols-3 gap-6">
               {[...Array(6)].map((_, i) => (
                 <div
                   key={i}
@@ -246,7 +255,7 @@ export default function HomePage() {
               </p>
             </div>
           ) : (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+            <div className="grid grid-cols-2 lg:grid-cols-3 gap-6">
               {filteredServices.map((service) => (
                 <div
                   key={service.id}
@@ -257,7 +266,7 @@ export default function HomePage() {
                   
                   <div className="relative rounded-2xl bg-gradient-to-b from-white to-slate-50 dark:from-slate-800 dark:to-slate-900 border border-slate-200 dark:border-slate-700 overflow-hidden hover:shadow-xl transition-all duration-300 hover:-translate-y-1">
                     {/* Image/Icon Header */}
-                    <div className="relative h-48 overflow-hidden bg-gradient-to-br from-slate-100 to-slate-50 dark:from-slate-800 dark:to-slate-900">
+                    <div className="relative h-32 sm:h-40 lg:h-48 overflow-hidden bg-gradient-to-br from-slate-100 to-slate-50 dark:from-slate-800 dark:to-slate-900">
                       {service.image_url ? (
                         <img
                           src={service.image_url}
@@ -273,11 +282,11 @@ export default function HomePage() {
                           )}
                         </div>
                       )}
-                      
+
                       {/* Category badge */}
                       {service.category && (
-                        <div className="absolute top-4 left-4">
-                          <span className="px-3 py-1 text-xs font-medium rounded-full bg-white/90 dark:bg-slate-800/90 backdrop-blur-sm text-slate-700 dark:text-slate-300">
+                        <div className="absolute top-2 sm:top-3 lg:top-4 left-2 sm:left-3 lg:left-4">
+                          <span className="inline-block px-2 sm:px-3 py-0.5 sm:py-1 text-xs font-medium rounded-full bg-white/95 dark:bg-slate-800/95 backdrop-blur-sm text-red-700 dark:text-red-300 shadow-sm">
                             {categoryLabels[service.category] || service.category}
                           </span>
                         </div>
@@ -285,35 +294,28 @@ export default function HomePage() {
                     </div>
 
                     {/* Content */}
-                    <div className="p-6">
-                      <h3 className="text-lg font-medium text-slate-900 dark:text-slate-100 mb-3 line-clamp-1 group-hover:text-red-600 dark:group-hover:text-red-400 transition-colors">
+                    <div className="p-3 sm:p-4 lg:p-6">
+                      <h3 className="text-sm sm:text-base lg:text-lg font-medium text-slate-900 dark:text-slate-100 mb-2 line-clamp-1 group-hover:text-red-600 dark:group-hover:text-red-400 transition-colors">
                         {service.name}
                       </h3>
                       
-                      <p className="text-sm text-slate-600 dark:text-slate-400 mb-4 line-clamp-2 leading-relaxed">
+                      <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-400 mb-2 line-clamp-2 leading-relaxed">
                         {service.description}
                       </p>
 
-                      <div className="flex items-center justify-between mb-4">
+                      <div className="flex items-center justify-between mb-2 gap-2">
                         <div>
-                          <div className="text-sm text-slate-500 dark:text-slate-400 mb-1">Starting from</div>
-                          <div className="text-2xl font-bold text-red-600 dark:text-red-400">
+                          <div className="text-lg sm:text-xl lg:text-2xl font-bold text-red-600 dark:text-red-400">
                             KSh {Number(service.price).toLocaleString()}
                           </div>
                         </div>
                         
-                        <div className={`px-3 py-1 rounded-full text-sm font-medium transition-all duration-300 ${
-                          addedItem === service.id
-                            ? "bg-green-500 text-white"
-                            : "bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400"
-                        }`}>
-                          {addedItem === service.id ? "✓ Added" : "Add"}
-                        </div>
+
                       </div>
 
                       <button
                         onClick={() => handleAddToCart(service)}
-                        className={`w-full py-3 rounded-xl font-medium transition-all duration-300 ${
+                        className={`w-full py-2 sm:py-3 rounded-xl font-medium text-sm sm:text-base transition-all duration-300 ${
                           addedItem === service.id
                             ? "bg-gradient-to-r from-green-500 to-emerald-500 text-white shadow-lg animate-pulse"
                             : "bg-gradient-to-r from-red-600 to-orange-500 text-white hover:shadow-lg hover:shadow-red-500/25 hover:scale-[1.02] active:scale-[0.98]"
