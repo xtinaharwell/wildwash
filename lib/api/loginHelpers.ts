@@ -6,6 +6,11 @@ import { AUTH_STORAGE_KEY } from '../auth';
 
 const API_BASE = process.env.NEXT_PUBLIC_API_BASE || '';
 
+interface CsrfResponse {
+  csrfToken?: string;
+  detail?: string;
+}
+
 interface LoginResponse {
   token: string;
   user: User;
@@ -42,7 +47,7 @@ const ensureCsrfToken = async (): Promise<string | null> => {
     clearCsrfToken();
 
     // Fetch a fresh CSRF token from the backend
-    const response = await axios.get(`${API_BASE}/users/csrf/`, {
+    const response = await axios.get<CsrfResponse>(`${API_BASE}/users/csrf/`, {
       withCredentials: true,
     });
 
