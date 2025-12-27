@@ -38,35 +38,51 @@ const getCsrfToken = (): string | null => {
 const clearCsrfToken = (): void => {
   if (typeof document === 'undefined') return;
   document.cookie = 'csrftoken=; path=/; expires=Thu, 01 Jan 1970 00:00:00 UTC;';
+  document.cookie = 'csrftoken=; path=/; domain=' + window.location.hostname + '; expires=Thu, 01 Jan 1970 00:00:00 UTC;';
 };
 
-// Function to ensure CSRF token is available
-const ensureCsrfToken = async (): Promise<string | null> => {
-  try {
-    // Clear any stale CSRF token first
-    clearCsrfToken();
+// Function to ensure CSRF token is available with retries
+const ensureCsrfToken = async (retries: number = 3): Promise<string | null> => {
+  for (let attempt = 0; attempt < retries; attempt++) {
+    try {
+      // Clear any stale CSRF token
+      clearCsrfToken();
 
-    // Fetch a fresh CSRF token from the backend
-    const response = await axios.get<CsrfResponse>(`${API_BASE}/users/csrf/`, {
-      withCredentials: true,
-    });
+      // Fetch a fresh CSRF token from the backend
+      const response = await axios.get<CsrfResponse>(`${API_BASE}/users/csrf/`, {
+        withCredentials: true,
+        timeout: 5000, // 5 second timeout
+      });
 
-    // Wait a bit for the cookie to be set
-    await new Promise(resolve => setTimeout(resolve, 100));
+      // Wait for the cookie to be set
+      await new Promise(resolve => setTimeout(resolve, 150));
 
-    // Get the token from cookies
-    let token = getCsrfToken();
-    
-    // If still not found, try from response data
-    if (!token && response.data?.csrfToken) {
-      token = response.data.csrfToken;
+      // Get the token from cookies
+      let token = getCsrfToken();
+      
+      // If still not found, try from response data
+      if (!token && response.data?.csrfToken) {
+        token = response.data.csrfToken;
+      }
+
+      if (token) {
+        return token;
+      }
+
+      // Token not found, will retry
+      console.warn(`CSRF token attempt ${attempt + 1}/${retries} failed, retrying...`);
+    } catch (error) {
+      console.warn(`CSRF token fetch attempt ${attempt + 1}/${retries} failed:`, error);
+      
+      // Wait before retrying
+      if (attempt < retries - 1) {
+        await new Promise(resolve => setTimeout(resolve, 500));
+      }
     }
-
-    return token;
-  } catch (error) {
-    console.error('Failed to get CSRF token:', error);
-    return null;
   }
+
+  console.error('Failed to get CSRF token after retries');
+  return null;
 };
 
 export const handleLogin = async (
@@ -74,42 +90,70 @@ export const handleLogin = async (
   credentials: { phoneNumber: string; password: string } | { username: string; password: string },
   dispatch: AppDispatch
 ): Promise<{ success: boolean; error?: string }> => {
-  try {
-    // Ensure CSRF token is available
-    const csrfToken = await ensureCsrfToken();
+  let lastError: string | null = null;
 
-    const headers: any = {
-      'Content-Type': 'application/json',
-      'Accept': 'application/json',
-    };
+  // Try login with CSRF token, with automatic retry on CSRF failure
+  for (let attempt = 0; attempt < 3; attempt++) {
+    try {
+      // Ensure CSRF token is available
+      const csrfToken = await ensureCsrfToken();
 
-    // Add CSRF token if available
-    if (csrfToken) {
-      headers['X-CSRFToken'] = csrfToken;
-    }
+      const headers: any = {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json',
+      };
 
-    const response = await axios.post<LoginResponse>(
-      `${API_BASE}${endpoint}`,
-      credentials,
-      {
-        withCredentials: true,
-        headers,
+      // Add CSRF token if available
+      if (csrfToken) {
+        headers['X-CSRFToken'] = csrfToken;
       }
-    );
 
-    const { token, user } = response.data;
+      const response = await axios.post<LoginResponse>(
+        `${API_BASE}${endpoint}`,
+        credentials,
+        {
+          withCredentials: true,
+          headers,
+          timeout: 10000, // 10 second timeout
+        }
+      );
 
-    // Store the auth state which will be used by the API client
-    localStorage.setItem(AUTH_STORAGE_KEY, JSON.stringify({ user, token }));
+      const { token, user } = response.data;
 
-    // Update the Redux state
-    dispatch(setAuth({ user, token }));
+      // Store the auth state which will be used by the API client
+      localStorage.setItem(AUTH_STORAGE_KEY, JSON.stringify({ user, token }));
 
-    return { success: true };
-  } catch (error: any) {
-    const errorMessage = error.response?.data?.detail || 'An error occurred during login';
-    return { success: false, error: errorMessage };
+      // Update the Redux state
+      dispatch(setAuth({ user, token }));
+
+      return { success: true };
+    } catch (error: any) {
+      const errorDetail = error.response?.data?.detail || error.message || 'Login failed';
+      lastError = errorDetail;
+
+      // Check if it's a CSRF token error
+      const isCsrfError = errorDetail.includes('CSRF') || error.response?.status === 403;
+
+      if (isCsrfError && attempt < 2) {
+        console.warn(`CSRF error detected, attempting recovery (${attempt + 1}/3)...`);
+        
+        // Clear all CSRF-related data and retry
+        clearCsrfToken();
+        if (typeof localStorage !== 'undefined') {
+          localStorage.removeItem('csrf_token');
+        }
+        
+        // Wait before retrying
+        await new Promise(resolve => setTimeout(resolve, 1000));
+        continue;
+      }
+
+      // Not a CSRF error or final attempt, break out of loop
+      break;
+    }
   }
+
+  return { success: false, error: lastError || 'An error occurred during login' };
 };
 
 // Endpoint constants for different user types
