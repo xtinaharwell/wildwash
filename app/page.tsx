@@ -161,17 +161,17 @@ export default function HomePage() {
             Categories
           </h2>
           
-          <div className="flex space-x-3 overflow-x-auto pb-4 -mx-4 px-4 scrollbar-hide">
+          <div className="flex space-x-2 overflow-x-auto pb-4 -mx-4 px-4 scrollbar-hide">
             <button
               onClick={() => setSelectedCategory(null)}
-              className={`flex-shrink-0 flex flex-col items-center p-4 rounded-2xl transition-all duration-300 ${
+              className={`flex-shrink-0 flex flex-col items-center justify-center px-3 py-2 rounded-xl transition-all duration-300 ${
                 selectedCategory === null
-                  ? "bg-gradient-to-br from-red-600 to-orange-500 text-white shadow-lg scale-105"
-                  : "bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:shadow-md hover:scale-[1.02]"
+                  ? "bg-gradient-to-br from-red-600 to-orange-500 text-white shadow-lg shadow-red-500/40"
+                  : "bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:shadow-md border border-slate-200 dark:border-slate-700"
               }`}
               title="View all services"
             >
-              <Squares2X2Icon className={`w-6 h-6 mb-2 ${
+              <Squares2X2Icon className={`w-5 h-5 mb-1 ${
                 selectedCategory === null ? "text-white" : "text-red-500 dark:text-red-400"
               }`} />
               <span className="text-xs font-medium whitespace-nowrap">
@@ -184,16 +184,16 @@ export default function HomePage() {
                 <button
                   key={cat}
                   onClick={() => setSelectedCategory(selectedCategory === cat ? null : cat)}
-                  className={`flex-shrink-0 flex flex-col items-center p-4 rounded-2xl transition-all duration-300 ${
+                  className={`flex-shrink-0 flex flex-col items-center justify-center px-3 py-2 rounded-xl transition-all duration-300 ${
                     selectedCategory === cat
-                      ? "bg-gradient-to-br from-red-600 to-orange-500 text-white shadow-lg scale-105"
-                      : "bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:shadow-md hover:scale-[1.02]"
+                      ? "bg-gradient-to-br from-red-600 to-orange-500 text-white shadow-lg shadow-red-500/40"
+                      : "bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:shadow-md border border-slate-200 dark:border-slate-700"
                   }`}
                 >
-                  <Icon className={`w-6 h-6 mb-2 ${
+                  <Icon className={`w-5 h-5 mb-1 ${
                     selectedCategory === cat ? "text-white" : "text-red-500 dark:text-red-400"
                   }`} />
-                  <span className="text-xs font-medium whitespace-nowrap">
+                  <span className="text-xs font-medium text-center">
                     {categoryLabels[cat]}
                   </span>
                 </button>

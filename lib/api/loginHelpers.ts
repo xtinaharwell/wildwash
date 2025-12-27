@@ -11,21 +11,70 @@ interface LoginResponse {
   user: User;
 }
 
+// Function to get CSRF token from cookies
+const getCsrfToken = (): string | null => {
+  if (typeof document === 'undefined') return null;
+  const name = 'csrftoken';
+  let cookieValue = null;
+  if (document.cookie && document.cookie !== '') {
+    const cookies = document.cookie.split(';');
+    for (let i = 0; i < cookies.length; i++) {
+      const cookie = cookies[i].trim();
+      if (cookie.substring(0, name.length + 1) === name + '=') {
+        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+        break;
+      }
+    }
+  }
+  return cookieValue;
+};
+
+// Function to ensure CSRF token is available
+const ensureCsrfToken = async (): Promise<string | null> => {
+  try {
+    // First check if token is already in cookies
+    let token = getCsrfToken();
+    if (token) return token;
+
+    // If not, fetch it from the backend
+    await axios.get(`${API_BASE}/users/csrf/`, {
+      withCredentials: true,
+    });
+
+    // Try to get it again from cookies
+    token = getCsrfToken();
+    return token;
+  } catch (error) {
+    console.error('Failed to get CSRF token:', error);
+    return null;
+  }
+};
+
 export const handleLogin = async (
   endpoint: string,
   credentials: { phoneNumber: string; password: string } | { username: string; password: string },
   dispatch: AppDispatch
 ): Promise<{ success: boolean; error?: string }> => {
   try {
+    // Ensure CSRF token is available
+    const csrfToken = await ensureCsrfToken();
+
+    const headers: any = {
+      'Content-Type': 'application/json',
+      'Accept': 'application/json',
+    };
+
+    // Add CSRF token if available
+    if (csrfToken) {
+      headers['X-CSRFToken'] = csrfToken;
+    }
+
     const response = await axios.post<LoginResponse>(
       `${API_BASE}${endpoint}`,
       credentials,
       {
         withCredentials: true,
-        headers: {
-          'Content-Type': 'application/json',
-          'Accept': 'application/json',
-        }
+        headers,
       }
     );
 
