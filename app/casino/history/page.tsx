@@ -94,7 +94,7 @@ export default function HistoryPage() {
         }
       }
 
-      const response = await axios.get(
+      const response = await axios.get<{ balance: number }>(
         `${apiBase}/casino/wallet-balance/`,
         {
           headers: {
