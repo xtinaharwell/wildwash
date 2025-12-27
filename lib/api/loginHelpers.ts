@@ -103,14 +103,23 @@ export const handleLogin = async (
         'Accept': 'application/json',
       };
 
-      // Add CSRF token if available
+      // Build the request data
+      const requestData: any = { ...credentials };
+
+      // Add CSRF token in multiple ways to ensure it's recognized
       if (csrfToken) {
+        // Method 1: X-CSRFToken header (most common for AJAX)
         headers['X-CSRFToken'] = csrfToken;
+        
+        // Method 2: Also include in request body as fallback
+        requestData['csrfmiddlewaretoken'] = csrfToken;
       }
+
+      console.log(`Login attempt ${attempt + 1}/3 with CSRF token:`, csrfToken ? 'present' : 'missing');
 
       const response = await axios.post<LoginResponse>(
         `${API_BASE}${endpoint}`,
-        credentials,
+        requestData,
         {
           withCredentials: true,
           headers,
@@ -131,6 +140,8 @@ export const handleLogin = async (
       const errorDetail = error.response?.data?.detail || error.message || 'Login failed';
       lastError = errorDetail;
 
+      console.error(`Login attempt ${attempt + 1}/3 failed:`, errorDetail);
+
       // Check if it's a CSRF token error
       const isCsrfError = errorDetail.includes('CSRF') || error.response?.status === 403;
 
@@ -143,7 +154,7 @@ export const handleLogin = async (
           localStorage.removeItem('csrf_token');
         }
         
-        // Wait before retrying
+        // Wait before retrying with fresh CSRF token
         await new Promise(resolve => setTimeout(resolve, 1000));
         continue;
       }
