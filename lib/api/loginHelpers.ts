@@ -29,20 +29,34 @@ const getCsrfToken = (): string | null => {
   return cookieValue;
 };
 
+// Function to clear CSRF token from cookies
+const clearCsrfToken = (): void => {
+  if (typeof document === 'undefined') return;
+  document.cookie = 'csrftoken=; path=/; expires=Thu, 01 Jan 1970 00:00:00 UTC;';
+};
+
 // Function to ensure CSRF token is available
 const ensureCsrfToken = async (): Promise<string | null> => {
   try {
-    // First check if token is already in cookies
-    let token = getCsrfToken();
-    if (token) return token;
+    // Clear any stale CSRF token first
+    clearCsrfToken();
 
-    // If not, fetch it from the backend
-    await axios.get(`${API_BASE}/users/csrf/`, {
+    // Fetch a fresh CSRF token from the backend
+    const response = await axios.get(`${API_BASE}/users/csrf/`, {
       withCredentials: true,
     });
 
-    // Try to get it again from cookies
-    token = getCsrfToken();
+    // Wait a bit for the cookie to be set
+    await new Promise(resolve => setTimeout(resolve, 100));
+
+    // Get the token from cookies
+    let token = getCsrfToken();
+    
+    // If still not found, try from response data
+    if (!token && response.data?.csrfToken) {
+      token = response.data.csrfToken;
+    }
+
     return token;
   } catch (error) {
     console.error('Failed to get CSRF token:', error);
