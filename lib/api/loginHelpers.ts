@@ -13,7 +13,7 @@ interface LoginResponse {
 
 export const handleLogin = async (
   endpoint: string,
-  credentials: { username: string; password: string },
+  credentials: { phoneNumber: string; password: string } | { username: string; password: string },
   dispatch: AppDispatch
 ): Promise<{ success: boolean; error?: string }> => {
   try {
