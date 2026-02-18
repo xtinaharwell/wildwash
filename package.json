@@ -8,10 +8,12 @@
     "start": "next start"
   },
   "dependencies": {
+    "-": "^0.0.1",
     "@heroicons/react": "^2.2.0",
     "@radix-ui/react-slot": "^1.2.3",
     "@types/axios": "^0.9.36",
     "axios": "^1.13.0",
+    "baseline-browser-mapping": "^2.9.19",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "leaflet": "^1.9.4",
