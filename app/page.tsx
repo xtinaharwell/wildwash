@@ -1,8 +1,7 @@
 'use client';
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 import {
   CubeTransparentIcon,
   HomeModernIcon,
@@ -13,7 +12,7 @@ import {
   WrenchIcon,
   SparklesIcon,
   XMarkIcon,
-  Squares2X2Icon,
+  ArrowUpIcon,
 } from "@heroicons/react/24/outline";
 import { useAppDispatch } from "@/redux/hooks";
 import { addToCart } from "@/redux/features/cartSlice";
@@ -42,36 +41,18 @@ const serviceImageMap: Record<string, string> = {
 };
 
 function getImageForService(serviceName: string): string {
-  // First, try exact match
-  if (serviceImageMap[serviceName]) {
-    return serviceImageMap[serviceName];
-  }
-
-  // If no exact match, find closest match by keyword
+  if (serviceImageMap[serviceName]) return serviceImageMap[serviceName];
   const nameLower = serviceName.toLowerCase();
-  
-  if (nameLower.includes("fumigation") || nameLower.includes("bedsitter")) {
+  if (nameLower.includes("fumigation") || nameLower.includes("bedsitter"))
     return "Bedsitter Fumigation.png";
-  }
-  if (nameLower.includes("carpet")) {
-    return "Carpet Cleaning.png";
-  }
-  if (nameLower.includes("duvet")) {
-    return "Duvet Cleaning.png";
-  }
-  if (nameLower.includes("iron")) {
-    return "Ironing Service.png";
-  }
-  if (nameLower.includes("dry") || nameLower.includes("dryclean")) {
+  if (nameLower.includes("carpet")) return "Carpet Cleaning.png";
+  if (nameLower.includes("duvet")) return "Duvet Cleaning.png";
+  if (nameLower.includes("iron")) return "Ironing Service.png";
+  if (nameLower.includes("dry") || nameLower.includes("dryclean"))
     return "Dry Cleaning.png";
-  }
-  if (nameLower.includes("express")) {
-    return "Express Wash.png";
-  }
-  if (nameLower.includes("wash") || nameLower.includes("laundry")) {
+  if (nameLower.includes("express")) return "Express Wash.png";
+  if (nameLower.includes("wash") || nameLower.includes("laundry"))
     return "Standard Wash.png";
-  }
-  
   return "Standard Wash.png";
 }
 
@@ -101,7 +82,22 @@ export default function HomePage() {
   const [services, setServices] = useState<Service[]>([]);
   const [loading, setLoading] = useState(true);
   const [addedItem, setAddedItem] = useState<number | null>(null);
+  const [showScrollTop, setShowScrollTop] = useState(false);
+  const [visibleCards, setVisibleCards] = useState<Set<number>>(new Set());
+  const cardRefs = useRef<Map<number, HTMLDivElement>>(new Map());
+  const observerRef = useRef<IntersectionObserver | null>(null);
 
+  // Initial load bounce
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      const categories = document.getElementById("categories-container");
+      categories?.classList.add("animate-bounce-custom");
+      setTimeout(() => categories?.classList.remove("animate-bounce-custom"), 600);
+    }, 100);
+    return () => clearTimeout(timer);
+  }, []);
+
+  // Fetch services
   useEffect(() => {
     let mounted = true;
     const fetchServices = async () => {
@@ -111,7 +107,7 @@ export default function HomePage() {
           credentials: "include",
           headers: { Accept: "application/json" },
         });
-        if (!response.ok) throw new Error(`Failed to load services: ${response.status}`);
+        if (!response.ok) throw new Error(`Failed: ${response.status}`);
         const data = await response.json();
         if (!mounted) return;
         const servicesList = Array.isArray(data) ? data : Array.isArray(data?.results) ? data.results : [];
@@ -138,11 +134,54 @@ export default function HomePage() {
     };
   }, []);
 
+  // Scroll to top button visibility
+  useEffect(() => {
+    const handleScroll = () => {
+      setShowScrollTop(window.scrollY > 400);
+    };
+    window.addEventListener("scroll", handleScroll);
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, []);
+
+  // Intersection Observer for card animations
+  useEffect(() => {
+    observerRef.current = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          const id = Number(entry.target.getAttribute("data-id"));
+          if (entry.isIntersecting) {
+            setVisibleCards((prev) => new Set(prev).add(id));
+          } else {
+            setVisibleCards((prev) => {
+              const next = new Set(prev);
+              next.delete(id);
+              return next;
+            });
+          }
+        });
+      },
+      { threshold: 0.1, rootMargin: "0px 0px -50px 0px" }
+    );
+
+    return () => observerRef.current?.disconnect();
+  }, []);
+
+  // Observe/unobserve cards when services change
+  useEffect(() => {
+    cardRefs.current.forEach((ref, id) => {
+      if (ref && observerRef.current) {
+        observerRef.current.observe(ref);
+      }
+    });
+    return () => {
+      observerRef.current?.disconnect();
+    };
+  }, [services]);
+
   const handleAddToCart = (service: Service) => {
     const { icon, ...cartService } = service as any;
     const finalCartService = { ...cartService, price: String(cartService.price), description: cartService.description || "" };
     dispatch(addToCart(finalCartService));
-    
     setAddedItem(service.id);
     setTimeout(() => setAddedItem(null), 800);
   };
@@ -152,9 +191,7 @@ export default function HomePage() {
       service.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
       service.category?.toLowerCase().includes(searchTerm.toLowerCase()) ||
       service.description?.toLowerCase().includes(searchTerm.toLowerCase());
-    
     const matchesCategory = !selectedCategory || service.category === selectedCategory;
-    
     return matchesSearch && matchesCategory;
   });
 
@@ -170,31 +207,68 @@ export default function HomePage() {
 
   return (
     <div className="min-h-screen bg-white dark:bg-black text-slate-900 dark:text-slate-50">
-      <div className="max-w-6xl mx-auto px-5 pt-6 pb-24">
-        
-        {/* Search bar */}
-        <div className="mb-12 flex justify-center">
-          <div className="relative w-full max-w-md">
+      <style>{`
+        @keyframes bounce {
+          0%, 100% { transform: translateY(0); }
+          50% { transform: translateY(-8px); }
+        }
+        .animate-bounce-custom {
+          animation: bounce 0.6s ease-in-out;
+        }
+        @keyframes fade-up {
+          from { opacity: 0; transform: translateY(20px); }
+          to { opacity: 1; transform: translateY(0); }
+        }
+        .card-enter {
+          animation: fade-up 0.5s ease-out forwards;
+        }
+        .scrollbar-hide::-webkit-scrollbar {
+          display: none;
+        }
+        .scrollbar-hide {
+          -ms-overflow-style: none;
+          scrollbar-width: none;
+        }
+      `}</style>
+
+      {/* Scroll to top button */}
+      {showScrollTop && (
+        <button
+          onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
+          className="fixed bottom-6 right-6 z-50 p-3 bg-red-600 text-white rounded-full shadow-lg hover:bg-red-700 transition-all hover:scale-110 focus:outline-none"
+          aria-label="Scroll to top"
+        >
+          <ArrowUpIcon className="w-5 h-5" />
+        </button>
+      )}
+
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 pb-24">
+        {/* Search bar - Sticky with blur */}
+        <div className="sticky top-0 z-50 bg-white/80 dark:bg-black/80 backdrop-blur-md py-4 mb-6 -mx-4 sm:-mx-6 px-4 sm:px-6">
+          <div className="relative w-full max-w-md mx-auto">
             <MagnifyingGlassIcon className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
             <input
               type="text"
               placeholder="Search services"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full pl-12 pr-4 py-3 text-base border border-slate-200 dark:border-slate-800 rounded-full bg-white dark:bg-slate-950 focus:outline-none focus:ring-1 focus:ring-red-600 transition-ring"
+              className="w-full pl-12 pr-4 py-3 text-base border border-slate-200 dark:border-slate-800 rounded-full bg-white dark:bg-slate-950 focus:outline-none focus:ring-2 focus:ring-red-600/50 focus:border-transparent transition-all duration-300 hover:shadow-md"
             />
           </div>
         </div>
 
-        {/* Categories */}
-        <div className="mb-10">
-          <div className="flex items-center gap-2 overflow-x-auto py-2 -mx-5 px-5 scrollbar-hide">
+        {/* Categories - Sticky with blur */}
+        <div
+          id="categories-container"
+          className="sticky top-16 z-40 bg-white/80 dark:bg-black/80 backdrop-blur-md py-3 mb-6 -mx-4 sm:-mx-6 px-4 sm:px-6 flex justify-center"
+        >
+          <div className="flex items-center gap-2 overflow-x-auto scrollbar-hide py-2 max-w-4xl">
             <button
               onClick={() => setSelectedCategory(null)}
-              className={`flex-shrink-0 px-4 py-2 rounded-full text-sm font-500 transition-all whitespace-nowrap ${
+              className={`flex-shrink-0 px-5 py-2.5 rounded-full text-sm font-medium transition-all whitespace-nowrap transform active:scale-95 ${
                 selectedCategory === null
-                  ? "bg-red-600 text-white"
-                  : "bg-slate-100 dark:bg-slate-900 text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-800"
+                  ? "bg-red-600 text-white shadow-md"
+                  : "bg-slate-100 dark:bg-slate-900 text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-800 hover:scale-105"
               }`}
             >
               All
@@ -203,10 +277,10 @@ export default function HomePage() {
               <button
                 key={cat}
                 onClick={() => setSelectedCategory(selectedCategory === cat ? null : cat)}
-                className={`flex-shrink-0 px-4 py-2 rounded-full text-sm font-500 transition-all whitespace-nowrap ${
+                className={`flex-shrink-0 px-5 py-2.5 rounded-full text-sm font-medium transition-all whitespace-nowrap transform active:scale-95 ${
                   selectedCategory === cat
-                    ? "bg-red-600 text-white"
-                    : "bg-slate-100 dark:bg-slate-900 text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-800"
+                    ? "bg-red-600 text-white shadow-md"
+                    : "bg-slate-100 dark:bg-slate-900 text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-800 hover:scale-105"
                 }`}
               >
                 {categoryLabels[cat]}
@@ -216,17 +290,17 @@ export default function HomePage() {
         </div>
 
         {/* Results header */}
-        <div className="flex items-center justify-between mb-7">
-          <h2 className="text-lg font-600 text-slate-900 dark:text-slate-50">
+        <div className="flex items-center justify-between mb-8">
+          <h2 className="text-xl font-semibold text-slate-900 dark:text-slate-50">
             {selectedCategory ? categoryLabels[selectedCategory] : "All Services"}
-            <span className="text-slate-500 dark:text-slate-400 font-400 ml-2">
+            <span className="text-slate-500 dark:text-slate-400 font-normal ml-2 text-base">
               {filteredServices.length}
             </span>
           </h2>
           {selectedCategory && (
             <button
               onClick={() => setSelectedCategory(null)}
-              className="text-sm text-red-600 hover:text-red-700 dark:text-red-500 dark:hover:text-red-400 transition-colors flex items-center gap-1"
+              className="text-sm text-red-600 hover:text-red-700 dark:text-red-500 dark:hover:text-red-400 transition-colors flex items-center gap-1 bg-red-50 dark:bg-red-950/30 px-3 py-1 rounded-full"
             >
               <XMarkIcon className="w-4 h-4" />
               Clear
@@ -236,94 +310,109 @@ export default function HomePage() {
 
         {/* Services grid */}
         {loading ? (
-          <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-            {[...Array(6)].map((_, i) => (
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6">
+            {[...Array(8)].map((_, i) => (
               <div
                 key={i}
-                className="bg-slate-100 dark:bg-slate-900 rounded-2xl h-56 animate-pulse"
+                className="bg-slate-100 dark:bg-slate-900 rounded-2xl h-64 animate-pulse"
+                style={{ animationDelay: `${i * 0.05}s` }}
               />
             ))}
           </div>
         ) : filteredServices.length === 0 ? (
           <div className="text-center py-20">
-            <div className="w-16 h-16 mx-auto mb-6 rounded-full bg-slate-100 dark:bg-slate-900 flex items-center justify-center">
-              <MagnifyingGlassIcon className="w-8 h-8 text-red-500" />
+            <div className="w-20 h-20 mx-auto mb-6 rounded-full bg-slate-100 dark:bg-slate-900 flex items-center justify-center">
+              <MagnifyingGlassIcon className="w-10 h-10 text-red-500" />
             </div>
-            <h3 className="text-lg font-600 text-slate-900 dark:text-slate-100 mb-2">
+            <h3 className="text-xl font-semibold text-slate-900 dark:text-slate-100 mb-2">
               No services found
             </h3>
             <p className="text-slate-600 dark:text-slate-400">
-              {searchTerm 
-                ? `Try a different search term.`
-                : "Check back soon."}
+              {searchTerm ? "Try a different search term." : "Check back soon."}
             </p>
           </div>
         ) : (
-          <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6">
             {filteredServices.map((service) => (
-              <Link
+              <div
                 key={service.id}
-                href={`/services/${service.id}`}
-                className="group"
+                ref={(el) => {
+                  if (el) cardRefs.current.set(service.id, el);
+                  else cardRefs.current.delete(service.id);
+                }}
+                data-id={service.id}
+                className={`${visibleCards.has(service.id) ? "card-enter" : "opacity-0"}`}
+                style={{ animationDelay: `${(service.id % 10) * 0.05}s` }}
               >
-                <div className="bg-slate-50 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-800 rounded-2xl overflow-hidden hover:shadow-sm hover:border-slate-300 dark:hover:border-slate-700 transition-all h-full flex flex-col cursor-pointer">
-                  {/* Image/Icon area */}
-                  <div className="relative h-32 bg-gradient-to-br from-slate-100 to-slate-50 dark:from-slate-800 dark:to-slate-950 flex items-center justify-center border-b border-slate-200 dark:border-slate-800 rounded-t-2xl">
-                    {service.image_url ? (
-                      <img
-                        src={service.image_url}
-                        alt={service.name}
-                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                      />
-                    ) : (
-                      <div className="flex flex-col items-center">
-                        {service.icon ? (
-                          <service.icon className="w-12 h-12 text-slate-400 dark:text-slate-600 mb-1" />
-                        ) : (
-                          <SparklesIcon className="w-12 h-12 text-slate-400 dark:text-slate-600 mb-1" />
-                        )}
-                        <span className="text-xs text-slate-500 dark:text-slate-500 font-500">
-                          {categoryLabels[service.category || ""] || service.category}
-                        </span>
-                      </div>
-                    )}
-                  </div>
-
-                  {/* Content */}
-                  <div className="p-4 flex-1 flex flex-col">
-                    <h3 className="text-sm font-600 text-slate-900 dark:text-slate-100 mb-1 line-clamp-2">
-                      {service.name}
-                    </h3>
-                    
-                    {service.description && (
-                      <p className="text-xs text-slate-600 dark:text-slate-500 mb-3 line-clamp-1">
-                        {service.description}
-                      </p>
-                    )}
-
-                    <div className="flex items-baseline justify-between mb-3 mt-auto">
-                      <div className="text-base font-600 text-slate-900 dark:text-slate-100">
-                        KSh {Number(service.price).toLocaleString()}
-                      </div>
+                <Link
+                  href={`/services/${service.id}`}
+                  className="group block h-full"
+                >
+                  <div className="bg-slate-50 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-800 rounded-2xl overflow-hidden hover:shadow-xl hover:shadow-red-600/5 hover:border-red-600/20 dark:hover:border-red-600/20 transition-all duration-300 h-full flex flex-col cursor-pointer transform hover:-translate-y-1">
+                    {/* Image/Icon area */}
+                    <div className="relative h-40 bg-gradient-to-br from-slate-100 to-slate-50 dark:from-slate-800 dark:to-slate-950 flex items-center justify-center border-b border-slate-200 dark:border-slate-800 rounded-t-2xl overflow-hidden">
+                      {service.image_url ? (
+                        <img
+                          src={service.image_url}
+                          alt={service.name}
+                          className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
+                        />
+                      ) : (
+                        <div className="flex flex-col items-center">
+                          {service.icon ? (
+                            <service.icon className="w-14 h-14 text-slate-400 dark:text-slate-600 mb-2 group-hover:text-red-500 transition-colors" />
+                          ) : (
+                            <SparklesIcon className="w-14 h-14 text-slate-400 dark:text-slate-600 mb-2 group-hover:text-red-500 transition-colors" />
+                          )}
+                          <span className="text-xs text-slate-500 dark:text-slate-500 font-medium">
+                            {categoryLabels[service.category || ""] || service.category}
+                          </span>
+                        </div>
+                      )}
                     </div>
 
-                    <button
-                      onClick={(e) => {
-                        e.preventDefault();
-                        e.stopPropagation();
-                        handleAddToCart(service);
-                      }}
-                      className={`w-full py-2 rounded-lg font-500 text-sm transition-all ${
-                        addedItem === service.id
-                          ? "bg-green-500 text-white"
-                          : "bg-red-600 text-white hover:bg-red-700 active:scale-[0.98]"
-                      }`}
-                    >
-                      {addedItem === service.id ? "Added" : "Add"}
-                    </button>
+                    {/* Content */}
+                    <div className="p-4 flex-1 flex flex-col">
+                      <h3 className="text-base font-semibold text-slate-900 dark:text-slate-100 mb-1 line-clamp-2">
+                        {service.name}
+                      </h3>
+
+                      {service.description && (
+                        <p className="text-xs text-slate-600 dark:text-slate-500 mb-3 line-clamp-2">
+                          {service.description}
+                        </p>
+                      )}
+
+                      <div className="flex items-baseline justify-between mb-3 mt-auto">
+                        <div className="text-lg font-bold text-slate-900 dark:text-slate-100">
+                          KSh {Number(service.price).toLocaleString()}
+                        </div>
+                      </div>
+
+                      <button
+                        onClick={(e) => {
+                          e.preventDefault();
+                          e.stopPropagation();
+                          handleAddToCart(service);
+                        }}
+                        className={`w-full py-2.5 rounded-xl font-medium text-sm transition-all transform active:scale-95 ${
+                          addedItem === service.id
+                            ? "bg-green-500 text-white"
+                            : "bg-red-600 text-white hover:bg-red-700 hover:shadow-md"
+                        }`}
+                      >
+                        {addedItem === service.id ? (
+                          <span className="flex items-center justify-center gap-1">
+                            <CheckBadgeIcon className="w-4 h-4" /> Added
+                          </span>
+                        ) : (
+                          "Add to cart"
+                        )}
+                      </button>
+                    </div>
                   </div>
-                </div>
-              </Link>
+                </Link>
+              </div>
             ))}
           </div>
         )}
@@ -331,4 +420,3 @@ export default function HomePage() {
     </div>
   );
 }
-
