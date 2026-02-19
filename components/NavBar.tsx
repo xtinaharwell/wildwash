@@ -85,7 +85,7 @@ export default function NavBar() {
 
   return (
     <header
-      className={`fixed top-0 left-0 right-0 z-50 transition-all duration-200 ${
+      className={`fixed top-0 left-0 right-0 z-[60] transition-all duration-200 ${
         scrolled
           ? 'backdrop-blur-md bg-white/80 dark:bg-[#071025]/90 shadow-sm border-b border-white/10'
           : 'bg-white/60 dark:bg-[#071025]/60 backdrop-blur-sm border-b border-white/5'
@@ -133,44 +133,44 @@ export default function NavBar() {
             </div>
           </div>
 
-          <nav className="hidden md:flex items-center gap-0.5">
+          <nav className="hidden md:flex items-center gap-1 justify-center flex-1">
             <Link
               href="/offers"
-              className="text-xs xl:text-sm px-2 xl:px-3 py-2 rounded-lg bg-red-600 text-white hover:bg-red-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-red-300 font-medium transition-colors whitespace-nowrap">
+              className="text-xs px-2.5 xl:px-3 py-1.5 rounded-full bg-red-600 text-white hover:bg-red-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-red-300 font-medium transition-colors whitespace-nowrap">
               Offers
             </Link>
             <Link
               href="/financing"
-              className="text-xs xl:text-sm px-2 xl:px-3 py-2 rounded-lg bg-red-600 text-white hover:bg-red-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-red-300 font-medium transition-colors whitespace-nowrap">
+              className="text-xs px-2.5 xl:px-3 py-1.5 rounded-full bg-red-600 text-white hover:bg-red-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-red-300 font-medium transition-colors whitespace-nowrap">
               Financing
             </Link>
             <Link
               href="/borrow"
-              className="text-xs xl:text-sm px-2 xl:px-3 py-2 rounded-lg bg-red-600 text-white hover:bg-red-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-red-300 font-medium transition-colors whitespace-nowrap">
+              className="text-xs px-2.5 xl:px-3 py-1.5 rounded-full bg-red-600 text-white hover:bg-red-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-red-300 font-medium transition-colors whitespace-nowrap">
               Borrow
             </Link>
             <Link
               href="/invest"
-              className="text-xs xl:text-sm px-2 xl:px-3 py-2 rounded-lg bg-red-600 text-white hover:bg-red-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-red-300 font-medium transition-colors whitespace-nowrap">
+              className="text-xs px-2.5 xl:px-3 py-1.5 rounded-full bg-red-600 text-white hover:bg-red-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-red-300 font-medium transition-colors whitespace-nowrap">
               Invest
             </Link>
             {isAuthenticated && (
               <>
                 <Link
                   href="/bnpl"
-                  className="text-xs xl:text-sm px-2 xl:px-3 py-2 rounded-lg bg-red-600 text-white hover:bg-red-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-red-300 font-medium transition-colors whitespace-nowrap">
+                  className="text-xs px-2.5 xl:px-3 py-1.5 rounded-full bg-red-600 text-white hover:bg-red-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-red-300 font-medium transition-colors whitespace-nowrap">
                   BNPL
                 </Link>
                 <Link
                   href="/tradein"
-                  className="text-xs xl:text-sm px-2 xl:px-3 py-2 rounded-lg bg-red-600 text-white hover:bg-red-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-red-300 font-medium transition-colors whitespace-nowrap">
+                  className="text-xs px-2.5 xl:px-3 py-1.5 rounded-full bg-red-600 text-white hover:bg-red-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-red-300 font-medium transition-colors whitespace-nowrap">
                   Trade-In
                 </Link>
               </>
             )}
             <Link
               href="/casino"
-              className="text-xs xl:text-sm px-2 xl:px-3 py-2 rounded-lg bg-red-600 text-white hover:bg-red-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-red-300 font-medium transition-colors whitespace-nowrap">
+              className="text-xs px-2.5 xl:px-3 py-1.5 rounded-full bg-red-600 text-white hover:bg-red-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-red-300 font-medium transition-colors whitespace-nowrap">
               Casino
             </Link>
           </nav>
@@ -268,7 +268,7 @@ export default function NavBar() {
                   </svg>
                 </button>
                 {profileOpen && (
-                  <div className="absolute right-0 mt-2 w-56 rounded-xl bg-white dark:bg-slate-800 shadow-lg ring-1 ring-black ring-opacity-5">
+                  <div className="absolute right-0 mt-2 w-56 rounded-xl bg-white dark:bg-slate-800 shadow-lg ring-1 ring-black ring-opacity-5 z-[100]">
                     <div className="border-b border-slate-200 dark:border-slate-700 px-4 py-3">
                       <div className="text-sm font-semibold text-slate-900 dark:text-slate-100">{userName || 'User'}</div>
                       <div className="text-xs text-slate-500 dark:text-slate-400 capitalize mt-0.5">{userRole || 'customer'}</div>

@@ -256,12 +256,12 @@ export default function TradeInPage() {
         {/* Header */}
         <div className="flex items-center justify-between mb-8">
           <div className="flex items-center gap-3">
-            <Recycle className="w-8 h-8 text-purple-600" />
+            <Recycle className="w-8 h-8 text-red-600" />
             <h1 className="text-3xl font-bold">Trade-In Management</h1>
           </div>
           <button
             onClick={() => setShowForm(!showForm)}
-            className="flex items-center gap-2 bg-purple-600 hover:bg-purple-700 text-white font-semibold py-2 px-4 rounded-full transition-all"
+            className="flex items-center gap-2 bg-red-600 hover:bg-red-700 text-white font-semibold py-2 px-4 rounded-full transition-all"
           >
             <Plus className="w-5 h-5" />
             New Trade-In
@@ -300,7 +300,7 @@ export default function TradeInPage() {
                   value={formData.description}
                   onChange={handleInputChange}
                   placeholder="Describe the item you want to trade in (brand, model, condition, defects, etc.)"
-                  className="w-full px-4 py-3 border border-slate-200 dark:border-slate-700 rounded-lg bg-white dark:bg-slate-900 focus:ring-2 focus:ring-purple-500 focus:border-transparent outline-none text-sm"
+                  className="w-full px-4 py-3 border border-slate-200 dark:border-slate-700 rounded-lg bg-white dark:bg-slate-900 focus:ring-2 focus:ring-red-500 focus:border-transparent outline-none text-sm"
                   rows={4}
                   disabled={loadingForm}
                 />
@@ -320,7 +320,7 @@ export default function TradeInPage() {
                   placeholder="e.g., 5000"
                   step="0.01"
                   min="0"
-                  className="w-full px-4 py-3 border border-slate-200 dark:border-slate-700 rounded-full bg-white dark:bg-slate-900 focus:ring-2 focus:ring-purple-500 focus:border-transparent outline-none text-sm"
+                  className="w-full px-4 py-3 border border-slate-200 dark:border-slate-700 rounded-full bg-white dark:bg-slate-900 focus:ring-2 focus:ring-red-500 focus:border-transparent outline-none text-sm"
                   disabled={loadingForm}
                 />
               </div>
@@ -337,7 +337,7 @@ export default function TradeInPage() {
                   value={formData.contact_phone}
                   onChange={handleInputChange}
                   placeholder="e.g., 254712345678 or 0712345678"
-                  className="w-full px-4 py-3 border border-slate-200 dark:border-slate-700 rounded-full bg-white dark:bg-slate-900 focus:ring-2 focus:ring-purple-500 focus:border-transparent outline-none text-sm"
+                  className="w-full px-4 py-3 border border-slate-200 dark:border-slate-700 rounded-full bg-white dark:bg-slate-900 focus:ring-2 focus:ring-red-500 focus:border-transparent outline-none text-sm"
                   disabled={loadingForm}
                 />
               </div>
@@ -347,7 +347,7 @@ export default function TradeInPage() {
                 <button
                   type="submit"
                   disabled={loadingForm}
-                  className="flex-1 bg-purple-600 hover:bg-purple-700 disabled:bg-purple-400 text-white font-semibold py-3 px-4 rounded-full transition-all flex items-center justify-center gap-2"
+                  className="flex-1 bg-red-600 hover:bg-red-700 disabled:bg-red-400 text-white font-semibold py-3 px-4 rounded-full transition-all flex items-center justify-center gap-2"
                 >
                   {loadingForm ? (
                     <>
@@ -380,7 +380,7 @@ export default function TradeInPage() {
 
           {loadingTradeIns ? (
             <div className="flex items-center justify-center py-12">
-              <Loader2 className="w-6 h-6 animate-spin text-purple-600" />
+              <Loader2 className="w-6 h-6 animate-spin text-red-600" />
             </div>
           ) : tradeIns.length === 0 ? (
             <div className="p-12 text-center bg-slate-50 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-700 rounded-lg">
@@ -391,7 +391,7 @@ export default function TradeInPage() {
               </p>
               <button
                 onClick={() => setShowForm(true)}
-                className="inline-flex items-center gap-2 bg-purple-600 hover:bg-purple-700 text-white font-semibold py-2 px-6 rounded-full transition-all"
+                className="inline-flex items-center gap-2 bg-red-600 hover:bg-red-700 text-white font-semibold py-2 px-6 rounded-full transition-all"
               >
                 <Plus className="w-5 h-5" />
                 Submit Trade-In
@@ -430,7 +430,7 @@ export default function TradeInPage() {
                       <p className="text-xs font-medium text-slate-500 dark:text-slate-400 mb-1">
                         Estimated Price
                       </p>
-                      <p className="text-lg font-bold text-purple-600 dark:text-purple-400">
+                      <p className="text-lg font-bold text-red-600 dark:text-red-400">
                         KES {parseFloat(String(tradeIn.estimated_price)).toLocaleString('en-KE')}
                       </p>
                     </div>
@@ -459,11 +459,11 @@ export default function TradeInPage() {
         </div>
 
         {/* Info Box */}
-        <div className="mt-12 p-6 bg-purple-50 dark:bg-purple-900/20 border border-purple-200 dark:border-purple-800 rounded-lg">
-          <h3 className="font-semibold text-purple-900 dark:text-purple-100 mb-2">
+        <div className="mt-12 p-6 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg">
+          <h3 className="font-semibold text-red-900 dark:text-red-100 mb-2">
             How Trade-In Works
           </h3>
-          <ul className="text-sm text-purple-800 dark:text-purple-300 space-y-2">
+          <ul className="text-sm text-red-800 dark:text-red-300 space-y-2">
             <li>✓ Submit details of the item you want to trade in</li>
             <li>✓ Our team will review and contact you for inspection</li>
             <li>✓ Once approved, you'll get credit towards your next purchase</li>

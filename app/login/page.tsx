@@ -84,15 +84,8 @@ export default function LoginPage() {
   return (
     <div className="min-h-screen bg-gradient-to-b from-white via-[#f8fafc] to-[#eef2ff] dark:from-[#071025] dark:via-[#041022] dark:to-[#011018] text-slate-900 dark:text-slate-100 py-12">
       <div className="max-w-md mx-auto px-4">
-        <header className="mb-6">
+        <header className="mb-6 text-center">
           <h1 className="text-2xl font-extrabold">Sign in</h1>
-          <p className="mt-2 text-sm text-slate-600 dark:text-slate-300">
-            Sign in to your account or{" "}
-            <a href="/signup" className="text-red-600 hover:text-red-500">
-              create a new account
-            </a>
-            .
-          </p>
         </header>
 
         <form onSubmit={handleSubmit} className="rounded-2xl bg-white/80 dark:bg-white/5 p-6 shadow space-y-4">
@@ -167,6 +160,14 @@ export default function LoginPage() {
             </button>
           </div>
         </form>
+
+        <p className="mt-6 text-sm text-slate-600 dark:text-slate-300 text-center">
+          Sign in to your account or{" "}
+          <a href="/signup" className="text-red-600 hover:text-red-500">
+            create a new account
+          </a>
+          .
+        </p>
       </div>
     </div>
   );

@@ -179,45 +179,45 @@ export default function InvestPage(): React.ReactElement {
   ];
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-white via-slate-50 to-slate-100 dark:from-slate-900 dark:via-slate-800 dark:to-slate-900">
+    <div className="min-h-screen bg-white dark:bg-slate-950">
       {/* Investment Confirmation Modal */}
       {investmentConfirmation && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white dark:bg-slate-800 rounded-lg max-w-md w-full p-6 shadow-xl">
-            <div className="text-center mb-6">
-              <div className="inline-flex items-center justify-center w-16 h-16 bg-green-100 dark:bg-green-900/20 rounded-full mb-4">
+        <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+          <div className="bg-white dark:bg-slate-900 rounded-3xl max-w-md w-full p-8 shadow-2xl">
+            <div className="text-center mb-8">
+              <div className="inline-flex items-center justify-center w-16 h-16 bg-green-100 dark:bg-green-900/20 rounded-full mb-4 animate-pulse">
                 <svg className="w-8 h-8 text-green-600 dark:text-green-400" fill="currentColor" viewBox="0 0 20 20">
                   <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
                 </svg>
               </div>
-              <h2 className="text-2xl font-bold text-slate-900 dark:text-slate-100 mb-2">Investment Confirmed!</h2>
-              <p className="text-sm text-slate-600 dark:text-slate-400">STK push sent to your phone</p>
+              <h2 className="text-3xl font-bold text-slate-900 dark:text-slate-50 mb-2">Investment Confirmed</h2>
+              <p className="text-base text-slate-600 dark:text-slate-400">STK push sent to your phone</p>
             </div>
 
-            <div className="space-y-4 mb-6 bg-slate-50 dark:bg-slate-700/50 rounded-lg p-4">
+            <div className="space-y-4 mb-8 bg-slate-50 dark:bg-slate-800/50 rounded-2xl p-6">
               <div className="flex justify-between items-center">
-                <span className="text-slate-700 dark:text-slate-300">Plan:</span>
-                <span className="font-semibold text-slate-900 dark:text-slate-100">{investmentConfirmation.plan}</span>
+                <span className="text-slate-600 dark:text-slate-400">Plan</span>
+                <span className="font-semibold text-slate-900 dark:text-slate-50">{investmentConfirmation.plan}</span>
               </div>
               <div className="flex justify-between items-center">
-                <span className="text-slate-700 dark:text-slate-300">Investment Amount:</span>
-                <span className="font-semibold text-slate-900 dark:text-slate-100">KSh {investmentConfirmation.amount.toLocaleString()}</span>
+                <span className="text-slate-600 dark:text-slate-400">Amount</span>
+                <span className="font-semibold text-slate-900 dark:text-slate-50">KSh {investmentConfirmation.amount.toLocaleString()}</span>
               </div>
               <div className="flex justify-between items-center">
-                <span className="text-slate-700 dark:text-slate-300">Lockup Period:</span>
-                <span className="font-semibold text-slate-900 dark:text-slate-100">{investmentConfirmation.lockupPeriod}</span>
+                <span className="text-slate-600 dark:text-slate-400">Lockup Period</span>
+                <span className="font-semibold text-slate-900 dark:text-slate-50">{investmentConfirmation.lockupPeriod}</span>
               </div>
               <div className="flex justify-between items-center">
-                <span className="text-slate-700 dark:text-slate-300">Maturity Date:</span>
-                <span className="font-semibold text-slate-900 dark:text-slate-100">{investmentConfirmation.maturityDate}</span>
+                <span className="text-slate-600 dark:text-slate-400">Maturity Date</span>
+                <span className="font-semibold text-slate-900 dark:text-slate-50">{investmentConfirmation.maturityDate}</span>
               </div>
-              <div className="border-t border-slate-200 dark:border-slate-600 pt-4 mt-4">
-                <div className="flex justify-between items-center mb-2">
-                  <span className="text-slate-700 dark:text-slate-300">Expected Annual Return:</span>
+              <div className="border-t border-slate-200 dark:border-slate-700 pt-4 mt-4 space-y-3">
+                <div className="flex justify-between items-center">
+                  <span className="text-slate-600 dark:text-slate-400">Expected Annual</span>
                   <span className="font-semibold text-green-600 dark:text-green-400">+KSh {investmentConfirmation.expectedReturn.toLocaleString(undefined, { maximumFractionDigits: 0 })}</span>
                 </div>
                 <div className="flex justify-between items-center">
-                  <span className="text-slate-700 dark:text-slate-300">Expected Monthly Return:</span>
+                  <span className="text-slate-600 dark:text-slate-400">Expected Monthly</span>
                   <span className="font-semibold text-green-600 dark:text-green-400">+KSh {investmentConfirmation.expectedMonthlyReturn.toLocaleString(undefined, { maximumFractionDigits: 0 })}</span>
                 </div>
               </div>
@@ -226,13 +226,13 @@ export default function InvestPage(): React.ReactElement {
             <div className="space-y-3">
               <button
                 onClick={() => setInvestmentConfirmation(null)}
-                className="w-full bg-red-600 hover:bg-red-700 text-white font-semibold py-2 px-4 rounded-lg transition-colors">
-                View Investment Dashboard
+                className="w-full bg-red-600 hover:bg-red-700 text-white font-semibold py-3 px-4 rounded-full transition-colors">
+                View Dashboard
               </button>
               <button
                 onClick={() => setInvestmentConfirmation(null)}
-                className="w-full bg-slate-100 hover:bg-slate-200 dark:bg-slate-700 dark:hover:bg-slate-600 text-slate-900 dark:text-slate-100 font-semibold py-2 px-4 rounded-lg transition-colors">
-                Go Back
+                className="w-full bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-900 dark:text-slate-100 font-semibold py-3 px-4 rounded-full transition-colors">
+                Close
               </button>
             </div>
           </div>
@@ -241,18 +241,18 @@ export default function InvestPage(): React.ReactElement {
 
       {/* Investment Amount Modal */}
       {selectedPlan && !investmentConfirmation && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white dark:bg-slate-800 rounded-lg max-w-md w-full p-6 shadow-xl">
-            <h2 className="text-2xl font-bold text-slate-900 dark:text-slate-100 mb-4">Enter Investment Amount</h2>
+        <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+          <div className="bg-white dark:bg-slate-900 rounded-3xl max-w-md w-full p-8 shadow-2xl">
+            <h2 className="text-3xl font-bold text-slate-900 dark:text-slate-50 mb-6">Investment Amount</h2>
             
             {error && (
-              <div className="mb-4 p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg">
+              <div className="mb-6 p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-2xl">
                 <p className="text-sm text-red-700 dark:text-red-400">{error}</p>
               </div>
             )}
 
-            <div className="mb-6">
-              <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">Amount (KSh)</label>
+            <div className="mb-8">
+              <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-3">Amount (KSh)</label>
               <input
                 type="number"
                 value={investmentAmount}
@@ -260,10 +260,10 @@ export default function InvestPage(): React.ReactElement {
                   setInvestmentAmount(e.target.value);
                   setError(null);
                 }}
-                placeholder="Enter amount"
-                className="w-full px-4 py-2 border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-red-500"
+                placeholder="0"
+                className="w-full px-6 py-4 text-xl border border-slate-200 dark:border-slate-700 rounded-2xl bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-50 focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-transparent"
               />
-              <p className="mt-2 text-xs text-slate-500 dark:text-slate-400">
+              <p className="mt-3 text-sm text-slate-500 dark:text-slate-400">
                 Minimum: KSh {investmentPlans.find(p => p.id === selectedPlan)?.minInvestment.toLocaleString()}
               </p>
             </div>
@@ -275,9 +275,9 @@ export default function InvestPage(): React.ReactElement {
                   if (plan) handleInvest(plan);
                 }}
                 disabled={isLoading || !investmentAmount}
-                className="w-full bg-red-600 hover:bg-red-700 disabled:bg-red-400 text-white font-semibold py-2 px-4 rounded-lg transition-colors flex items-center justify-center gap-2">
+                className="w-full bg-red-600 hover:bg-red-700 disabled:bg-red-400 text-white font-semibold py-3 px-6 rounded-full transition-colors flex items-center justify-center gap-2">
                 {isLoading && <svg className="animate-spin h-5 w-5" fill="none" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" /><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" /></svg>}
-                {isLoading ? 'Processing...' : 'Continue'}
+                {isLoading ? 'Processing' : 'Continue'}
               </button>
               <button
                 onClick={() => {
@@ -285,7 +285,7 @@ export default function InvestPage(): React.ReactElement {
                   setInvestmentAmount('');
                   setError(null);
                 }}
-                className="w-full bg-slate-100 hover:bg-slate-200 dark:bg-slate-700 dark:hover:bg-slate-600 text-slate-900 dark:text-slate-100 font-semibold py-2 px-4 rounded-lg transition-colors">
+                className="w-full bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-900 dark:text-slate-100 font-semibold py-3 px-6 rounded-full transition-colors">
                 Cancel
               </button>
             </div>
@@ -297,58 +297,46 @@ export default function InvestPage(): React.ReactElement {
         <>
 
 
-      <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
-
-        <section className="py-16">
-          <h2 className="text-3xl font-bold text-slate-900 dark:text-slate-100 mb-12 text-center">Investment Plans</h2>
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        {/* Investment Plans */}
+        <section className="mb-20">
+          <h2 className="text-4xl font-bold text-slate-900 dark:text-slate-50 mb-16 text-center">Investment Plans</h2>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
             {investmentPlans.map((plan) => {
-              const colorClasses = {
-                blue: 'border-blue-500 bg-blue-50 dark:bg-blue-900/20',
-                purple: 'border-purple-500 bg-purple-50 dark:bg-purple-900/20',
-                amber: 'border-amber-500 bg-amber-50 dark:bg-amber-900/20'
-              };
-              const buttonClasses = {
-                blue: 'bg-blue-600 hover:bg-blue-700',
-                purple: 'bg-purple-600 hover:bg-purple-700',
-                amber: 'bg-amber-600 hover:bg-amber-700'
-              };
-
               return (
                 <div
                   key={plan.id}
-                  className={`rounded-lg border-2 p-8 shadow-lg transition-all hover:shadow-xl ${
-                    colorClasses[plan.color as keyof typeof colorClasses]
-                  } bg-white dark:bg-slate-800 dark:border-opacity-30`}
-                >
-                  <h3 className="text-2xl font-bold text-slate-900 dark:text-slate-100 mb-2">{plan.name}</h3>
-                  <p className="text-slate-600 dark:text-slate-400 mb-4 text-sm">{plan.description}</p>
+                  className="bg-white dark:bg-slate-900 rounded-3xl p-8 shadow-sm hover:shadow-xl transition-all border border-slate-200 dark:border-slate-800">
+                  {plan.id === 'professional' && (
+                    <div className="inline-block px-4 py-1 bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400 text-xs font-semibold rounded-full mb-4">Most Popular</div>
+                  )}
+                  <h3 className="text-3xl font-bold text-slate-900 dark:text-slate-50 mb-2">{plan.name}</h3>
+                  <p className="text-slate-600 dark:text-slate-400 mb-6 text-base">{plan.description}</p>
 
-                  <div className="space-y-2 mb-6 py-4 border-y border-slate-200 dark:border-slate-700">
-                    <div className="flex justify-between items-center">
-                      <span className="text-slate-700 dark:text-slate-300">Min Investment:</span>
-                      <span className="font-semibold text-slate-900 dark:text-slate-100">KSh {plan.minInvestment.toLocaleString()}</span>
+                  <div className="space-y-4 mb-8 py-8 border-y border-slate-200 dark:border-slate-800">
+                    <div className="flex justify-between items-baseline">
+                      <span className="text-slate-600 dark:text-slate-400">Minimum</span>
+                      <span className="text-2xl font-semibold text-slate-900 dark:text-slate-50">KSh {(plan.minInvestment / 1000).toLocaleString()}K</span>
                     </div>
-                    <div className="flex justify-between items-center">
-                      <span className="text-slate-700 dark:text-slate-300">Expected Return:</span>
-                      <span className="font-semibold text-green-600 dark:text-green-400">{plan.expectedReturn} p.a.</span>
+                    <div className="flex justify-between items-baseline">
+                      <span className="text-slate-600 dark:text-slate-400">Annual Return</span>
+                      <span className="text-2xl font-semibold text-red-600 dark:text-red-400">{plan.expectedReturn}</span>
                     </div>
-                    <div className="flex justify-between items-center">
-                      <span className="text-slate-700 dark:text-slate-300">Investment Term:</span>
-                      <span className="font-semibold text-slate-900 dark:text-slate-100">{plan.term}</span>
+                    <div className="flex justify-between items-baseline">
+                      <span className="text-slate-600 dark:text-slate-400">Term</span>
+                      <span className="text-2xl font-semibold text-slate-900 dark:text-slate-50">{plan.term}</span>
                     </div>
                   </div>
 
-                  <div className="mb-6">
-                    <h4 className="font-semibold text-slate-900 dark:text-slate-100 mb-3">Features:</h4>
-                    <ul className="space-y-2">
-                      {plan.features.map((feature, idx) => (
-                        <li key={idx} className="flex items-start gap-2 text-sm text-slate-700 dark:text-slate-400">
-                          <span className="text-green-600 dark:text-green-400 mt-1">✓</span>
-                          <span>{feature}</span>
-                        </li>
-                      ))}
-                    </ul>
+                  <div className="mb-8 space-y-3">
+                    {plan.features.slice(0, 3).map((feature, idx) => (
+                      <div key={idx} className="flex items-center gap-3">
+                        <svg className="w-5 h-5 text-red-600 dark:text-red-400 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                          <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                        </svg>
+                        <span className="text-sm text-slate-700 dark:text-slate-300">{feature}</span>
+                      </div>
+                    ))}
                   </div>
 
                   <button
@@ -359,10 +347,11 @@ export default function InvestPage(): React.ReactElement {
                       }
                       setSelectedPlan(plan.id);
                     }}
-                    className={`w-full py-2 rounded-lg text-white font-medium transition-colors ${
-                      buttonClasses[plan.color as keyof typeof buttonClasses]
-                    }`}
-                  >
+                    className={`w-full py-3 rounded-full font-semibold transition-colors ${
+                      plan.id === 'professional'
+                        ? 'bg-red-600 hover:bg-red-700 text-white'
+                        : 'bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-900 dark:text-slate-50'
+                    }`}>
                     {selectedPlan === plan.id ? 'Selected' : 'Choose Plan'}
                   </button>
                 </div>
@@ -372,29 +361,24 @@ export default function InvestPage(): React.ReactElement {
         </section>
 
         {/* How It Works */}
-        <section className="py-16">
-          <h2 className="text-3xl font-bold text-slate-900 dark:text-slate-100 mb-12 text-center">How It Works</h2>
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+        <section className="mb-20">
+          <h2 className="text-4xl font-bold text-slate-900 dark:text-slate-50 mb-16 text-center">How It Works</h2>
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
             {steps.map((step, index) => (
-              <div key={index} className="relative">
-                <div className="bg-white dark:bg-slate-800 rounded-lg p-6 shadow-md border border-slate-200 dark:border-slate-700 text-center">
-                  <div className="w-12 h-12 bg-red-600 text-white rounded-full flex items-center justify-center text-xl font-bold mx-auto mb-4">
-                    {step.number}
-                  </div>
-                  <h3 className="text-lg font-semibold text-slate-900 dark:text-slate-100 mb-2">{step.title}</h3>
-                  <p className="text-sm text-slate-600 dark:text-slate-400">{step.description}</p>
+              <div key={index} className="text-center">
+                <div className="w-16 h-16 bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400 rounded-full flex items-center justify-center text-2xl font-bold mx-auto mb-6">
+                  {step.number}
                 </div>
-                {index < steps.length - 1 && (
-                  <div className="hidden md:block absolute top-1/2 -right-3 w-6 h-0.5 bg-red-600 transform -translate-y-1/2"></div>
-                )}
+                <h3 className="text-xl font-bold text-slate-900 dark:text-slate-50 mb-3">{step.title}</h3>
+                <p className="text-slate-600 dark:text-slate-400 leading-relaxed">{step.description}</p>
               </div>
             ))}
           </div>
         </section>
 
         {/* FAQ Section */}
-        <section className="py-16">
-          <h2 className="text-3xl font-bold text-slate-900 dark:text-slate-100 mb-12 text-center">Frequently Asked Questions</h2>
+        <section className="mb-20">
+          <h2 className="text-4xl font-bold text-slate-900 dark:text-slate-50 mb-16 text-center">Frequently Asked Questions</h2>
           <div className="max-w-3xl mx-auto space-y-4">
             {[
               {
@@ -424,47 +408,44 @@ export default function InvestPage(): React.ReactElement {
             ].map((faq, index) => (
               <details
                 key={index}
-                className="group bg-white dark:bg-slate-800 rounded-lg border border-slate-200 dark:border-slate-700 p-4 shadow-sm hover:shadow-md transition-shadow"
-              >
-                <summary className="flex cursor-pointer items-center justify-between font-semibold text-slate-900 dark:text-slate-100">
+                className="group bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 p-6 shadow-sm hover:shadow-md transition-shadow">
+                <summary className="flex cursor-pointer items-center justify-between font-semibold text-slate-900 dark:text-slate-50 text-lg">
                   {faq.question}
-                  <span className="transition-transform group-open:rotate-180">▼</span>
+                  <span className="transition-transform group-open:rotate-180 text-red-600">▼</span>
                 </summary>
-                <p className="mt-4 text-slate-600 dark:text-slate-400">{faq.answer}</p>
+                <p className="mt-4 text-slate-600 dark:text-slate-400 leading-relaxed">{faq.answer}</p>
               </details>
             ))}
           </div>
         </section>
 
         {/* CTA Section */}
-        <section className="py-16">
-          <div className="bg-gradient-to-r from-red-600 to-red-700 dark:from-red-700 dark:to-red-800 rounded-lg p-12 text-white text-center">
-            <h2 className="text-3xl font-bold mb-4">Ready to Start Investing?</h2>
-            <p className="text-lg text-red-50 mb-8 max-w-2xl mx-auto">
-              Join hundreds of investors who are already growing their wealth with Wild Wash
+        <section className="mb-20">
+          <div className="bg-gradient-to-r from-red-600 to-red-700 dark:from-red-700 dark:to-red-800 rounded-3xl p-16 text-white text-center">
+            <h2 className="text-4xl font-bold mb-4">Ready to Start Investing?</h2>
+            <p className="text-lg text-red-50 mb-10 max-w-2xl mx-auto leading-relaxed">
+              Join thousands of investors who are already growing their wealth with Wild Wash
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
               <Link
                 href="/register"
-                className="px-8 py-3 bg-white text-red-600 rounded-lg font-semibold hover:bg-red-50 transition-colors"
-              >
-                Get Started Now
+                className="px-8 py-4 bg-white text-red-600 rounded-full font-semibold hover:bg-red-50 transition-colors">
+                Get Started
               </Link>
               <Link
                 href="/contact"
-                className="px-8 py-3 border-2 border-white text-white rounded-lg font-semibold hover:bg-white/10 transition-colors"
-              >
-                Contact Our Team
+                className="px-8 py-4 border-2 border-white text-white rounded-full font-semibold hover:bg-white/10 transition-colors">
+                Contact Us
               </Link>
             </div>
           </div>
         </section>
 
         {/* Risk Disclaimer */}
-        <section className="py-16">
-          <div className="bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg p-6">
-            <h3 className="font-semibold text-yellow-900 dark:text-yellow-100 mb-2">⚠️ Important Disclaimer</h3>
-            <p className="text-sm text-yellow-800 dark:text-yellow-200">
+        <section className="mb-20">
+          <div className="bg-yellow-50 dark:bg-yellow-900/10 border border-yellow-200 dark:border-yellow-900/30 rounded-2xl p-8">
+            <h3 className="font-bold text-yellow-900 dark:text-yellow-100 mb-3 text-lg">⚠️ Important Disclaimer</h3>
+            <p className="text-yellow-800 dark:text-yellow-200 leading-relaxed">
               Investments in Wild Wash carry risk. Past performance is not indicative of future results. Returns are not guaranteed. Please review all terms and conditions carefully before investing. Consult with a financial advisor if needed.
             </p>
           </div>
