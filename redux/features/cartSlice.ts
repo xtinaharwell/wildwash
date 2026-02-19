@@ -8,6 +8,7 @@ export interface Service {
   name: string;
   price: string;
   description: string;
+  category?: string;
   quantity?: number; // Add quantity field
 }
 
