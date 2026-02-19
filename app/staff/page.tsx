@@ -304,12 +304,12 @@ export default function StaffDashboard(): React.ReactElement {
                 const label = getUrgencyLabel(urgency.score);
                 return (
                 <tr key={o.id ?? o.code} className="border-b border-slate-100 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700/50">
-                  <td className="py-2 px-3 font-mono">
+                  <td className="py-2 px-3 font-mono text-left">
                     <Link href={`/orders/${o.code}`} className="text-indigo-600 dark:text-indigo-400 hover:underline">
                       {o.code}
                     </Link>
                   </td>
-                  <td className="py-2 px-3">
+                  <td className="py-2 px-3 text-left">
                     <div className="flex flex-col gap-2">
                       <div className="px-3 py-1 rounded bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-300 text-xs font-medium capitalize">
                         {o.status ?? o.state ?? 'requested'}
@@ -362,7 +362,7 @@ export default function StaffDashboard(): React.ReactElement {
                       {label.label} ({urgency.score})
                     </div>
                   </td>
-                  <td className="py-2 px-3 text-slate-900 dark:text-slate-300">
+                  <td className="py-2 px-3 text-slate-900 dark:text-slate-300 text-left">
                     {o.order_type === 'manual' ? (
                       // For manual orders, show the staff member who created it
                       <div className="flex flex-col">
