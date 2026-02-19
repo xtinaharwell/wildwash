@@ -9,10 +9,60 @@ import Link from "next/link";
 
 const API_BASE = process.env.NEXT_PUBLIC_API_BASE || '';
 
+// Validators
+const validators = {
+  username: (value: string) => {
+    if (!value) return "Username is required";
+    if (value.length < 3) return "Username must be at least 3 characters";
+    if (value.length > 30) return "Username must be less than 30 characters";
+    if (!/^[a-zA-Z0-9_]+$/.test(value)) return "Username can only contain letters, numbers, and underscores";
+    return "";
+  },
+  phone: (value: string) => {
+    if (!value) return "Phone number is required";
+    // Accept Kenya formats: 07xxxxxxxxx, 2547xxxxxxxxx, +2547xxxxxxxxx
+    const cleaned = value.replace(/\D/g, "");
+    if (cleaned.length < 10) return "Phone number must be at least 10 digits";
+    if (!/^(?:254|0)7\d{8}$/.test(cleaned)) return "Please enter a valid Kenya phone number";
+    return "";
+  },
+  password: (value: string) => {
+    if (!value) return "Password is required";
+    if (value.length < 8) return "Password must be at least 8 characters";
+    if (!/[A-Z]/.test(value)) return "Password must contain at least one uppercase letter";
+    if (!/[a-z]/.test(value)) return "Password must contain at least one lowercase letter";
+    if (!/\d/.test(value)) return "Password must contain at least one number";
+    return "";
+  },
+  confirmPassword: (password: string, confirmPassword: string) => {
+    if (!confirmPassword) return "Confirm password is required";
+    if (password !== confirmPassword) return "Passwords do not match";
+    return "";
+  },
+  location: (value: string) => {
+    if (!value) return "Please select a location";
+    return "";
+  },
+};
+
+// Validators for single parameter fields
+const singleParamValidators = {
+  username: validators.username,
+  phone: validators.phone,
+  location: validators.location,
+};
+
 export default function SignupPage() {
   const router = useRouter();
   const dispatch = useDispatch();
   const [formData, setFormData] = useState({
+    username: "",
+    phone: "",
+    password: "",
+    confirmPassword: "",
+    location: "",
+  });
+  const [errors, setErrors] = useState({
     username: "",
     phone: "",
     password: "",
@@ -30,14 +80,40 @@ export default function SignupPage() {
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
+
+    // Clear error for this field when user starts typing
+    const newErrors = { ...errors };
+    if (name === "confirmPassword") {
+      newErrors.confirmPassword = validators.confirmPassword(formData.password, value);
+    } else if (name === "password") {
+      newErrors.password = validators.password(value);
+      // Also revalidate confirmPassword if it exists
+      if (formData.confirmPassword) {
+        newErrors.confirmPassword = validators.confirmPassword(value, formData.confirmPassword);
+      }
+    } else {
+      newErrors[name as keyof typeof singleParamValidators] = singleParamValidators[name as keyof typeof singleParamValidators]?.(value) || "";
+    }
+    setErrors(newErrors);
+  };
+
+  const validateForm = (): boolean => {
+    const newErrors = {
+      username: validators.username(formData.username),
+      phone: validators.phone(formData.phone),
+      password: validators.password(formData.password),
+      confirmPassword: validators.confirmPassword(formData.password, formData.confirmPassword),
+      location: validators.location(formData.location),
+    };
+    setErrors(newErrors);
+    return !Object.values(newErrors).some((error) => error !== "");
   };
 
   async function handleSubmit(e?: React.FormEvent) {
     e?.preventDefault();
     setError(null);
 
-    if (formData.password !== formData.confirmPassword) {
-      setError("Passwords do not match");
+    if (!validateForm()) {
       return;
     }
 
@@ -97,10 +173,11 @@ export default function SignupPage() {
               name="username"
               value={formData.username}
               onChange={handleChange}
-              className="mt-1 w-full rounded-md border dark:border-slate-800 bg-white dark:bg-slate-900 px-3 py-2 text-sm"
+              className={`mt-1 w-full rounded-md border ${errors.username ? "border-red-500" : "dark:border-slate-800"} bg-white dark:bg-slate-900 px-3 py-2 text-sm`}
               placeholder="Choose a username"
               autoComplete="username"
             />
+            {errors.username && <p className="mt-1 text-xs text-red-600 dark:text-red-400">{errors.username}</p>}
           </div>
 
           <div>
@@ -110,10 +187,11 @@ export default function SignupPage() {
               type="tel"
               value={formData.phone}
               onChange={handleChange}
-              className="mt-1 w-full rounded-md border dark:border-slate-800 bg-white dark:bg-slate-900 px-3 py-2 text-sm"
+              className={`mt-1 w-full rounded-md border ${errors.phone ? "border-red-500" : "dark:border-slate-800"} bg-white dark:bg-slate-900 px-3 py-2 text-sm`}
               placeholder="07123456789"
               autoComplete="tel"
             />
+            {errors.phone && <p className="mt-1 text-xs text-red-600 dark:text-red-400">{errors.phone}</p>}
           </div>
 
           <div>
@@ -122,13 +200,14 @@ export default function SignupPage() {
               name="location"
               value={formData.location}
               onChange={handleChange}
-              className="mt-1 w-full rounded-md border dark:border-slate-800 bg-white dark:bg-slate-900 px-3 py-2 text-sm"
+              className={`mt-1 w-full rounded-md border ${errors.location ? "border-red-500" : "dark:border-slate-800"} bg-white dark:bg-slate-900 px-3 py-2 text-sm`}
             >
               <option value="">Select a location</option>
               {locations.map((l) => (
                 <option key={l} value={l}>{l}</option>
               ))}
             </select>
+            {errors.location && <p className="mt-1 text-xs text-red-600 dark:text-red-400">{errors.location}</p>}
           </div>
 
           <div>
@@ -139,7 +218,7 @@ export default function SignupPage() {
                 type={showPassword ? "text" : "password"}
                 value={formData.password}
                 onChange={handleChange}
-                className="w-full rounded-md border dark:border-slate-800 bg-white dark:bg-slate-900 px-3 py-2 text-sm"
+                className={`w-full rounded-md border ${errors.password ? "border-red-500" : "dark:border-slate-800"} bg-white dark:bg-slate-900 px-3 py-2 text-sm`}
                 placeholder="Create a password"
                 autoComplete="new-password"
               />
@@ -153,6 +232,7 @@ export default function SignupPage() {
                 {showPassword ? "Hide" : "Show"}
               </button>
             </div>
+            {errors.password && <p className="mt-1 text-xs text-red-600 dark:text-red-400">{errors.password}</p>}
           </div>
 
           <div>
@@ -163,7 +243,7 @@ export default function SignupPage() {
                 type={showConfirmPassword ? "text" : "password"}
                 value={formData.confirmPassword}
                 onChange={handleChange}
-                className="w-full rounded-md border dark:border-slate-800 bg-white dark:bg-slate-900 px-3 py-2 text-sm"
+                className={`w-full rounded-md border ${errors.confirmPassword ? "border-red-500" : "dark:border-slate-800"} bg-white dark:bg-slate-900 px-3 py-2 text-sm`}
                 placeholder="Confirm your password"
                 autoComplete="new-password"
               />
@@ -177,6 +257,7 @@ export default function SignupPage() {
                 {showConfirmPassword ? "Hide" : "Show"}
               </button>
             </div>
+            {errors.confirmPassword && <p className="mt-1 text-xs text-red-600 dark:text-red-400">{errors.confirmPassword}</p>}
           </div>
 
           {error && <div className="text-sm text-red-600 dark:text-red-400">{error}</div>}
@@ -193,6 +274,7 @@ export default function SignupPage() {
               type="button"
               onClick={() => {
                 setFormData({ username: "", phone: "", password: "", confirmPassword: "", location: "" });
+                setErrors({ username: "", phone: "", password: "", confirmPassword: "", location: "" });
                 setError(null);
               }}
               className="rounded-md border dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800 px-4 py-2 text-sm"

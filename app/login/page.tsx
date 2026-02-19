@@ -129,6 +129,12 @@ export default function LoginPage() {
                 {showPassword ? "Hide" : "Show"}
               </button>
             </div>
+            <Link 
+              href="/reset-password" 
+              className="text-xs text-red-600 hover:text-red-500 mt-2 inline-block"
+            >
+              Forgot password?
+            </Link>
           </div>
 
           {error && <div className="text-sm text-red-600 dark:text-red-400">{error}</div>}

@@ -24,7 +24,7 @@ export default function Page() {
   const [dropoffAddress, setDropoffAddress] = useState("");
   const [sameAsPickup, setSameAsPickup] = useState(true);
   const [userProfile, setUserProfile] = useState<any>(null);
-  const [urgency, setUrgency] = useState(2); // 1 = Normal, 2 = Fast, 3 = Express
+  const [deliveryHours, setDeliveryHours] = useState(24); // Delivery time in hours (1-72)
   const [sending, setSending] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
   const [serverErrors, setServerErrors] = useState<any | null>(null);
@@ -32,9 +32,106 @@ export default function Page() {
   const [scheduledAt, setScheduledAt] = useState<string>(''); // stores value from datetime-local input
   const [customerNote, setCustomerNote] = useState<string>('');
   const [summaryExpanded, setSummaryExpanded] = useState<boolean>(false);
+  const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
 
   const cartItems = useAppSelector(selectCartItems);
   const cartServiceIds = useMemo(() => cartItems.map(item => item.id), [cartItems]);
+
+  // Validation functions
+  const validatePhone = (phone: string): boolean => {
+    // Basic phone validation - at least 10 digits
+    const phoneDigits = phone.replace(/\D/g, '');
+    return phoneDigits.length >= 10;
+  };
+
+  const validateForm = (): boolean => {
+    const errors: Record<string, string> = {};
+
+    // Validate pickup building
+    if (!pickupBuilding.trim()) {
+      errors.pickupBuilding = "Pickup address is required";
+    }
+
+    // Validate pickup contact
+    if (!pickupContact.trim()) {
+      errors.pickupContact = "Contact phone number is required";
+    } else if (!validatePhone(pickupContact)) {
+      errors.pickupContact = "Phone number must have at least 10 digits";
+    }
+
+    // Validate dropoff address if not same as pickup
+    if (!sameAsPickup && !dropoffAddress.trim()) {
+      errors.dropoffAddress = "Dropoff address is required";
+    }
+
+    // Validate services in cart
+    if (cartItems.length === 0) {
+      errors.services = "Please add at least one service to your cart";
+    }
+
+    setFieldErrors(errors);
+
+    // Scroll to first error field
+    if (Object.keys(errors).length > 0) {
+      const firstErrorKey = Object.keys(errors)[0];
+      const errorElement = document.getElementById(`error-${firstErrorKey}`);
+      if (errorElement) {
+        errorElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }
+    }
+
+    return Object.keys(errors).length === 0;
+  };
+
+  // Calculate price multiplier based on exact delivery hours with smooth interpolation
+  const calculatePriceMultiplier = (hours: number): number => {
+    // Define key price points for smooth pricing curve
+    // Hours -> Multiplier
+    // 6h = 2.0x (express)
+    // 12h = 1.6x (fast)
+    // 24h = 1.3x (fast)
+    // 36h = 1.1x (normal)
+    // 48h = 1.0x (normal)
+    // 72h = 0.7x (economy)
+    
+    const pricePoints = [
+      { hours: 6, multiplier: 2.0 },
+      { hours: 12, multiplier: 1.6 },
+      { hours: 24, multiplier: 1.3 },
+      { hours: 36, multiplier: 1.1 },
+      { hours: 48, multiplier: 1.0 },
+      { hours: 72, multiplier: 0.7 },
+    ];
+
+    // Find the two surrounding points for interpolation
+    for (let i = 0; i < pricePoints.length - 1; i++) {
+      const current = pricePoints[i];
+      const next = pricePoints[i + 1];
+      
+      if (hours >= current.hours && hours <= next.hours) {
+        // Linear interpolation between two points
+        const ratio = (hours - current.hours) / (next.hours - current.hours);
+        return current.multiplier + (next.multiplier - current.multiplier) * ratio;
+      }
+    }
+
+    // If beyond all points, return the last one
+    return pricePoints[pricePoints.length - 1].multiplier;
+  };
+
+  // Format delivery speed label based on exact multiplier
+  const getDeliveryLabel = (hours: number): string => {
+    const multiplier = calculatePriceMultiplier(hours);
+    if (multiplier >= 2.0) return "Express";
+    if (multiplier >= 1.5) return "Fast";
+    if (multiplier >= 1.0) return "Normal";
+    return "Economy";
+  };
+
+  // Calculate total price with multiplier
+  const baseTotal = cartItems.reduce((acc, item) => acc + Number(item.price) * (item.quantity || 1), 0);
+  const priceMultiplier = calculatePriceMultiplier(deliveryHours);
+  const totalWithMultiplier = baseTotal * priceMultiplier;
 
   useEffect(() => {
     // warm the csrf cookie for cross-domain SPA
@@ -130,8 +227,9 @@ export default function Page() {
   }
 
   async function handleBookPickup() {
-    if (!canSubmitBooking) {
-      setMessage("Please fill all required fields.");
+    // Validate form before submission
+    if (!validateForm()) {
+      setMessage("Please fix the errors above before booking.");
       return;
     }
 
@@ -140,11 +238,11 @@ export default function Page() {
         service_quantities: cartItems.map(item => ({ service_id: item.id, quantity: item.quantity || 1 })),
         pickup_address: pickupBuilding + (pickupContact ? ` (contact: ${pickupContact})` : ""),
         dropoff_address: sameAsPickup ? pickupBuilding : dropoffAddress,
-        urgency: Number(urgency),
+        urgency: calculatePriceMultiplier(deliveryHours) === 2.0 ? 3 : calculatePriceMultiplier(deliveryHours) === 1.3 ? 2 : 1, // Convert hours to urgency level
         // These fields might not be needed for a 'booking' vs an 'order'
         items: cartItems.length,
         weight_kg: null, // To be determined at pickup
-        price: null, // To be determined at pickup
+        price: Math.round(totalWithMultiplier * 100) / 100, // Round to 2 decimal places to avoid validation errors
     estimated_delivery: null, // To be set by backend
   // Include an optional customer note/description
   ...(customerNote ? { description: customerNote } : {}),
@@ -161,7 +259,8 @@ export default function Page() {
         setPickupContact("");
         setDropoffAddress("");
         setSameAsPickup(false);
-        setUrgency(2);
+        setDeliveryHours(24);
+        setFieldErrors({}); // Clear all validation errors
         
         // Redirect to orders page after a short delay
         setTimeout(() => {
@@ -192,31 +291,55 @@ export default function Page() {
               <div className="space-y-3">
                 <div className="text-sm font-semibold text-slate-700">Pickup Address</div>
                 <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-                  <div>
+                  <div id="error-pickupBuilding">
                     <label htmlFor="pickup-building" className="block text-xs text-slate-500 mb-1">Building / Street</label>
                     <input 
                       id="pickup-building"
                       type="text"
                       value={pickupBuilding} 
-                      onChange={(e) => setPickupBuilding(e.target.value)} 
+                      onChange={(e) => {
+                        setPickupBuilding(e.target.value);
+                        if (fieldErrors.pickupBuilding) {
+                          setFieldErrors({ ...fieldErrors, pickupBuilding: "" });
+                        }
+                      }} 
                       placeholder="e.g. Olive Towers, 4th floor" 
-                      className="w-full rounded-lg border border-slate-200 dark:border-slate-600 p-3 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-red-500 bg-white dark:bg-slate-700 text-slate-900 dark:text-slate-100 placeholder-slate-400 dark:placeholder-slate-500" 
+                      className={`w-full rounded-lg border p-3 text-sm shadow-sm focus:outline-none focus:ring-2 bg-white dark:bg-slate-700 text-slate-900 dark:text-slate-100 placeholder-slate-400 dark:placeholder-slate-500 ${
+                        fieldErrors.pickupBuilding 
+                          ? 'border-red-500 dark:border-red-400 focus:ring-red-500' 
+                          : 'border-slate-200 dark:border-slate-600 focus:ring-red-500'
+                      }`}
                     />
+                    {fieldErrors.pickupBuilding && (
+                      <p className="mt-1 text-xs text-red-600 dark:text-red-400">{fieldErrors.pickupBuilding}</p>
+                    )}
                   </div>
-                  <div>
+                  <div id="error-pickupContact">
                     <label htmlFor="pickup-contact" className="block text-xs text-slate-500 dark:text-slate-400 mb-1">Contact (phone)</label>
                     <input 
                       id="pickup-contact"
                       type="tel"
                       value={pickupContact} 
-                      onChange={(e) => setPickupContact(e.target.value)} 
+                      onChange={(e) => {
+                        setPickupContact(e.target.value);
+                        if (fieldErrors.pickupContact) {
+                          setFieldErrors({ ...fieldErrors, pickupContact: "" });
+                        }
+                      }} 
                       placeholder="e.g. +254 7xx xxx xxx" 
-                      className="w-full rounded-lg border border-slate-200 dark:border-slate-600 p-3 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-sky-300 bg-white dark:bg-slate-700 text-slate-900 dark:text-slate-100 placeholder-slate-400 dark:placeholder-slate-500" 
+                      className={`w-full rounded-lg border p-3 text-sm shadow-sm focus:outline-none focus:ring-2 bg-white dark:bg-slate-700 text-slate-900 dark:text-slate-100 placeholder-slate-400 dark:placeholder-slate-500 ${
+                        fieldErrors.pickupContact 
+                          ? 'border-red-500 dark:border-red-400 focus:ring-red-500' 
+                          : 'border-slate-200 dark:border-slate-600 focus:ring-sky-300'
+                      }`}
                     />
+                    {fieldErrors.pickupContact && (
+                      <p className="mt-1 text-xs text-red-600 dark:text-red-400">{fieldErrors.pickupContact}</p>
+                    )}
                   </div>
                 </div>
 
-                <div>
+                <div id="error-services">
                   <div className="block text-xs text-slate-500 dark:text-slate-400 mb-1">Services to be picked up</div>
                     <ul className="space-y-2" role="list">
                         {cartItems.map((item) => (
@@ -229,6 +352,9 @@ export default function Page() {
                             </li>
                         ))}
                     </ul>
+                    {fieldErrors.services && (
+                      <p className="mt-1 text-xs text-red-600 dark:text-red-400">{fieldErrors.services}</p>
+                    )}
                 </div>
 
 
@@ -256,6 +382,9 @@ export default function Page() {
                       checked={sameAsPickup}
                       onChange={(e) => {
                         setSameAsPickup(e.target.checked);
+                        if (fieldErrors.dropoffAddress) {
+                          setFieldErrors({ ...fieldErrors, dropoffAddress: "" });
+                        }
                         if (e.target.checked) {
                           setDropoffAddress(pickupBuilding);
                         }
@@ -265,44 +394,66 @@ export default function Page() {
                     <span className="text-sm text-slate-700 dark:text-slate-300">Dropoff same as pickup location</span>
                   </label>
                   {!sameAsPickup && (
-                    <div>
+                    <div id="error-dropoffAddress">
                       <label htmlFor="dropoff-address" className="sr-only">Dropoff Address</label>
                       <input 
                         id="dropoff-address"
                         type="text"
                         value={dropoffAddress} 
-                        onChange={(e) => setDropoffAddress(e.target.value)} 
+                        onChange={(e) => {
+                          setDropoffAddress(e.target.value);
+                          if (fieldErrors.dropoffAddress) {
+                            setFieldErrors({ ...fieldErrors, dropoffAddress: "" });
+                          }
+                        }} 
                         placeholder="e.g. Home / Office address for dropoff" 
-                        className="w-full rounded-lg border border-slate-200 dark:border-slate-600 p-3 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-sky-300 bg-white dark:bg-slate-700 text-slate-900 dark:text-slate-100 placeholder-slate-400 dark:placeholder-slate-500" 
+                        className={`w-full rounded-lg border p-3 text-sm shadow-sm focus:outline-none focus:ring-2 bg-white dark:bg-slate-700 text-slate-900 dark:text-slate-100 placeholder-slate-400 dark:placeholder-slate-500 ${
+                          fieldErrors.dropoffAddress 
+                            ? 'border-red-500 dark:border-red-400 focus:ring-red-500' 
+                            : 'border-slate-200 dark:border-slate-600 focus:ring-sky-300'
+                        }`}
                       />
+                      {fieldErrors.dropoffAddress && (
+                        <p className="mt-1 text-xs text-red-600 dark:text-red-400">{fieldErrors.dropoffAddress}</p>
+                      )}
                     </div>
                   )}
                 </div>
               </div>
 
               <div className="space-y-3">
-                <div className="text-sm font-semibold text-slate-700 dark:text-slate-200">Urgency</div>
-                <div className="flex items-center gap-3">
-                  <div className="flex-1">
-                    <label htmlFor="urgency-slider" className="sr-only">Urgency Level</label>
-                    <input 
-                      id="urgency-slider"
-                      type="range" 
-                      min={1} 
-                      max={3} 
-                      value={urgency} 
-                      onChange={(e) => setUrgency(Number(e.target.value))} 
-                      className="w-full accent-red-500 dark:accent-red-400" 
-                    />
-                    <div className="mt-2 text-xs text-slate-500 dark:text-slate-400 flex items-center justify-between">
-                      <span>(48h)</span>
-                      <span>(24h)</span>
-                      <span>(4-6h)</span>
+                <div className="text-sm font-semibold text-slate-700 dark:text-slate-200">Delivery Time & Price</div>
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs text-slate-500 dark:text-slate-400">Select delivery time</span>
+                    <span className="text-lg font-bold text-red-600 dark:text-red-400">{deliveryHours}h</span>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <div className="flex-1">
+                      <label htmlFor="delivery-hours" className="sr-only">Delivery Hours</label>
+                      <input 
+                        id="delivery-hours"
+                        type="range" 
+                        min={6} 
+                        max={72} 
+                        value={deliveryHours} 
+                        onChange={(e) => setDeliveryHours(Number(e.target.value))} 
+                        className="w-full accent-red-500 dark:accent-red-400" 
+                      />
+                      <div className="mt-2 text-xs text-slate-500 dark:text-slate-400 flex items-center justify-between">
+                        <span>6h</span>
+                        <span>36h</span>
+                        <span>72h</span>
+                      </div>
                     </div>
                   </div>
-                  <div className="w-28 text-right">
-                    <div className="text-xs text-slate-500 dark:text-slate-400">Selected</div>
-                    <div className="mt-1 font-medium text-slate-800 dark:text-slate-200">{urgency === 1 ? "Normal" : urgency === 2 ? "Fast" : "Express"}</div>
+
+                  <div className="grid grid-cols-1 gap-3">
+                    <div className="rounded-lg bg-slate-50 dark:bg-slate-700/50 p-3">
+                      <div className="text-xs text-slate-500 dark:text-slate-400">Delivery Speed</div>
+                      <div className="mt-1 font-semibold text-slate-800 dark:text-slate-100">{getDeliveryLabel(deliveryHours)}</div>
+                      <div className="text-xs text-slate-500 dark:text-slate-400 mt-1">{deliveryHours} hour{deliveryHours !== 1 ? 's' : ''}</div>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -374,7 +525,7 @@ export default function Page() {
                 </div>
                 <div>
                   <div className="text-xs text-slate-500 dark:text-slate-500">Delivery Speed</div>
-                  <div className="mt-1 font-medium text-slate-800 dark:text-slate-100">{urgency === 1 ? "Normal (48h)" : urgency === 2 ? "Fast (24h)" : "Express (4-6h)"}</div>
+                  <div className="mt-1 font-medium text-slate-800 dark:text-slate-100">{getDeliveryLabel(deliveryHours)} ({deliveryHours}h)</div>
                 </div>
               </div>
 
@@ -391,15 +542,15 @@ export default function Page() {
                   </div>
                 </div>
                 <div className="mt-2 flex items-center justify-between">
-                  <div className="text-xs text-slate-500">Total</div>
-                  <div className="font-semibold text-red-600 dark:text-red-400">KSh {cartItems.reduce((acc, item) => acc + Number(item.price) * (item.quantity || 1), 0).toFixed(2)}</div>
+                  <div className="text-xs text-slate-500">Total (with {priceMultiplier.toFixed(2)}x)</div>
+                  <div className="font-semibold text-red-600 dark:text-red-400">KSh {totalWithMultiplier.toFixed(2)}</div>
                 </div>
 
                 <div className="mt-3 flex items-center gap-2">
                   <button onClick={() => setSummaryExpanded(s => !s)} className="text-sm text-blue-600 dark:text-blue-400 underline">
                     {summaryExpanded ? 'Hide details' : 'Show details'}
                   </button>
-                  <div className="text-xs text-slate-500">{urgency === 1 ? "Normal" : urgency === 2 ? "Fast" : "Express"}</div>
+                  <div className="text-xs text-slate-500">{getDeliveryLabel(deliveryHours)} ({deliveryHours}h)</div>
                 </div>
 
                 {summaryExpanded && (
@@ -422,16 +573,20 @@ export default function Page() {
               </div>
 
               <div className="mt-6 pt-4 border-t border-slate-200 dark:border-slate-700">
-                <div className="flex justify-between items-center">
-                  <div className="text-xs font-semibold text-slate-700 dark:text-slate-200">Total Cost:</div>
-                  <div className="text-lg font-bold text-red-600 dark:text-red-400">
-                    KSh {cartItems.reduce((acc, item) => acc + Number(item.price) * (item.quantity || 1), 0).toFixed(2)}
+                <div className="space-y-2">
+                  <div className="flex justify-between items-center text-sm">
+                    <div className="text-slate-600 dark:text-slate-400">Service Total:</div>
+                    <div className="font-medium text-slate-800 dark:text-slate-100">KSh {baseTotal.toFixed(2)}</div>
+                  </div>
+                  <div className="flex justify-between items-center text-base font-bold pt-2 border-t border-slate-200 dark:border-slate-700">
+                    <div className="text-slate-700 dark:text-slate-200">Final Cost:</div>
+                    <div className="text-red-600 dark:text-red-400">KSh {totalWithMultiplier.toFixed(2)}</div>
                   </div>
                 </div>
               </div>
 
               <div className="mt-6 text-xs text-slate-500 dark:text-slate-500">
-                You will be able to checkout and pay on the orders page after pickup confirmation.
+                Price varies based on delivery time selected. Faster delivery = higher cost. You'll confirm payment after pickup.
               </div>
             </div>
           </aside>
@@ -445,7 +600,9 @@ export default function Page() {
                 setPickupContact("");
                 setDropoffAddress("");
                 setSameAsPickup(false);
-                setUrgency(2);
+                setDeliveryHours(24);
+                setFieldErrors({}); // Clear validation errors
+                resetMessage();
               }} 
               className="px-4 py-2 text-sm text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200"
             >
@@ -453,7 +610,7 @@ export default function Page() {
             </button>
             <button 
               onClick={handleBookPickup} 
-              disabled={!canSubmitBooking || sending} 
+              disabled={sending} 
               className="flex-1 max-w-md rounded-lg bg-red-600 text-white py-3 text-sm font-medium disabled:opacity-50 hover:bg-red-700 dark:hover:bg-red-500"
             >
               {sending ? "Processing..." : "Book Pick Up"}

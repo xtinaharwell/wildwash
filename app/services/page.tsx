@@ -10,6 +10,52 @@ interface Service {
   category: string;
   price: string;
   description: string;
+  image_url?: string | null;
+}
+
+// Map service names to image files with intelligent fallback
+const serviceImageMap: Record<string, string> = {
+  "Standard Wash": "Standard Wash.png",
+  "Express Wash": "Express Wash.png",
+  "Dry Cleaning": "Dry Cleaning.png",
+  "Duvet Cleaning": "Duvet Cleaning.png",
+  "Carpet Cleaning": "Carpet Cleaning.png",
+  "Ironing Service": "Ironing Service.png",
+  "Bedsitter Fumigation": "Bedsitter Fumigation.png",
+};
+
+function getImageForService(serviceName: string): string {
+  // First, try exact match
+  if (serviceImageMap[serviceName]) {
+    return serviceImageMap[serviceName];
+  }
+
+  // If no exact match, find closest match by keyword
+  const nameLower = serviceName.toLowerCase();
+  
+  if (nameLower.includes("fumigation") || nameLower.includes("bedsitter")) {
+    return "Bedsitter Fumigation.png";
+  }
+  if (nameLower.includes("carpet")) {
+    return "Carpet Cleaning.png";
+  }
+  if (nameLower.includes("duvet")) {
+    return "Duvet Cleaning.png";
+  }
+  if (nameLower.includes("iron")) {
+    return "Ironing Service.png";
+  }
+  if (nameLower.includes("dry") || nameLower.includes("dryclean")) {
+    return "Dry Cleaning.png";
+  }
+  if (nameLower.includes("express")) {
+    return "Express Wash.png";
+  }
+  if (nameLower.includes("wash") || nameLower.includes("laundry")) {
+    return "Standard Wash.png";
+  }
+  
+  return "Standard Wash.png";
 }
 
 export default function ServicesPage() {
@@ -29,7 +75,12 @@ export default function ServicesPage() {
         const res = await fetch(`${process.env.NEXT_PUBLIC_API_BASE}/services/`);
         if (!res.ok) throw new Error("Failed to fetch services");
         const data = await res.json();
-        setServices(data);
+        // Add image URLs to services
+        const servicesWithImages = data.map((s: any) => ({
+          ...s,
+          image_url: getImageForService(s.name) ? `/images/${getImageForService(s.name)}` : (s.image_url || null),
+        }));
+        setServices(servicesWithImages);
       } catch (err) {
         setError((err as Error).message);
       } finally {
@@ -86,14 +137,25 @@ export default function ServicesPage() {
                       <button
                         aria-expanded={open === s.id.toString()}
                         onClick={() => toggle(s.id.toString())}
-                        className="w-full flex items-center justify-between px-4 py-3 text-left hover:bg-slate-50 dark:hover:bg-white/5 focus:outline-none"
+                        className="w-full flex items-start gap-4 px-4 py-3 text-left hover:bg-slate-50 dark:hover:bg-white/5 focus:outline-none"
                       >
-                        <div>
+                        {/* Service image */}
+                        {s.image_url && (
+                          <div className="flex-shrink-0 w-16 h-16 rounded-lg overflow-hidden bg-slate-100 dark:bg-slate-900">
+                            <img
+                              src={s.image_url}
+                              alt={s.name}
+                              className="w-full h-full object-cover"
+                            />
+                          </div>
+                        )}
+                        
+                        <div className="flex-1">
                           <div className="font-medium">{s.name}</div>
                           <div className="text-sm text-slate-500 mt-1">KSh {s.price}</div>
                         </div>
                         <ChevronDownIcon
-                          className={`w-5 h-5 transition-transform ${
+                          className={`w-5 h-5 transition-transform flex-shrink-0 ${
                             open === s.id.toString() ? "rotate-180" : "rotate-0"
                           }`}
                         />
