@@ -348,7 +348,7 @@ export default function ProfilePage() {
               ) : (
                 <div className="space-y-4">
                   <p className="text-sm text-slate-600 dark:text-slate-400">
-                    Subscribe to regular car wash pickups and never worry about scheduling again.
+                    Subscribe to regular Wild Wash pickups and never worry about scheduling again.
                   </p>
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                     {(['weekly', 'bi-weekly', 'monthly'] as SubscriptionFrequency[]).map((frequency) => (

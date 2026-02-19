@@ -243,9 +243,9 @@ export default function Page() {
         items: cartItems.length,
         weight_kg: null, // To be determined at pickup
         price: Math.round(totalWithMultiplier * 100) / 100, // Round to 2 decimal places to avoid validation errors
-    estimated_delivery: null, // To be set by backend
-  // Include an optional customer note/description
-  ...(customerNote ? { description: customerNote } : {}),
+        estimated_delivery: new Date(Date.now() + deliveryHours * 60 * 60 * 1000).toISOString(), // Based on selected delivery hours
+        // Include an optional customer note/description
+        ...(customerNote ? { description: customerNote } : {}),
     // If user chose to schedule a pickup, send requested_pickup_at in ISO format
     ...(scheduleOption === 'scheduled' && scheduledAt ? { requested_pickup_at: new Date(scheduledAt).toISOString() } : {}),
     };
