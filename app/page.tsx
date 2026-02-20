@@ -54,7 +54,7 @@ function getImageForService(serviceName: string): string {
   return "Standard Wash.png";
 }
 
-function getIconForCategory(category: string) {
+function getIconForCategory(category: string): React.ComponentType<{ className?: string }> {
   switch (category) {
     case "laundry":
       return CheckBadgeIcon;
