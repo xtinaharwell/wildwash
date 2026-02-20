@@ -25,6 +25,9 @@ export default function InvestPage(): React.ReactElement {
   const isAuthenticated = useSelector((state: RootState) => state.auth.isAuthenticated);
   const userPhone = useSelector((state: RootState) => state.auth.user?.phone);
 
+  // Get API base URL
+  const apiBase = typeof window !== 'undefined' ? process.env.NEXT_PUBLIC_API_BASE || '' : '';
+
   const investmentPlans = [
     {
       id: 'starter',
@@ -110,25 +113,67 @@ export default function InvestPage(): React.ReactElement {
     setError(null);
 
     try {
-      // Initiate STK push
-      const response = await fetch('/api/payments/stk-push', {
+      // Get auth token from localStorage
+      let authToken = '';
+      if (typeof window !== 'undefined') {
+        const storedAuth = localStorage.getItem('wildwash_auth_state');
+        if (storedAuth) {
+          const authState = JSON.parse(storedAuth);
+          authToken = authState.token || '';
+        }
+      }
+
+      if (!authToken) {
+        setError('Authentication token not found. Please log in again.');
+        setIsLoading(false);
+        return;
+      }
+
+      // Step 1: Create investment in the database
+      const createInvestmentRes = await fetch(`${apiBase}/loans/investments/`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Token ${authToken}`
+        },
+        credentials: 'same-origin',
         body: JSON.stringify({
-          phone: userPhone,
-          amount: amount,
-          accountReference: `INVEST-${plan.id.toUpperCase()}`,
-          transactionDesc: `Wild Wash Investment - ${plan.name} Plan`,
-          investmentPlan: plan.id,
-          investmentAmount: amount
+          plan_type: plan.id,
+          amount: amount
         })
       });
 
-      if (!response.ok) {
+      if (!createInvestmentRes.ok) {
+        const errorData = await createInvestmentRes.json();
+        throw new Error(errorData.detail || errorData.error || 'Failed to create investment');
+      }
+
+      const investmentData = await createInvestmentRes.json();
+
+      // Step 2: Initiate STK push for payment
+      const stkRes = await fetch(`${apiBase}/payments/mpesa/stk-push/`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Token ${authToken}`
+        },
+        credentials: 'same-origin',
+        body: JSON.stringify({
+          phone: userPhone,
+          amount: amount,
+          order_id: `INVEST-${plan.id.toUpperCase()}-${investmentData.id}`,
+          transactionDesc: `Wild Wash Investment - ${plan.name} Plan`,
+          investmentPlan: plan.id,
+          investmentAmount: amount,
+          investmentId: investmentData.id
+        })
+      });
+
+      if (!stkRes.ok) {
         throw new Error('Failed to initiate payment');
       }
 
-      const data = await response.json();
+      const stkData = await stkRes.json();
 
       // Calculate returns
       const months = plan.id === 'starter' ? 12 : plan.id === 'professional' ? 18 : 24;
@@ -225,7 +270,11 @@ export default function InvestPage(): React.ReactElement {
 
             <div className="space-y-3">
               <button
-                onClick={() => setInvestmentConfirmation(null)}
+                onClick={() => {
+                  setInvestmentConfirmation(null);
+                  // Navigate to dashboard
+                  window.location.href = '/invest/dashboard';
+                }}
                 className="w-full bg-red-600 hover:bg-red-700 text-white font-semibold py-3 px-4 rounded-full transition-colors">
                 View Dashboard
               </button>
@@ -427,11 +476,20 @@ export default function InvestPage(): React.ReactElement {
               Join thousands of investors who are already growing their wealth with Wild Wash
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <Link
-                href="/register"
-                className="px-8 py-4 bg-white text-red-600 rounded-full font-semibold hover:bg-red-50 transition-colors">
-                Get Started
-              </Link>
+              {isAuthenticated && (
+                <Link
+                  href="/invest/dashboard"
+                  className="px-8 py-4 bg-white text-red-600 rounded-full font-semibold hover:bg-red-50 transition-colors">
+                  View My Investments
+                </Link>
+              )}
+              {!isAuthenticated && (
+                <Link
+                  href="/register"
+                  className="px-8 py-4 bg-white text-red-600 rounded-full font-semibold hover:bg-red-50 transition-colors">
+                  Get Started
+                </Link>
+              )}
               <Link
                 href="/contact"
                 className="px-8 py-4 border-2 border-white text-white rounded-full font-semibold hover:bg-white/10 transition-colors">
