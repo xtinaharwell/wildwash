@@ -16,18 +16,16 @@ import {
 } from "@heroicons/react/24/outline";
 import { useAppDispatch } from "@/redux/hooks";
 import { addToCart } from "@/redux/features/cartSlice";
-
-interface Service {
-  id: number;
-  name: string;
-  category?: string;
-  price: number | string;
-  description?: string;
-  icon?: React.ComponentType<{ className?: string }>;
-  image_url?: string | null;
-}
+import { useGetServicesQuery } from "@/redux/services/apiSlice";
+import type { Service } from "@/redux/services/apiSlice";
 
 const API_BASE = process.env.NEXT_PUBLIC_API_BASE ?? "";
+
+// Extended service type with UI properties
+type ServiceWithUI = Service & {
+  icon: React.ComponentType<{ className?: string }>;
+  image_url: string | null;
+};
 
 // Map service names to image files with intelligent fallback
 const serviceImageMap: Record<string, string> = {
@@ -79,13 +77,21 @@ export default function HomePage() {
   const dispatch = useAppDispatch();
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
-  const [services, setServices] = useState<Service[]>([]);
-  const [loading, setLoading] = useState(true);
   const [addedItem, setAddedItem] = useState<number | null>(null);
   const [showScrollTop, setShowScrollTop] = useState(false);
   const [visibleCards, setVisibleCards] = useState<Set<number>>(new Set());
   const cardRefs = useRef<Map<number, HTMLDivElement>>(new Map());
   const observerRef = useRef<IntersectionObserver | null>(null);
+
+  // Fetch services using Redux
+  const { data: servicesData, isLoading: loading, error: servicesError } = useGetServicesQuery();
+
+  // Transform services with images and icons (safely handle undefined/null data)
+  const services: ServiceWithUI[] = (Array.isArray(servicesData) ? servicesData : []).map((s): ServiceWithUI => ({
+    ...s,
+    icon: getIconForCategory(s.category || "other"),
+    image_url: s.image_url || (getImageForService(s.name) ? `/images/${getImageForService(s.name)}` : null),
+  }));
 
   // Initial load bounce
   useEffect(() => {
@@ -97,71 +103,22 @@ export default function HomePage() {
     return () => clearTimeout(timer);
   }, []);
 
-  // Fetch services
+  // Setup IntersectionObserver for card animations
   useEffect(() => {
-    let mounted = true;
-    const fetchServices = async () => {
-      try {
-        setLoading(true);
-        const response = await fetch(`${API_BASE}/services/`, {
-          credentials: "include",
-          headers: { Accept: "application/json" },
-        });
-        if (!response.ok) throw new Error(`Failed: ${response.status}`);
-        const data = await response.json();
-        if (!mounted) return;
-        const servicesList = Array.isArray(data) ? data : Array.isArray(data?.results) ? data.results : [];
-        const fetched = servicesList.map((s: any) => ({
-          id: Number(s.id),
-          name: s.name || "",
-          category: s.category || "other",
-          price: s.price || 0,
-          description: s.description || "",
-          icon: getIconForCategory(s.category || "other"),
-          image_url: getImageForService(s.name) ? `/images/${getImageForService(s.name)}` : (s.image_url || null),
-        }));
-        setServices(fetched);
-      } catch (err) {
-        console.error("Error fetching services:", err);
-        setServices([]);
-      } finally {
-        if (mounted) setLoading(false);
-      }
-    };
-    fetchServices();
-    return () => {
-      mounted = false;
-    };
-  }, []);
-
-  // Scroll to top button visibility
-  useEffect(() => {
-    const handleScroll = () => {
-      setShowScrollTop(window.scrollY > 400);
-    };
-    window.addEventListener("scroll", handleScroll);
-    return () => window.removeEventListener("scroll", handleScroll);
-  }, []);
-
-  // Intersection Observer for card animations
-  useEffect(() => {
-    observerRef.current = new IntersectionObserver(
-      (entries) => {
-        entries.forEach((entry) => {
-          const id = Number(entry.target.getAttribute("data-id"));
-          if (entry.isIntersecting) {
-            setVisibleCards((prev) => new Set(prev).add(id));
-          } else {
-            setVisibleCards((prev) => {
-              const next = new Set(prev);
-              next.delete(id);
-              return next;
-            });
-          }
-        });
-      },
-      { threshold: 0.1, rootMargin: "0px 0px -50px 0px" }
-    );
+    observerRef.current = new IntersectionObserver((entries) => {
+      entries.forEach((entry) => {
+        const id = Number(entry.target.getAttribute("data-id"));
+        if (entry.isIntersecting) {
+          setVisibleCards((prev) => new Set(prev).add(id));
+        } else {
+          setVisibleCards((prev) => {
+            const next = new Set(prev);
+            next.delete(id);
+            return next;
+          });
+        }
+      });
+    }, { threshold: 0.1, rootMargin: "0px 0px -50px 0px" });
 
     return () => observerRef.current?.disconnect();
   }, []);
@@ -178,7 +135,7 @@ export default function HomePage() {
     };
   }, [services]);
 
-  const handleAddToCart = (service: Service) => {
+  const handleAddToCart = (service: ServiceWithUI) => {
     const { icon, ...cartService } = service as any;
     const finalCartService = { ...cartService, price: String(cartService.price), description: cartService.description || "" };
     dispatch(addToCart(finalCartService));

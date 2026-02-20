@@ -6,6 +6,8 @@ import RouteGuard from "@/components/RouteGuard";
 import { useRiderNotifications } from "@/lib/hooks/useRiderNotifications";
 import { useRiderOrderNotifications } from "@/lib/hooks/useRiderOrderNotifications";
 import { useBackgroundOrderPolling, useOrderPollingRefresh } from "@/lib/hooks/useBackgroundOrderPolling";
+import { useGetRiderProfilesQuery, useGetRiderLocationsQuery } from "@/redux/services/apiSlice";
+import type { RiderProfile, RiderLocation } from "@/redux/services/apiSlice";
 
 const API_BASE = process.env.NEXT_PUBLIC_API_BASE || '';
 
@@ -50,46 +52,15 @@ type OrderUpdatePayload = {
   description?: string;
 };
 
-type RiderProfile = {
-  id: number;
-  user?: string | null;
-  display_name?: string | null;
-  phone?: string | null;
-  vehicle_type?: string | null;
-  vehicle_reg?: string | null;
-  rating?: number | null;
-  completed_jobs?: number | null;
-  id_document?: string | null;
-  license_document?: string | null;
-  created_at?: string | null;
-  updated_at?: string | null;
-  raw?: Record<string, any>;
-};
-
-type RiderLocation = {
-  id?: number;
-  rider?: number | string | null;
-  rider_display?: string | null;
-  latitude?: number | null;
-  longitude?: number | null;
-  accuracy?: number | null;
-  speed?: number | null;
-  recorded_at?: string | null;
-  raw?: Record<string, any>;
-};
-
 /* --- Component --- */
 export default function RiderMapPage(): React.ReactElement {
   const [loadingOrders, setLoadingOrders] = useState(true);
   const [errorOrders, setErrorOrders] = useState<string | null>(null);
   const [currentStatus, setCurrentStatus] = useState<OrderStatus>('in_progress');
 
-  const [profiles, setProfiles] = useState<RiderProfile[]>([]);
-  const [locations, setLocations] = useState<RiderLocation[]>([]);
-  const [loadingProfiles, setLoadingProfiles] = useState<boolean>(true);
-  const [loadingLocations, setLoadingLocations] = useState<boolean>(true);
-  const [errorProfiles, setErrorProfiles] = useState<string | null>(null);
-  const [errorLocations, setErrorLocations] = useState<string | null>(null);
+  // Fetch profiles and locations using Redux
+  const { data: profiles = [], isLoading: loadingProfiles, error: errorProfiles, refetch: refetchProfiles } = useGetRiderProfilesQuery();
+  const { data: locations = [], isLoading: loadingLocations, error: errorLocations, refetch: refetchLocations } = useGetRiderLocationsQuery();
 
   // Confirmation state for action buttons (orderId -> timestamp)
   const [confirmingOrderId, setConfirmingOrderId] = useState<number | null>(null);
@@ -154,100 +125,8 @@ export default function RiderMapPage(): React.ReactElement {
     }
   }, [token, refreshOrders]);
 
-  const fetchProfiles = useCallback(async () => {
-    setLoadingProfiles(true);
-    setErrorProfiles(null);
-    try {
-      const authState = JSON.parse(localStorage.getItem('wildwash_auth_state') || '{}');
-      const token = authState.token;
-      if (!token) {
-        throw new Error('Authentication required');
-      }
-      
-      const res = await fetch(`${API_BASE}/riders/profiles/`, { 
-        method: "GET", 
-        headers: { 
-          Accept: "application/json",
-          Authorization: `Token ${token}`
-        } 
-      });
-      if (!res.ok) throw new Error(`Profiles fetch failed: ${res.status} ${res.statusText}`);
-      const data = await res.json().catch(() => null);
-      const list: any[] = Array.isArray(data) ? data : Array.isArray(data?.results) ? data.results : [];
-
-      setProfiles(
-        list.map((p: any) => ({
-          id: p.id,
-          user: p.user ?? p.username ?? (p.user && p.user.username) ?? null,
-          display_name: p.display_name ?? null,
-          phone: p.phone ?? null,
-          vehicle_type: p.vehicle_type ? String(p.vehicle_type).toLowerCase() : null,
-          vehicle_reg: p.vehicle_reg ?? null,
-          rating: p.rating ?? null,
-          completed_jobs: p.completed_jobs ?? null,
-          id_document: p.id_document ?? null,
-          license_document: p.license_document ?? null,
-          created_at: p.created_at ?? null,
-          updated_at: p.updated_at ?? null,
-          raw: p,
-        }))
-      );
-    } catch (err: any) {
-      console.error("fetchProfiles error:", err);
-      setErrorProfiles(err?.message ?? "Failed to load profiles");
-      setProfiles([]);
-    } finally {
-      setLoadingProfiles(false);
-    }
-  }, []);
-
-  const fetchLocations = useCallback(async () => {
-    setLoadingLocations(true);
-    setErrorLocations(null);
-    try {
-      const authState = JSON.parse(localStorage.getItem('wildwash_auth_state') || '{}');
-      const token = authState.token;
-      if (!token) {
-        throw new Error('Authentication required');
-      }
-
-      const res = await fetch(`${API_BASE}/riders/`, { 
-        method: "GET", 
-        headers: { 
-          Accept: "application/json",
-          Authorization: `Token ${token}`
-        } 
-      });
-      if (!res.ok) throw new Error(`Locations fetch failed: ${res.status} ${res.statusText}`);
-      const data = await res.json().catch(() => null);
-      const list: any[] = Array.isArray(data) ? data : Array.isArray(data?.results) ? data.results : [];
-
-      setLocations(
-        list.map((l: any) => ({
-          id: l.id,
-          rider: l.rider ?? null,
-          rider_display: l.rider_display ?? (l.rider && l.rider.username) ?? null,
-          latitude: l.latitude !== undefined ? Number(l.latitude) : l.lat !== undefined ? Number(l.lat) : null,
-          longitude: l.longitude !== undefined ? Number(l.longitude) : l.lon !== undefined ? Number(l.lon) : null,
-          accuracy: l.accuracy ?? null,
-          speed: l.speed ?? null,
-          recorded_at: l.recorded_at ?? null,
-          raw: l,
-        }))
-      );
-    } catch (err: any) {
-      console.error("fetchLocations error:", err);
-      setErrorLocations(err?.message ?? "Failed to load rider locations");
-      setLocations([]);
-    } finally {
-      setLoadingLocations(false);
-    }
-  }, []);
-
   useEffect(() => {
     fetchOrders();
-    fetchProfiles();
-    fetchLocations();
     // Initialize order notification count on page load
     fetchAndUpdateOrdersCount();
   }, []);
@@ -264,7 +143,7 @@ export default function RiderMapPage(): React.ReactElement {
   useRiderNotifications(token, !!token, 15000); // Poll notifications every 15 seconds when token is available
 
   const refresh = async () => {
-    await Promise.all([fetchOrders(), fetchProfiles(), fetchLocations()]);
+    await Promise.all([fetchOrders(), refetchProfiles(), refetchLocations()]);
   };
 
   const handleOpenDetailsForm = (order: Order) => {

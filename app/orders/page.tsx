@@ -4,6 +4,16 @@ import React, { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useDispatch, useSelector, TypedUseSelectorHook } from "react-redux";
+import {
+  Package,
+  Truck,
+  Loader,
+  CheckCircle,
+  Clock,
+  AlertCircle,
+  Wind,
+  Droplets,
+} from "lucide-react";
 import type { AppDispatch, RootState } from "@/redux/store";
 import {
   fetchOrders,
@@ -145,12 +155,44 @@ export default function OrdersPage(): React.JSX.Element {
 
         <main>
           {loading ? (
-            <div className="rounded-2xl bg-white/80 dark:bg-white/5 p-6 shadow text-sm text-slate-600">Loading your orders…</div>
+            <div className="rounded-2xl bg-white/80 dark:bg-white/5 p-8 shadow text-center">
+              <div className="inline-block">
+                <div className="animate-spin rounded-full h-8 w-8 border-2 border-red-600 border-t-transparent mb-3"></div>
+                <p className="text-slate-600 dark:text-slate-400">Loading your orders…</p>
+              </div>
+            </div>
           ) : orders.length === 0 ? (
-            <div className="rounded-2xl bg-white/80 dark:bg-white/5 p-6 shadow text-sm text-slate-600">No orders found. Try a different filter or <Link href="/contact" className="underline">contact support</Link>.</div>
+            <div className="rounded-2xl bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-800/20 dark:to-slate-900/20 p-12 shadow text-center border border-slate-200 dark:border-slate-700">
+              <div className="text-6xl mb-3">📦</div>
+              <h3 className="text-lg font-semibold text-slate-900 dark:text-slate-100 mb-2">No orders yet</h3>
+              <p className="text-slate-600 dark:text-slate-400 mb-6">You haven't placed any orders. Start by browsing our services.</p>
+              <div className="flex gap-3 justify-center">
+                <Link href="/" className="px-6 py-3 rounded-lg bg-red-600 hover:bg-red-700 text-white font-medium transition-colors">
+                  Browse Services
+                </Link>
+                <Link href="/contact" className="px-6 py-3 rounded-lg bg-slate-200 dark:bg-slate-700 text-slate-900 dark:text-slate-100 font-medium hover:bg-slate-300 dark:hover:bg-slate-600 transition-colors">
+                  Get Support
+                </Link>
+              </div>
+            </div>
           ) : (
-            <div className="grid grid-cols-1 gap-6">
+            <div className="space-y-6">
               {filtered.map((o) => {
+                const statusIcons = {
+                  'Received': Package,
+                  'Washing': Droplets,
+                  'Drying': Wind,
+                  'Ready': CheckCircle,
+                  'Delivered': CheckCircle,
+                  'Cancelled': AlertCircle,
+                  'requested': Package,
+                  'picked': Truck,
+                  'in_progress': Loader,
+                  'washed': Droplets,
+                  'ready': CheckCircle,
+                  'pending_assignment': Clock,
+                };
+
                 const statusColors = {
                   'Received': { bg: 'bg-blue-50 dark:bg-blue-950/20', border: 'border-l-4 border-l-blue-500', badge: 'bg-blue-100 dark:bg-blue-900/40 text-blue-700 dark:text-blue-300' },
                   'Washing': { bg: 'bg-purple-50 dark:bg-purple-950/20', border: 'border-l-4 border-l-purple-500', badge: 'bg-purple-100 dark:bg-purple-900/40 text-purple-700 dark:text-purple-300' },
@@ -158,55 +200,85 @@ export default function OrdersPage(): React.JSX.Element {
                   'Ready': { bg: 'bg-green-50 dark:bg-green-950/20', border: 'border-l-4 border-l-green-500', badge: 'bg-green-100 dark:bg-green-900/40 text-green-700 dark:text-green-300' },
                   'Delivered': { bg: 'bg-slate-50 dark:bg-slate-800/20', border: 'border-l-4 border-l-slate-400', badge: 'bg-slate-100 dark:bg-slate-800/40 text-slate-700 dark:text-slate-300' },
                   'Cancelled': { bg: 'bg-red-50 dark:bg-red-950/20', border: 'border-l-4 border-l-red-500', badge: 'bg-red-100 dark:bg-red-900/40 text-red-700 dark:text-red-300' },
+                  'requested': { bg: 'bg-blue-50 dark:bg-blue-950/20', border: 'border-l-4 border-l-blue-500', badge: 'bg-blue-100 dark:bg-blue-900/40 text-blue-700 dark:text-blue-300' },
+                  'picked': { bg: 'bg-indigo-50 dark:bg-indigo-950/20', border: 'border-l-4 border-l-indigo-500', badge: 'bg-indigo-100 dark:bg-indigo-900/40 text-indigo-700 dark:text-indigo-300' },
+                  'in_progress': { bg: 'bg-purple-50 dark:bg-purple-950/20', border: 'border-l-4 border-l-purple-500', badge: 'bg-purple-100 dark:bg-purple-900/40 text-purple-700 dark:text-purple-300' },
+                  'washed': { bg: 'bg-cyan-50 dark:bg-cyan-950/20', border: 'border-l-4 border-l-cyan-500', badge: 'bg-cyan-100 dark:bg-cyan-900/40 text-cyan-700 dark:text-cyan-300' },
+                  'ready': { bg: 'bg-green-50 dark:bg-green-950/20', border: 'border-l-4 border-l-green-500', badge: 'bg-green-100 dark:bg-green-900/40 text-green-700 dark:text-green-300' },
+                  'pending_assignment': { bg: 'bg-yellow-50 dark:bg-yellow-950/20', border: 'border-l-4 border-l-yellow-500', badge: 'bg-yellow-100 dark:bg-yellow-900/40 text-yellow-700 dark:text-yellow-300' },
                 };
                 
-                const colors = statusColors[o.status] || statusColors['Received'];
+                const colors = statusColors[o.status as keyof typeof statusColors] || statusColors['requested'];
+                const IconComponent = statusIcons[o.status as keyof typeof statusIcons] || Package;
+                const isPaid = o.is_paid ?? false;
+                const orderDate = new Date(o.created_at || o.date || '');
                 
                 return (
-                <article key={o.code} className={`rounded-2xl bg-white/80 dark:bg-white/5 ${colors.bg} ${colors.border} p-6 shadow hover:shadow-lg transition-shadow`}>
-                  <div className="flex items-start justify-between gap-6">
+                <article key={o.code} className={`rounded-xl ${colors.bg} ${colors.border} bg-white/80 dark:bg-white/5 p-4 shadow-sm hover:shadow-md transition-all`}>
+                  <div className="flex items-start justify-between gap-4 mb-4">
                     <div className="flex-1">
-                      <div className="flex items-center gap-2 mb-1">
-                        <div className="text-sm text-slate-500">{new Date(o.date).toLocaleString()}</div>
-                        <span className={`inline-block px-2 py-0.5 rounded-full text-xs font-semibold ${colors.badge}`}>
-                          {o.status}
-                        </span>
-                      </div>
-                      <div className="font-mono font-semibold text-2xl mt-2">{o.code}</div>
-                      <div className="mt-2 text-base text-slate-600 dark:text-slate-400">{o.items} items · {o.weightKg ? `${o.weightKg} kg` : ''} · {o.package}</div>
-                      
-                      <div className="mt-4 grid grid-cols-3 gap-4">
-                        <div className="rounded-lg bg-white/50 dark:bg-white/5 p-3 border border-white/20 dark:border-white/10">
-                          <div className="text-xs text-slate-500 uppercase tracking-wide">Amount</div>
-                          <div className="font-semibold text-lg mt-1 text-slate-900 dark:text-slate-100">{o.price}</div>
-                        </div>
-
-                        {o.eta && (
-                          <div className="rounded-lg bg-white/50 dark:bg-white/5 p-3 border border-white/20 dark:border-white/10">
-                            <div className="text-xs text-slate-500 uppercase tracking-wide">ETA</div>
-                            <div className="font-semibold text-lg mt-1">{o.eta}</div>
-                          </div>
-                        )}
-                        
-                        <div className="rounded-lg bg-white/50 dark:bg-white/5 p-3 border border-white/20 dark:border-white/10">
-                          <div className="text-xs text-slate-500 uppercase tracking-wide">Items</div>
-                          <div className="font-semibold text-lg mt-1">{o.items}</div>
+                      <div className="flex items-center gap-2 mb-2">
+                        <IconComponent className="w-5 h-5 text-slate-600 dark:text-slate-400 flex-shrink-0" />
+                        <div>
+                          <div className="font-mono font-bold text-sm text-slate-900 dark:text-slate-100">{o.code}</div>
+                          <div className="text-xs text-slate-500 dark:text-slate-400">{orderDate.toLocaleDateString()} · {orderDate.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</div>
                         </div>
                       </div>
+                      <span className={`inline-block px-2 py-0.5 rounded-full text-xs font-semibold ${colors.badge}`}>
+                        {o.status}
+                      </span>
+                    </div>
+                    
+                    <div className="text-right">
+                      <div className="text-xs text-slate-500 dark:text-slate-400 uppercase tracking-wider">Amount</div>
+                      <div className="text-2xl font-bold text-slate-900 dark:text-slate-100">{o.price || o.price_display || 'KSh 0'}</div>
+                      {isPaid && (
+                        <div className="text-xs font-semibold text-green-600 dark:text-green-400 mt-1 flex items-center justify-end gap-1">
+                          <CheckCircle className="w-3 h-3" /> Paid
+                        </div>
+                      )}
                     </div>
                   </div>
 
-                  <div className="mt-6 flex items-center gap-3">
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-2 mb-4 pb-4 border-b border-slate-200 dark:border-slate-700">
+                    <div className="rounded-lg bg-white/40 dark:bg-white/5 p-2.5">
+                      <div className="text-xs text-slate-500 dark:text-slate-400 uppercase tracking-wide font-semibold">Items</div>
+                      <div className="font-bold text-sm mt-1 text-slate-900 dark:text-slate-100">{o.items}</div>
+                    </div>
+
+                    {(o.weight_kg || o.weightKg) && (
+                      <div className="rounded-lg bg-white/40 dark:bg-white/5 p-2.5">
+                        <div className="text-xs text-slate-500 dark:text-slate-400 uppercase tracking-wide font-semibold">Weight</div>
+                        <div className="font-bold text-sm mt-1 text-slate-900 dark:text-slate-100">{o.weight_kg || o.weightKg} kg</div>
+                      </div>
+                    )}
+
+                    {(o.estimated_delivery || o.eta) && (
+                      <div className="rounded-lg bg-white/40 dark:bg-white/5 p-2.5">
+                        <div className="text-xs text-slate-500 dark:text-slate-400 uppercase tracking-wide font-semibold">ETA</div>
+                        <div className="font-bold text-sm mt-1 text-slate-900 dark:text-slate-100">{o.estimated_delivery ? new Date(o.estimated_delivery).toLocaleDateString() : o.eta}</div>
+                      </div>
+                    )}
+                    
+                    <div className="rounded-lg bg-white/40 dark:bg-white/5 p-2.5">
+                      <div className="text-xs text-slate-500 dark:text-slate-400 uppercase tracking-wide font-semibold">Package</div>
+                      <div className="font-bold text-sm mt-1 text-slate-900 dark:text-slate-100 truncate">{o.package}</div>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center gap-2">
                     <Link 
                       href={`/orders/${o.code}`} 
-                      className="flex-1 px-4 py-3 rounded bg-slate-100 dark:bg-white/10 hover:bg-slate-200 dark:hover:bg-white/20 text-slate-900 dark:text-slate-100 font-medium text-center transition-colors">
+                      className="flex-1 px-3 py-2 rounded-lg bg-slate-100 dark:bg-white/10 hover:bg-slate-200 dark:hover:bg-white/20 text-slate-900 dark:text-slate-100 font-semibold text-sm text-center transition-all hover:shadow-sm">
                       View Details
                     </Link>
-                    <Link 
-                      href={`/checkout?order_id=${encodeURIComponent(o.code)}&amount=${encodeURIComponent(o.price.replace(/[^0-9.]/g, ''))}`} 
-                      className="flex-1 px-4 py-3 rounded bg-red-600 hover:bg-red-700 text-white font-medium text-center transition-colors">
-                      Pay Now
-                    </Link>
+                    {!isPaid && (
+                      <Link 
+                        href={`/checkout?order_id=${encodeURIComponent(o.code)}&amount=${encodeURIComponent((o.price || o.price_display || '0').replace(/[^0-9.]/g, ''))}`} 
+                        className="flex-1 px-3 py-2 rounded-lg bg-red-600 hover:bg-red-700 text-white font-semibold text-sm text-center transition-all hover:shadow-sm">
+                        Pay Now
+                      </Link>
+                    )}
                   </div>
                 </article>
               );

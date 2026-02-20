@@ -3,18 +3,28 @@ import { createApi, fetchBaseQuery } from '@reduxjs/toolkit/query/react';
 import type { RootState } from '../store';
 
 // Keep the Order type here or import from types/order.ts
-export type OrderStatus = "Received" | "Washing" | "Drying" | "Ready" | "Delivered" | "Cancelled";
+export type OrderStatus = "Received" | "Washing" | "Drying" | "Ready" | "Delivered" | "Cancelled" | "requested" | "picked" | "in_progress" | "washed" | "ready" | "pending_assignment";
 
 export type Order = {
   code: string;
-  date: string; // ISO
+  date?: string; // ISO
+  created_at?: string; // ISO
   items: number;
+  weight_kg?: number;
   weightKg?: number;
   package: string;
   price: string;
+  price_display?: string;
   status: OrderStatus;
   eta?: string;
+  estimated_delivery?: string;
   deliveredAt?: string;
+  delivered_at?: string;
+  is_paid?: boolean;
+  pickup_address?: string;
+  dropoff_address?: string;
+  rider?: string | null;
+  order_type?: string;
 };
 
 export type Investment = {
@@ -49,6 +59,44 @@ export type InvestmentSummary = {
   completed_investments: number;
 };
 
+export type Service = {
+  id: number;
+  name: string;
+  category: string;
+  price: number;
+  description: string;
+  image_url?: string | null;
+  icon?: string;
+};
+
+export type RiderProfile = {
+  id: number;
+  user?: string | null;
+  display_name?: string | null;
+  phone?: string | null;
+  vehicle_type?: string | null;
+  vehicle_reg?: string | null;
+  rating?: number | null;
+  completed_jobs?: number | null;
+  id_document?: string | null;
+  license_document?: string | null;
+  created_at?: string | null;
+  updated_at?: string | null;
+  raw?: Record<string, any>;
+};
+
+export type RiderLocation = {
+  id?: number;
+  rider?: number | string | null;
+  rider_display?: string | null;
+  latitude?: number | null;
+  longitude?: number | null;
+  accuracy?: number | null;
+  speed?: number | null;
+  recorded_at?: string | null;
+  raw?: Record<string, any>;
+};
+
 export const apiSlice = createApi({
   reducerPath: 'api',
   baseQuery: fetchBaseQuery({
@@ -68,10 +116,13 @@ export const apiSlice = createApi({
       return headers;
     },
   }),
-  tagTypes: ['Investments', 'InvestmentSummary'],
+  tagTypes: ['Investments', 'InvestmentSummary', 'Services', 'RiderProfiles', 'RiderLocations'],
   endpoints: (builder) => ({
     getOrders: builder.query<Order[], void>({
       query: () => '/orders',
+      transformResponse: (response: any) => {
+        return Array.isArray(response) ? response : (response?.results || []);
+      },
     }),
     getOrderByCode: builder.query<Order, string>({
       query: (code) => `/orders/${encodeURIComponent(code)}`,
@@ -79,6 +130,9 @@ export const apiSlice = createApi({
     // Investment endpoints
     getMyInvestments: builder.query<Investment[], void>({
       query: () => '/loans/investments/my_investments/',
+      transformResponse: (response: any) => {
+        return Array.isArray(response) ? response : (response?.results || []);
+      },
       providesTags: ['Investments'],
     }),
     getInvestmentSummary: builder.query<InvestmentSummary, void>({
@@ -97,6 +151,34 @@ export const apiSlice = createApi({
       query: (id) => `/loans/investments/${id}/`,
       providesTags: (result, error, id) => [{ type: 'Investments', id }],
     }),
+    // Service endpoints
+    getServices: builder.query<Service[], void>({
+      query: () => '/services/',
+      transformResponse: (response: any) => {
+        // Handle paginated response or direct array
+        return Array.isArray(response) ? response : (response?.results || []);
+      },
+      providesTags: ['Services'],
+    }),
+    getServiceDetail: builder.query<Service, number>({
+      query: (id) => `/services/${id}/`,
+      providesTags: (result, error, id) => [{ type: 'Services', id }],
+    }),
+    // Rider endpoints
+    getRiderProfiles: builder.query<RiderProfile[], void>({
+      query: () => '/riders/profiles/',
+      transformResponse: (response: any) => {
+        return Array.isArray(response) ? response : (response?.results || []);
+      },
+      providesTags: ['RiderProfiles'],
+    }),
+    getRiderLocations: builder.query<RiderLocation[], void>({
+      query: () => '/riders/',
+      transformResponse: (response: any) => {
+        return Array.isArray(response) ? response : (response?.results || []);
+      },
+      providesTags: ['RiderLocations'],
+    }),
   }),
 });
 
@@ -107,4 +189,8 @@ export const {
   useGetInvestmentSummaryQuery,
   useCreateInvestmentMutation,
   useGetInvestmentDetailQuery,
+  useGetServicesQuery,
+  useGetServiceDetailQuery,
+  useGetRiderProfilesQuery,
+  useGetRiderLocationsQuery,
 } = apiSlice;

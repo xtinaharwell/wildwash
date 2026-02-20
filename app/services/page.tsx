@@ -1,17 +1,10 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React, { useState } from "react";
 import { ChevronDownIcon, BellIcon } from "@heroicons/react/24/outline";
 import { Spinner } from "@/components";
-
-interface Service {
-  id: number;
-  name: string;
-  category: string;
-  price: string;
-  description: string;
-  image_url?: string | null;
-}
+import { useGetServicesQuery } from "@/redux/services/apiSlice";
+import type { Service } from "@/redux/services/apiSlice";
 
 // Map service names to image files with intelligent fallback
 const serviceImageMap: Record<string, string> = {
@@ -62,33 +55,17 @@ export default function ServicesPage() {
   const [open, setOpen] = useState<string | null>(null);
   const [notif, setNotif] = useState({ push: true, sms: false, email: false });
   const [sent, setSent] = useState<string | null>(null);
-  const [services, setServices] = useState<Service[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+
+  // Fetch services using Redux
+  const { data: servicesData = [], isLoading: loading, error: servicesError } = useGetServicesQuery();
+
+  // Transform services with images
+  const services = servicesData.map((s) => ({
+    ...s,
+    image_url: s.image_url || (getImageForService(s.name) ? `/images/${getImageForService(s.name)}` : null),
+  }));
 
   const toggle = (id: string) => setOpen((o) => (o === id ? null : id));
-
-  useEffect(() => {
-    async function loadServices() {
-      try {
-        setLoading(true);
-        const res = await fetch(`${process.env.NEXT_PUBLIC_API_BASE}/services/`);
-        if (!res.ok) throw new Error("Failed to fetch services");
-        const data = await res.json();
-        // Add image URLs to services
-        const servicesWithImages = data.map((s: any) => ({
-          ...s,
-          image_url: getImageForService(s.name) ? `/images/${getImageForService(s.name)}` : (s.image_url || null),
-        }));
-        setServices(servicesWithImages);
-      } catch (err) {
-        setError((err as Error).message);
-      } finally {
-        setLoading(false);
-      }
-    }
-    loadServices();
-  }, []);
 
   function simulateNotify() {
     setSent(null);
@@ -118,8 +95,8 @@ export default function ServicesPage() {
           <div className="flex justify-center py-20">
             <Spinner className="w-8 h-8" />
           </div>
-        ) : error ? (
-          <div className="text-center text-red-600">Error: {error}</div>
+        ) : servicesError ? (
+          <div className="text-center text-red-600">Error: {typeof servicesError === 'string' ? servicesError : 'Failed to load services'}</div>
         ) : services.length === 0 ? (
           <div className="text-center text-slate-500">No services available yet.</div>
         ) : (

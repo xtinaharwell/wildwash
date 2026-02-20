@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import {
   ArrowLeftIcon,
@@ -10,15 +10,8 @@ import {
 } from "@heroicons/react/24/outline";
 import { useAppDispatch } from "@/redux/hooks";
 import { addToCart } from "@/redux/features/cartSlice";
-
-interface Service {
-  id: number;
-  name: string;
-  category?: string;
-  price: number | string;
-  description?: string;
-  image_url?: string | null;
-}
+import { useGetServiceDetailQuery } from "@/redux/services/apiSlice";
+import type { Service } from "@/redux/services/apiSlice";
 
 const API_BASE = process.env.NEXT_PUBLIC_API_BASE ?? "";
 
@@ -71,48 +64,29 @@ export default function ServiceDetailPage() {
   const params = useParams();
   const router = useRouter();
   const dispatch = useAppDispatch();
-  const serviceId = params.id as string;
+  const serviceId = Number(params.id);
 
-  const [service, setService] = useState<Service | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
   const [addedToCart, setAddedToCart] = useState(false);
 
-  useEffect(() => {
-    const fetchService = async () => {
-      try {
-        setLoading(true);
-        const response = await fetch(`${API_BASE}/services/${serviceId}/`, {
-          credentials: "include",
-          headers: { Accept: "application/json" },
-        });
-        if (!response.ok) throw new Error(`Service not found`);
-        const data = await response.json();
-        // Add image URL if available
-        const serviceWithImage = {
-          ...data,
-          image_url: getImageForService(data.name) ? `/images/${getImageForService(data.name)}` : (data.image_url || null),
-        };
-        setService(serviceWithImage);
-      } catch (err: any) {
-        setError(err?.message ?? "Failed to load service");
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetchService();
-  }, [serviceId]);
+  // Fetch service using Redux
+  const { data: service, isLoading: loading, error: serviceError } = useGetServiceDetailQuery(serviceId);
+
+  // Transform service with image
+  const displayService = service ? {
+    ...service,
+    image_url: service.image_url || (getImageForService(service.name) ? `/images/${getImageForService(service.name)}` : null),
+  } : null;
 
   const handleAddToCart = () => {
-    if (!service) return;
+    if (!displayService) return;
     
     dispatch(
       addToCart({
-        id: service.id,
-        name: service.name,
-        price: String(service.price),
-        category: service.category || "other",
-        description: service.description || "",
+        id: displayService.id,
+        name: displayService.name,
+        price: String(displayService.price),
+        category: displayService.category || "other",
+        description: displayService.description || "",
       })
     );
     
@@ -142,7 +116,7 @@ export default function ServiceDetailPage() {
     );
   }
 
-  if (error || !service) {
+  if (serviceError || !displayService) {
     return (
       <div className="min-h-screen bg-white dark:bg-black text-slate-900 dark:text-slate-50">
         <div className="max-w-2xl mx-auto px-5 pt-6 pb-24">
@@ -158,7 +132,7 @@ export default function ServiceDetailPage() {
               Service not found
             </h2>
             <p className="text-slate-600 dark:text-slate-400 mb-6">
-              {error || "The service you're looking for doesn't exist."}
+              {typeof serviceError === 'string' ? serviceError : "The service you're looking for doesn't exist."}
             </p>
             <button
               onClick={() => router.push("/")}
@@ -186,17 +160,17 @@ export default function ServiceDetailPage() {
 
         {/* Service image/icon */}
         <div className="w-full h-[500px] bg-gradient-to-br from-slate-100 to-slate-50 dark:from-slate-800 dark:to-slate-950 rounded-2xl flex items-center justify-center mb-6 border border-slate-200 dark:border-slate-800 overflow-hidden">
-          {service.image_url ? (
+          {displayService?.image_url ? (
             <img
-              src={service.image_url}
-              alt={service.name}
+              src={displayService.image_url}
+              alt={displayService.name}
               className="w-full h-full object-cover"
             />
           ) : (
             <div className="flex flex-col items-center">
               <SparklesIcon className="w-24 h-24 text-slate-400 dark:text-slate-600 mb-3" />
               <span className="text-slate-500 dark:text-slate-500 text-sm font-500">
-                {service.category || "Service"}
+                {displayService?.category || "Service"}
               </span>
             </div>
           )}
@@ -207,23 +181,23 @@ export default function ServiceDetailPage() {
           <div className="flex items-start justify-between gap-4">
             <div className="flex-1">
               <h1 className="text-2xl font-700 text-slate-900 dark:text-slate-50 mb-2">
-                {service.name}
+                {displayService?.name}
               </h1>
-              {service.category && (
+              {displayService?.category && (
                 <span className="inline-block px-3 py-1 text-xs font-500 rounded-full bg-slate-100 dark:bg-slate-900 text-slate-700 dark:text-slate-300">
-                  {service.category}
+                  {displayService.category}
                 </span>
               )}
             </div>
             <div className="text-2xl font-700 text-red-600 dark:text-red-500 whitespace-nowrap">
-              KSh {Number(service.price).toLocaleString()}
+              KSh {Number(displayService?.price || 0).toLocaleString()}
             </div>
           </div>
 
-          {service.description && (
+          {displayService?.description && (
             <div className="mt-4">
               <p className="text-sm text-slate-600 dark:text-slate-400 leading-relaxed">
-                {service.description}
+                {displayService.description}
               </p>
             </div>
           )}
