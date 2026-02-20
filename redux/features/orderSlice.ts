@@ -19,6 +19,7 @@ type BackendOrder = {
   status: 'requested' | 'picked' | 'in_progress' | 'ready' | 'delivered' | 'cancelled' | string;
   estimated_delivery?: string | null;
   delivered_at?: string | null;
+  is_paid?: boolean;
 };
 
 export type Order = {
@@ -101,13 +102,19 @@ function backendToFrontend(o: BackendOrder): Order {
   return {
     code: o.code || `WW-${o.id}`,
     date: o.created_at,
+    created_at: o.created_at,
     items: o.items ?? 0,
     weightKg,
+    weight_kg: o.weight_kg ? Number(o.weight_kg) : undefined,
     package: pkg,
     price,
+    price_display: o.price_display,
     status: statusMap[o.status] ?? "Received",
     eta,
+    estimated_delivery: o.estimated_delivery,
     deliveredAt,
+    delivered_at: o.delivered_at,
+    is_paid: o.is_paid ?? false,
   };
 }
 

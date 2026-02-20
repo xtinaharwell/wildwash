@@ -33,6 +33,7 @@ type Order = {
   deliveredAt?: string;
   rider?: { name: string; phone?: string };
   statusLog?: StatusPoint[];
+  is_paid?: boolean;
 };
 
 function getCookie(name: string) {
@@ -48,6 +49,22 @@ function getCookie(name: string) {
 type OrderParams = {
   code: string;
 };
+
+// Helper function to extract phone number from address
+function extractPhoneFromAddress(address?: string): { cleanAddress: string; phone: string | null } {
+  if (!address) return { cleanAddress: address ?? "", phone: null };
+  
+  // Match phone number patterns like +254718693484 or (contact: +254718693484)
+  const phoneMatch = address.match(/\(?contact:\s*(\+?[\d\s\-]+)\)?/i);
+  
+  if (phoneMatch && phoneMatch[1]) {
+    const phone = phoneMatch[1].trim();
+    const cleanAddress = address.replace(/\s*\(?contact:\s*[\d\s\-\(\)]+\)?\s*$/i, "").trim();
+    return { cleanAddress, phone };
+  }
+  
+  return { cleanAddress: address, phone: null };
+}
 
 export default function OrderDetailsPage() {
   const params = useParams<OrderParams>();
@@ -111,6 +128,9 @@ export default function OrderDetailsPage() {
         }
 
         // normalize
+        const { cleanAddress: cleanPickup, phone: pickupPhone } = extractPhoneFromAddress(found.pickup_address);
+        const { cleanAddress: cleanDropoff } = extractPhoneFromAddress(found.dropoff_address);
+        
         const mapped: Order = {
           id: found.id,
           code: found.code || `WW-${found.id}`,
@@ -120,10 +140,10 @@ export default function OrderDetailsPage() {
             ? `${found.user.first_name} ${found.user.last_name}`
             : found.user?.username ?? undefined,
           userEmail: found.user?.email ?? undefined,
-          userPhone: found.user?.phone ?? found.user?.phone_number ?? undefined,
+          userPhone: found.user?.phone ?? found.user?.phone_number ?? pickupPhone ?? undefined,
           serviceName: found.service_name ?? (found.service && typeof found.service === "object" ? found.service.name : undefined),
-          pickupAddress: found.pickup_address ?? undefined,
-          dropoffAddress: found.dropoff_address ?? undefined,
+          pickupAddress: cleanPickup ?? undefined,
+          dropoffAddress: cleanDropoff ?? undefined,
           items: found.items ?? 0,
           weightKg: found.weight_kg ? Number(found.weight_kg) : undefined,
           package: (() => {
@@ -139,6 +159,7 @@ export default function OrderDetailsPage() {
           deliveredAt: found.delivered_at ? new Date(found.delivered_at).toLocaleString() : undefined,
           rider: found.rider ? { name: found.rider.username || found.rider.first_name || found.rider.name, phone: found.rider.phone } : undefined,
           statusLog: found.timeline ?? found.status_log ?? [],
+          is_paid: found.is_paid ?? false,
         };
 
         setOrder(mapped);
@@ -187,6 +208,11 @@ export default function OrderDetailsPage() {
               <div className="text-right">
                 <div className="text-xs text-slate-500 dark:text-slate-400">Status</div>
                 <div className="font-semibold text-red-600">{order.status}</div>
+                {order.is_paid && (
+                  <div className="mt-2 inline-block px-2 py-1 bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400 rounded-full text-xs font-semibold">
+                    ✓ Paid
+                  </div>
+                )}
                 {order.eta && (
                   <>
                     <div className="text-xs text-slate-500 dark:text-slate-400 mt-2">ETA</div>
@@ -245,6 +271,20 @@ export default function OrderDetailsPage() {
                   <div>
                     <div className="text-xs text-slate-500 dark:text-slate-400">Price</div>
                     <div className="mt-1 font-medium">{order.price || "—"}</div>
+                  </div>
+                  <div>
+                    <div className="text-xs text-slate-500 dark:text-slate-400">Payment Status</div>
+                    <div className="mt-1 font-medium">
+                      {order.is_paid ? (
+                        <span className="px-2 py-1 bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400 rounded text-sm font-semibold">
+                          ✓ Paid
+                        </span>
+                      ) : (
+                        <span className="px-2 py-1 bg-yellow-100 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-400 rounded text-sm font-semibold">
+                          Pending Payment
+                        </span>
+                      )}
+                    </div>
                   </div>
                 </div>
               </div>
@@ -314,12 +354,14 @@ export default function OrderDetailsPage() {
 
             {/* Actions */}
             <div className="mt-6">
-              <Link
-                href={`/checkout?order_id=${encodeURIComponent(order.code)}&amount=${encodeURIComponent(order.price.replace(/[^0-9.]/g, ''))}`}
-                className="inline-block px-6 py-3 bg-red-600 text-white font-medium rounded-lg hover:bg-red-700 transition-all duration-300 transform hover:scale-105 active:scale-95"
-              >
-                Proceed to Checkout
-              </Link>
+              {!order.is_paid && (
+                <Link
+                  href={`/checkout?order_id=${encodeURIComponent(order.code)}&amount=${encodeURIComponent(order.price.replace(/[^0-9.]/g, ''))}`}
+                  className="inline-block px-6 py-3 bg-red-600 text-white font-medium rounded-lg hover:bg-red-700 transition-all duration-300 transform hover:scale-105 active:scale-95"
+                >
+                  Proceed to Checkout
+                </Link>
+              )}
             </div>
 
             {/* Status timeline */}
