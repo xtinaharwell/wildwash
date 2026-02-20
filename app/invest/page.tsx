@@ -3,6 +3,7 @@
 import React, { useState } from 'react';
 import Link from 'next/link';
 import { useSelector } from 'react-redux';
+import { useCreateInvestmentMutation } from '@/redux/services/apiSlice';
 import type { RootState } from '@/redux/store';
 
 interface InvestmentConfirmation {
@@ -18,12 +19,12 @@ interface InvestmentConfirmation {
 export default function InvestPage(): React.ReactElement {
   const [selectedPlan, setSelectedPlan] = useState<string | null>(null);
   const [investmentAmount, setInvestmentAmount] = useState<string>('');
-  const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [investmentConfirmation, setInvestmentConfirmation] = useState<InvestmentConfirmation | null>(null);
   
   const isAuthenticated = useSelector((state: RootState) => state.auth.isAuthenticated);
   const userPhone = useSelector((state: RootState) => state.auth.user?.phone);
+  const [createInvestment, { isLoading }] = useCreateInvestmentMutation();
 
   // Get API base URL
   const apiBase = typeof window !== 'undefined' ? process.env.NEXT_PUBLIC_API_BASE || '' : '';
@@ -109,11 +110,16 @@ export default function InvestPage(): React.ReactElement {
       return;
     }
 
-    setIsLoading(true);
     setError(null);
 
     try {
-      // Get auth token from localStorage
+      // Step 1: Create investment using Redux mutation
+      const investmentData = await createInvestment({
+        plan_type: plan.id,
+        amount: amount
+      }).unwrap();
+
+      // Get auth token for STK push
       let authToken = '';
       if (typeof window !== 'undefined') {
         const storedAuth = localStorage.getItem('wildwash_auth_state');
@@ -124,31 +130,8 @@ export default function InvestPage(): React.ReactElement {
       }
 
       if (!authToken) {
-        setError('Authentication token not found. Please log in again.');
-        setIsLoading(false);
-        return;
+        throw new Error('Authentication token not found. Please log in again.');
       }
-
-      // Step 1: Create investment in the database
-      const createInvestmentRes = await fetch(`${apiBase}/loans/investments/`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Token ${authToken}`
-        },
-        credentials: 'same-origin',
-        body: JSON.stringify({
-          plan_type: plan.id,
-          amount: amount
-        })
-      });
-
-      if (!createInvestmentRes.ok) {
-        const errorData = await createInvestmentRes.json();
-        throw new Error(errorData.detail || errorData.error || 'Failed to create investment');
-      }
-
-      const investmentData = await createInvestmentRes.json();
 
       // Step 2: Initiate STK push for payment
       const stkRes = await fetch(`${apiBase}/payments/mpesa/stk-push/`, {
@@ -173,8 +156,6 @@ export default function InvestPage(): React.ReactElement {
         throw new Error('Failed to initiate payment');
       }
 
-      const stkData = await stkRes.json();
-
       // Calculate returns
       const months = plan.id === 'starter' ? 12 : plan.id === 'professional' ? 18 : 24;
       const { totalReturn, monthlyReturn } = calculateExpectedReturns(amount, plan.expectedReturn, months);
@@ -195,8 +176,6 @@ export default function InvestPage(): React.ReactElement {
       setInvestmentAmount('');
     } catch (err) {
       setError(err instanceof Error ? err.message : 'An error occurred');
-    } finally {
-      setIsLoading(false);
     }
   };
 

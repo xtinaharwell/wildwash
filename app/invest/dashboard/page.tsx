@@ -1,119 +1,25 @@
 "use client";
 
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import Link from 'next/link';
 import { useSelector } from 'react-redux';
+import { useGetMyInvestmentsQuery, useGetInvestmentSummaryQuery } from '@/redux/services/apiSlice';
 import type { RootState } from '@/redux/store';
-
-interface Investment {
-  id: string;
-  plan_type: string;
-  amount: number;
-  status: 'pending' | 'active' | 'completed' | 'cancelled';
-  annual_return_percentage: number;
-  expected_annual_return: number;
-  expected_monthly_return: number;
-  total_received_returns: number;
-  investment_date: string;
-  maturity_date: string;
-  lockup_period_months: number;
-  payout_frequency: string;
-  next_payout_date: string | null;
-  last_payout_date: string | null;
-  days_until_maturity: number;
-  progress_percentage: number;
-  created_at: string;
-}
-
-interface InvestmentSummary {
-  total_invested: number;
-  active_investments: number;
-  total_investments: number;
-  total_expected_returns: number;
-  total_received_returns: number;
-  pending_investments: number;
-  completed_investments: number;
-}
+import type { Investment, InvestmentSummary } from '@/redux/services/apiSlice';
 
 export default function InvestmentDashboard(): React.ReactElement {
-  const [investments, setInvestments] = useState<Investment[]>([]);
-  const [summary, setSummary] = useState<InvestmentSummary | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
   const [selectedInvestment, setSelectedInvestment] = useState<Investment | null>(null);
 
   const isAuthenticated = useSelector((state: RootState) => state.auth.isAuthenticated);
 
-  useEffect(() => {
-    if (!isAuthenticated) {
-      setError('Please login to view your investments');
-      setIsLoading(false);
-      return;
-    }
+  // Fetch investments using Redux hooks
+  const { data: investments = [], isLoading: investmentsLoading, error: investmentsError } = useGetMyInvestmentsQuery(undefined, {
+    skip: !isAuthenticated
+  });
 
-    fetchInvestments();
-  }, [isAuthenticated]);
-
-  const apiBase = typeof window !== 'undefined' ? process.env.NEXT_PUBLIC_API_BASE || '' : '';
-
-  const fetchInvestments = async () => {
-    try {
-      setIsLoading(true);
-      setError(null);
-
-      // Get auth token from localStorage
-      let authToken = '';
-      if (typeof window !== 'undefined') {
-        const storedAuth = localStorage.getItem('wildwash_auth_state');
-        if (storedAuth) {
-          const authState = JSON.parse(storedAuth);
-          authToken = authState.token || '';
-        }
-      }
-
-      if (!authToken) {
-        setError('Authentication token not found. Please log in again.');
-        setIsLoading(false);
-        return;
-      }
-
-      // Fetch investments
-      const investmentsRes = await fetch(`${apiBase}/loans/investments/my_investments/`, {
-        method: 'GET',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Token ${authToken}`
-        },
-        credentials: 'same-origin'
-      });
-
-      if (!investmentsRes.ok) {
-        throw new Error('Failed to fetch investments');
-      }
-
-      const investmentsData = await investmentsRes.json();
-      setInvestments(investmentsData);
-
-      // Fetch summary
-      const summaryRes = await fetch(`${apiBase}/loans/investments/summary/`, {
-        method: 'GET',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Token ${authToken}`
-        },
-        credentials: 'same-origin'
-      });
-
-      if (summaryRes.ok) {
-        const summaryData = await summaryRes.json();
-        setSummary(summaryData);
-      }
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'An error occurred');
-    } finally {
-      setIsLoading(false);
-    }
-  };
+  const { data: summary, isLoading: summaryLoading, error: summaryError } = useGetInvestmentSummaryQuery(undefined, {
+    skip: !isAuthenticated
+  });
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -166,7 +72,7 @@ export default function InvestmentDashboard(): React.ReactElement {
     );
   }
 
-  if (isLoading) {
+  if (investmentsLoading || summaryLoading) {
     return (
       <div className="min-h-screen bg-white dark:bg-slate-950 flex items-center justify-center">
         <div className="text-center">
@@ -176,6 +82,9 @@ export default function InvestmentDashboard(): React.ReactElement {
       </div>
     );
   }
+
+  const isLoading = investmentsLoading || summaryLoading;
+  const error = investmentsError || summaryError;
 
   return (
     <div className="min-h-screen bg-white dark:bg-slate-950">
@@ -202,7 +111,9 @@ export default function InvestmentDashboard(): React.ReactElement {
         {/* Error Message */}
         {error && (
           <div className="mb-8 p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-2xl">
-            <p className="text-red-700 dark:text-red-400">{error}</p>
+            <p className="text-red-700 dark:text-red-400">
+              {typeof error === 'string' ? error : 'Failed to load investments'}
+            </p>
           </div>
         )}
 

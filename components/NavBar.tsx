@@ -140,11 +140,6 @@ export default function NavBar() {
               Offers
             </Link>
             <Link
-              href="/financing"
-              className="text-xs px-2.5 xl:px-3 py-1.5 rounded-full bg-red-600 text-white hover:bg-red-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-red-300 font-medium transition-colors whitespace-nowrap">
-              Financing
-            </Link>
-            <Link
               href="/borrow"
               className="text-xs px-2.5 xl:px-3 py-1.5 rounded-full bg-red-600 text-white hover:bg-red-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-red-300 font-medium transition-colors whitespace-nowrap">
               Borrow
@@ -168,11 +163,11 @@ export default function NavBar() {
                 </Link>
               </>
             )}
-            <Link
+            {/* <Link
               href="/casino"
               className="text-xs px-2.5 xl:px-3 py-1.5 rounded-full bg-red-600 text-white hover:bg-red-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-red-300 font-medium transition-colors whitespace-nowrap">
               Casino
-            </Link>
+            </Link> */}
           </nav>
 
           <div className="flex items-center gap-1 sm:gap-2">
