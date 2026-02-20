@@ -23,14 +23,20 @@ type BackendOrder = {
 
 export type Order = {
   code: string;
-  date: string; // ISO
+  date?: string; // ISO
+  created_at?: string; // ISO
   items: number;
   weightKg?: number | null;
+  weight_kg?: number | null;
   package: string;
   price: string; // formatted for display
+  price_display?: string | null;
   status: "Received" | "Washing" | "Drying" | "Ready" | "Delivered" | "Cancelled";
   eta?: string | null;
+  estimated_delivery?: string | null;
   deliveredAt?: string | null;
+  delivered_at?: string | null;
+  is_paid?: boolean;
 };
 
 type OrdersState = {

@@ -21,9 +21,9 @@ import type { Service } from "@/redux/services/apiSlice";
 
 const API_BASE = process.env.NEXT_PUBLIC_API_BASE ?? "";
 
-// Extended service type with UI properties
-type ServiceWithUI = Service & {
-  icon: React.ComponentType<{ className?: string }>;
+// Extended service type with UI properties (omit icon from Service since we're replacing it)
+type ServiceWithUI = Omit<Service, 'icon'> & {
+  icon: React.ComponentType<any>;
   image_url: string | null;
 };
 
@@ -54,7 +54,7 @@ function getImageForService(serviceName: string): string {
   return "Standard Wash.png";
 }
 
-function getIconForCategory(category: string): React.ComponentType<{ className?: string }> {
+function getIconForCategory(category: string): React.ComponentType<any> {
   switch (category) {
     case "laundry":
       return CheckBadgeIcon;
