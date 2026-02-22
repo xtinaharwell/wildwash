@@ -43,6 +43,7 @@ interface Notification {
 interface Service {
   id: number;
   name: string;
+  processing_time?: number;
   [key: string]: any;
 }
 

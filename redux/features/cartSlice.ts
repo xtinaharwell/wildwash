@@ -10,6 +10,7 @@ export interface Service {
   description: string;
   category?: string;
   quantity?: number; // Add quantity field
+  processing_time?: number; // Processing time in hours
 }
 
 // Define the state shape

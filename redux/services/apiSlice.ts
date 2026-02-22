@@ -67,6 +67,7 @@ export type Service = {
   description: string;
   image_url?: string | null;
   icon?: string;
+  processing_time?: number; // Processing time in hours
 };
 
 export type RiderProfile = {
