@@ -128,9 +128,27 @@ export default function Page() {
     return "Economy";
   };
 
+  // Calculate minimum delivery hours based on items in cart
+  const calculateMinDeliveryHours = (): number => {
+    if (cartItems.length === 0) return 6; // Default minimum if no items
+    
+    // Get the maximum processing time from all items
+    const maxProcessingTime = Math.max(
+      ...cartItems.map(item => (item.processing_time || 12) * (item.quantity || 1))
+    );
+    
+    // Ensure minimum is at least 6 hours, maximum 72 hours
+    return Math.min(Math.max(maxProcessingTime, 6), 72);
+  };
+
+  const minDeliveryHours = calculateMinDeliveryHours();
+
+  // Ensure deliveryHours is never below the minimum
+  const effectiveDeliveryHours = Math.max(deliveryHours, minDeliveryHours);
+
   // Calculate total price with multiplier
   const baseTotal = cartItems.reduce((acc, item) => acc + Number(item.price) * (item.quantity || 1), 0);
-  const priceMultiplier = calculatePriceMultiplier(deliveryHours);
+  const priceMultiplier = calculatePriceMultiplier(effectiveDeliveryHours);
   const totalWithMultiplier = baseTotal * priceMultiplier;
 
   useEffect(() => {
@@ -238,12 +256,12 @@ export default function Page() {
         service_quantities: cartItems.map(item => ({ service_id: item.id, quantity: item.quantity || 1 })),
         pickup_address: pickupBuilding + (pickupContact ? ` (contact: ${pickupContact})` : ""),
         dropoff_address: sameAsPickup ? pickupBuilding : dropoffAddress,
-        urgency: calculatePriceMultiplier(deliveryHours) === 2.0 ? 3 : calculatePriceMultiplier(deliveryHours) === 1.3 ? 2 : 1, // Convert hours to urgency level
+        urgency: calculatePriceMultiplier(effectiveDeliveryHours) === 2.0 ? 3 : calculatePriceMultiplier(effectiveDeliveryHours) === 1.3 ? 2 : 1, // Convert hours to urgency level
         // These fields might not be needed for a 'booking' vs an 'order'
         items: cartItems.length,
         weight_kg: null, // To be determined at pickup
         price: Math.round(totalWithMultiplier * 100) / 100, // Round to 2 decimal places to avoid validation errors
-        estimated_delivery: new Date(Date.now() + deliveryHours * 60 * 60 * 1000).toISOString(), // Based on selected delivery hours
+        estimated_delivery: new Date(Date.now() + effectiveDeliveryHours * 60 * 60 * 1000).toISOString(), // Based on selected delivery hours
         // Include an optional customer note/description
         ...(customerNote ? { description: customerNote } : {}),
     // If user chose to schedule a pickup, send requested_pickup_at in ISO format
@@ -426,7 +444,7 @@ export default function Page() {
                 <div className="space-y-4">
                   <div className="flex items-center justify-between">
                     <span className="text-xs text-slate-500 dark:text-slate-400">Select delivery time</span>
-                    <span className="text-lg font-bold text-red-600 dark:text-red-400">{deliveryHours}h</span>
+                    <span className="text-lg font-bold text-red-600 dark:text-red-400">{effectiveDeliveryHours}h</span>
                   </div>
                   <div className="flex items-center gap-3">
                     <div className="flex-1">
@@ -434,25 +452,30 @@ export default function Page() {
                       <input 
                         id="delivery-hours"
                         type="range" 
-                        min={6} 
+                        min={minDeliveryHours} 
                         max={72} 
                         value={deliveryHours} 
                         onChange={(e) => setDeliveryHours(Number(e.target.value))} 
                         className="w-full accent-red-500 dark:accent-red-400" 
                       />
                       <div className="mt-2 text-xs text-slate-500 dark:text-slate-400 flex items-center justify-between">
-                        <span>6h</span>
+                        <span>{minDeliveryHours}h</span>
                         <span>36h</span>
                         <span>72h</span>
                       </div>
+                      {minDeliveryHours > 6 && (
+                        <div className="mt-1 text-xs text-slate-600 dark:text-slate-300">
+                          Minimum {minDeliveryHours}h based on items in cart
+                        </div>
+                      )}
                     </div>
                   </div>
 
                   <div className="grid grid-cols-1 gap-3">
                     <div className="rounded-lg bg-slate-50 dark:bg-slate-700/50 p-3">
                       <div className="text-xs text-slate-500 dark:text-slate-400">Delivery Speed</div>
-                      <div className="mt-1 font-semibold text-slate-800 dark:text-slate-100">{getDeliveryLabel(deliveryHours)}</div>
-                      <div className="text-xs text-slate-500 dark:text-slate-400 mt-1">{deliveryHours} hour{deliveryHours !== 1 ? 's' : ''}</div>
+                      <div className="mt-1 font-semibold text-slate-800 dark:text-slate-100">{getDeliveryLabel(effectiveDeliveryHours)}</div>
+                      <div className="text-xs text-slate-500 dark:text-slate-400 mt-1">{effectiveDeliveryHours} hour{effectiveDeliveryHours !== 1 ? 's' : ''}</div>
                     </div>
                   </div>
                 </div>
@@ -525,7 +548,7 @@ export default function Page() {
                 </div>
                 <div>
                   <div className="text-xs text-slate-500 dark:text-slate-500">Delivery Speed</div>
-                  <div className="mt-1 font-medium text-slate-800 dark:text-slate-100">{getDeliveryLabel(deliveryHours)} ({deliveryHours}h)</div>
+                  <div className="mt-1 font-medium text-slate-800 dark:text-slate-100">{getDeliveryLabel(effectiveDeliveryHours)} ({effectiveDeliveryHours}h)</div>
                 </div>
               </div>
 
@@ -550,7 +573,7 @@ export default function Page() {
                   <button onClick={() => setSummaryExpanded(s => !s)} className="text-sm text-blue-600 dark:text-blue-400 underline">
                     {summaryExpanded ? 'Hide details' : 'Show details'}
                   </button>
-                  <div className="text-xs text-slate-500">{getDeliveryLabel(deliveryHours)} ({deliveryHours}h)</div>
+                  <div className="text-xs text-slate-500">{getDeliveryLabel(effectiveDeliveryHours)} ({effectiveDeliveryHours}h)</div>
                 </div>
 
                 {summaryExpanded && (

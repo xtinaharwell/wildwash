@@ -2,9 +2,10 @@
 
 import React, { useEffect, useState } from "react";
 import Link from "next/link";
-import RouteGuard from "../../components/RouteGuard";
+import { useRouter } from "next/navigation";
 import BNPLManager from "../../components/BNPLManager";
 import { client } from "../../lib/api/client";
+import { getStoredAuthState } from "@/lib/auth";
 
 type Offer = {
   id: number;
@@ -26,9 +27,18 @@ export default function OffersPage() {
   const [loading, setLoading] = useState(true);
   const [query, setQuery] = useState("");
   const [subscribed, setSubscribed] = useState(false);
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [claimingId, setClaimingId] = useState<number | null>(null);
+  const router = useRouter();
 
   const API_BASE = process.env.NEXT_PUBLIC_API_BASE || '';
   const [error, setError] = useState<string | null>(null);
+
+  // Check if user is logged in
+  useEffect(() => {
+    const authState = getStoredAuthState();
+    setIsLoggedIn(!!authState?.token);
+  }, []);
 
   useEffect(() => {
     async function fetchOffers() {
@@ -54,7 +64,14 @@ export default function OffersPage() {
   }, []);
 
   async function claimOffer(id: number) {
+    // Check if user is logged in
+    if (!isLoggedIn) {
+      router.push("/login");
+      return;
+    }
+
     try {
+      setClaimingId(id);
       await client.post(`/offers/${id}/claim`);
 
       // Refresh offers list to update claim status
@@ -65,6 +82,8 @@ export default function OffersPage() {
     } catch (err: any) {
       setError(err.message || "Failed to claim offer");
       console.error("Error claiming offer:", err);
+    } finally {
+      setClaimingId(null);
     }
   }
 
@@ -80,11 +99,15 @@ export default function OffersPage() {
   });
 
   return (
-    <RouteGuard>
     <div className="min-h-screen bg-gradient-to-b from-white via-[#f8fafc] to-[#eef2ff] dark:from-[#071025] dark:via-[#041022] dark:to-[#011018] text-slate-900 dark:text-slate-100 py-12">
       <div className="max-w-4xl mx-auto px-4">
         <header className="mb-6">
           <h1 className="text-3xl font-extrabold">Offers — This week</h1>
+          {!isLoggedIn && (
+            <p className="text-sm text-slate-600 dark:text-slate-400 mt-2">
+              Log in to claim offers and start saving
+            </p>
+          )}
         </header>
 
         <section className="mb-6 flex gap-3 items-center">
@@ -94,10 +117,12 @@ export default function OffersPage() {
 
         <main>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {/* BNPL Manager */}
-            <div className="rounded-2xl overflow-hidden">
-              <BNPLManager />
-            </div>
+            {/* BNPL Manager - only show if logged in */}
+            {isLoggedIn && (
+              <div className="rounded-2xl overflow-hidden">
+                <BNPLManager />
+              </div>
+            )}
 
             {/* Offers list */}
             {loading ? (
@@ -142,12 +167,20 @@ export default function OffersPage() {
                       <div className="px-3 py-2 rounded bg-green-100 dark:bg-green-900/20 text-green-600 dark:text-green-400 text-sm">
                         Claimed ✓
                       </div>
+                    ) : isLoggedIn ? (
+                      <button 
+                        onClick={() => claimOffer(o.id)}
+                        disabled={claimingId === o.id}
+                        className="px-3 py-2 rounded bg-red-600 hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed text-white text-sm transition-colors"
+                      >
+                        {claimingId === o.id ? 'Claiming...' : 'Claim Offer'}
+                      </button>
                     ) : (
                       <button 
-                        onClick={() => claimOffer(o.id)} 
-                        className="px-3 py-2 rounded bg-red-600 hover:bg-red-700 text-white text-sm transition-colors"
+                        onClick={() => router.push("/login")}
+                        className="px-3 py-2 rounded bg-blue-600 hover:bg-blue-700 text-white text-sm transition-colors"
                       >
-                        Claim Offer
+                        Log in to Claim
                       </button>
                     )}
                     <div className="ml-auto text-xs text-slate-500">
@@ -162,6 +195,5 @@ export default function OffersPage() {
 
       </div>
     </div>
-    </RouteGuard>
   );
 }
