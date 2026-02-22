@@ -42,6 +42,17 @@ async function fetchWithAuth(url: string, options: RequestInit = {}) {
     throw new Error(error?.detail || `HTTP error! status: ${response.status}`);
   }
 
+  // Handle 204 No Content responses (common for DELETE operations)
+  if (response.status === 204) {
+    return null;
+  }
+
+  // For other successful responses, parse the JSON body
+  const contentLength = response.headers.get('content-length');
+  if (contentLength === '0' || response.status === 205) {
+    return null;
+  }
+
   return response.json();
 }
 

@@ -77,7 +77,7 @@ export default function ProfilePage() {
     setSubscriptionError(null);
     try {
       const data = await client.get('/user/me/subscription/');
-      setSubscription(data);
+      setSubscription(data || null);
     } catch (err: any) {
       setSubscriptionError(err.message || "Failed to load subscription details");
     } finally {
@@ -116,7 +116,7 @@ export default function ProfilePage() {
     setOffersError(null);
     try {
       const data = await client.get('/offers/user-offers');
-      setUserOffers(data);
+      setUserOffers(data.results || []);
     } catch (err: any) {
       setOffersError(err.message || "Failed to load offers");
     } finally {
