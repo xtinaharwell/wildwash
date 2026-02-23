@@ -1,8 +1,9 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useSelector } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
 import { useRouter } from "next/navigation";
+import { logout } from "@/redux/features/authSlice";
 import RouteGuard from "@/components/RouteGuard";
 import type { RootState } from "@/redux/store";
 import { client } from "@/lib/api/client";
@@ -55,6 +56,7 @@ type OffersSubscription = {
 
 export default function ProfilePage() {
   const router = useRouter();
+  const dispatch = useDispatch();
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -201,6 +203,12 @@ export default function ProfilePage() {
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
     setFormData(prev => ({ ...prev, [name]: value }));
+  };
+
+  const handleLogout = () => {
+    localStorage.removeItem('access_token');
+    dispatch(logout());
+    router.push('/');
   };
 
   if (loading) {
@@ -529,6 +537,15 @@ export default function ProfilePage() {
 
           <div className="mt-8">
             <BNPLManager />
+          </div>
+
+          {/* Logout Button - Mobile Only */}
+          <div className="mt-8 md:hidden">
+            <button
+              onClick={handleLogout}
+              className="w-full px-4 py-3 rounded-lg bg-red-600 text-white hover:bg-red-700 font-medium transition-colors">
+              Logout
+            </button>
           </div>
         </div>
       </div>
