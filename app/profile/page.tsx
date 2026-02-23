@@ -44,6 +44,15 @@ type Subscription = {
   next_pickup_date: string;
 }
 
+type OffersSubscription = {
+  id: number;
+  user: number;
+  phone_number: string;
+  is_active: boolean;
+  created_at: string;
+  updated_at: string;
+}
+
 export default function ProfilePage() {
   const router = useRouter();
   const [profile, setProfile] = useState<UserProfile | null>(null);
@@ -58,6 +67,9 @@ export default function ProfilePage() {
   const [subscription, setSubscription] = useState<Subscription | null>(null);
   const [loadingSubscription, setLoadingSubscription] = useState(false);
   const [subscriptionError, setSubscriptionError] = useState<string | null>(null);
+  const [offersSubscribed, setOffersSubscribed] = useState(false);
+  const [loadingOffersSubscription, setLoadingOffersSubscription] = useState(false);
+  const [offersSubscriptionError, setOffersSubscriptionError] = useState<string | null>(null);
   
   const isAuthenticated = useSelector((state: RootState) => state.auth.isAuthenticated);
 
@@ -70,7 +82,39 @@ export default function ProfilePage() {
     fetchProfile();
     fetchUserOffers();
     fetchSubscription();
+    checkOffersSubscriptionStatus();
   }, [isAuthenticated, router]);
+
+  const checkOffersSubscriptionStatus = async () => {
+    try {
+      const response = await client.get('/offers/subscriptions/my_subscription');
+      setOffersSubscribed(response.is_subscribed ?? response.is_active ?? false);
+    } catch (err) {
+      console.error("Error checking offers subscription status:", err);
+    }
+  };
+
+  const handleOffersSubscriptionToggle = async () => {
+    try {
+      setLoadingOffersSubscription(true);
+      setOffersSubscriptionError(null);
+      
+      if (offersSubscribed) {
+        // Unsubscribe
+        await client.post('/offers/subscriptions/unsubscribe');
+        setOffersSubscribed(false);
+      } else {
+        // Subscribe
+        await client.post('/offers/subscriptions/my_subscription');
+        setOffersSubscribed(true);
+      }
+    } catch (err: any) {
+      setOffersSubscriptionError(err.message || "Failed to update subscription");
+      console.error("Error toggling offers subscription:", err);
+    } finally {
+      setLoadingOffersSubscription(false);
+    }
+  };
 
   const fetchSubscription = async () => {
     setLoadingSubscription(true);
@@ -440,6 +484,46 @@ export default function ProfilePage() {
                   </a>
                 </div>
               )}
+            </div>
+          </div>
+
+          <div className="mt-8">
+            <div className="rounded-2xl bg-white/80 dark:bg-white/5 p-6 shadow">
+              <h2 className="text-xl font-bold mb-4">Offer Notifications</h2>
+              
+              {offersSubscriptionError && (
+                <div className="mb-4 text-sm text-red-600 dark:text-red-400">
+                  {offersSubscriptionError}
+                </div>
+              )}
+
+              <div className="space-y-4">
+                <p className="text-sm text-slate-600 dark:text-slate-400">
+                  Subscribe to receive SMS notifications when new offers are available. You'll get updates about discounts and exclusive deals right to your phone.
+                </p>
+                
+                <div className="p-4 rounded-lg border dark:border-slate-700 bg-slate-50 dark:bg-slate-800 flex items-center justify-between">
+                  <div>
+                    <h3 className="font-medium">SMS Notifications</h3>
+                    <p className="text-sm text-slate-600 dark:text-slate-400 mt-1">
+                      {offersSubscribed ? 'You will receive SMS notifications about new offers' : 'Subscribe to get notified about new offers via SMS'}
+                    </p>
+                  </div>
+                  <button
+                    onClick={handleOffersSubscriptionToggle}
+                    disabled={loadingOffersSubscription}
+                    className={`px-4 py-2 rounded text-sm font-medium transition-colors ${
+                      offersSubscribed
+                        ? 'bg-red-600 text-white hover:bg-red-700 disabled:opacity-50'
+                        : 'bg-slate-200 dark:bg-slate-700 hover:bg-slate-300 dark:hover:bg-slate-600 disabled:opacity-50'
+                    } ${
+                      loadingOffersSubscription ? 'cursor-not-allowed' : 'cursor-pointer'
+                    }`}
+                  >
+                    {loadingOffersSubscription ? 'Loading...' : offersSubscribed ? 'Subscribed' : 'Subscribe'}
+                  </button>
+                </div>
+              </div>
             </div>
           </div>
 

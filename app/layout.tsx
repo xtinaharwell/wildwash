@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
-import { NavBar, Footer, WhatsAppButton } from '@/components'
+import { NavBar, Footer, WhatsAppButton, BottomNav } from '@/components'
 import CustomProvider from '@/redux/provider';
 import AuthInitializer from '@/components/AuthInitializer';
 
@@ -34,9 +34,10 @@ export default function RootLayout({
         <CustomProvider>
           <AuthInitializer />
           <NavBar />
-          <main className="min-h-[calc(100vh-80px)] pt-20">
+          <main className="min-h-[calc(100vh-80px)] pt-20 pb-20 md:pb-0">
             {children}
           </main>
+          <BottomNav />
           <WhatsAppButton />         
           <Footer />
         </CustomProvider>

@@ -93,29 +93,6 @@ export default function NavBar() {
       <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16">
           <div className="flex items-center gap-3">
-            <button
-              onClick={handleAppsClick}
-              aria-expanded={appsOpen}
-              aria-label={appsOpen ? 'Close apps' : 'Open apps'}
-              className="relative p-2 rounded-lg hover:bg-slate-100 dark:hover:bg-white/5 focus:outline-none focus-visible:ring-2 focus-visible:ring-red-300"
-              ref={appsRef}
-              title="Apps">
-              {/* Google-style app grid icon */}
-              <svg
-                className="w-6 h-6"
-                viewBox="0 0 24 24"
-                fill="currentColor">
-                <rect x="2" y="2" width="4" height="4" rx="0.5" />
-                <rect x="10" y="2" width="4" height="4" rx="0.5" />
-                <rect x="18" y="2" width="4" height="4" rx="0.5" />
-                <rect x="2" y="10" width="4" height="4" rx="0.5" />
-                <rect x="10" y="10" width="4" height="4" rx="0.5" />
-                <rect x="18" y="10" width="4" height="4" rx="0.5" />
-                <rect x="2" y="18" width="4" height="4" rx="0.5" />
-                <rect x="10" y="18" width="4" height="4" rx="0.5" />
-                <rect x="18" y="18" width="4" height="4" rx="0.5" />
-              </svg>
-            </button>
             <div className="w-12 h-12 rounded-2xl bg-red-500/95 flex items-center justify-center shadow-md shrink-0">
               <Link
                 href="/"
@@ -170,7 +147,7 @@ export default function NavBar() {
             </Link> */}
           </nav>
 
-          <div className="flex items-center gap-1 sm:gap-2">
+          <div className="hidden md:flex items-center gap-1 sm:gap-2">
             <Link
               href="/cart"
               className="relative p-2 rounded hover:bg-slate-100 dark:hover:bg-white/5 focus:outline-none focus-visible:ring-2 focus-visible:ring-red-300">
@@ -300,6 +277,31 @@ export default function NavBar() {
               </Link>
             )}
           </div>
+
+          {/* Mobile Apps Button - Right side only on mobile */}
+          <button
+            onClick={handleAppsClick}
+            aria-expanded={appsOpen}
+            aria-label={appsOpen ? 'Close apps' : 'Open apps'}
+            className="relative md:hidden p-2 rounded-lg hover:bg-slate-100 dark:hover:bg-white/5 focus:outline-none focus-visible:ring-2 focus-visible:ring-red-300"
+            ref={appsRef}
+            title="Apps">
+            {/* Google-style app grid icon */}
+            <svg
+              className="w-6 h-6"
+              viewBox="0 0 24 24"
+              fill="currentColor">
+              <rect x="2" y="2" width="4" height="4" rx="0.5" />
+              <rect x="10" y="2" width="4" height="4" rx="0.5" />
+              <rect x="18" y="2" width="4" height="4" rx="0.5" />
+              <rect x="2" y="10" width="4" height="4" rx="0.5" />
+              <rect x="10" y="10" width="4" height="4" rx="0.5" />
+              <rect x="18" y="10" width="4" height="4" rx="0.5" />
+              <rect x="2" y="18" width="4" height="4" rx="0.5" />
+              <rect x="10" y="18" width="4" height="4" rx="0.5" />
+              <rect x="18" y="18" width="4" height="4" rx="0.5" />
+            </svg>
+          </button>
         </div>
       </div>
 
@@ -392,6 +394,8 @@ export default function NavBar() {
           </div>
         </div>
       )}
+
+      {/* Mobile Floating Cart Button moved to layout.tsx */}
     </header>
   );
 }

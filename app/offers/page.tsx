@@ -29,16 +29,32 @@ export default function OffersPage() {
   const [subscribed, setSubscribed] = useState(false);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [claimingId, setClaimingId] = useState<number | null>(null);
+  const [loadingSubscription, setLoadingSubscription] = useState(false);
   const router = useRouter();
 
   const API_BASE = process.env.NEXT_PUBLIC_API_BASE || '';
   const [error, setError] = useState<string | null>(null);
+  const [successMessage, setSuccessMessage] = useState<string | null>(null);
 
-  // Check if user is logged in
+  // Check if user is logged in and get subscription status
   useEffect(() => {
     const authState = getStoredAuthState();
     setIsLoggedIn(!!authState?.token);
+    
+    if (authState?.token) {
+      // Check subscription status
+      checkSubscriptionStatus();
+    }
   }, []);
+
+  async function checkSubscriptionStatus() {
+    try {
+      const response = await client.get('/offers/subscriptions/my_subscription');
+      setSubscribed(response.is_subscribed ?? response.is_active ?? false);
+    } catch (err) {
+      console.error("Error checking subscription status:", err);
+    }
+  }
 
   useEffect(() => {
     async function fetchOffers() {
@@ -124,6 +140,38 @@ export default function OffersPage() {
     }
   }
 
+  async function handleSubscriptionToggle() {
+    if (!isLoggedIn) return;
+
+    try {
+      setLoadingSubscription(true);
+      setError(null);
+      setSuccessMessage(null);
+      
+      if (subscribed) {
+        // Unsubscribe
+        await client.post('/offers/subscriptions/unsubscribe');
+        setSubscribed(false);
+        setSuccessMessage('Unsubscribed from offer notifications');
+      } else {
+        // Subscribe
+        await client.post('/offers/subscriptions/my_subscription');
+        setSubscribed(true);
+        setSuccessMessage('✓ You\'ll receive SMS notifications when new offers are available!');
+      }
+      
+      // Clear messages after 5 seconds
+      setTimeout(() => {
+        setSuccessMessage(null);
+      }, 5000);
+    } catch (err: any) {
+      setError(err.message || "Failed to update subscription");
+      console.error("Error toggling subscription:", err);
+    } finally {
+      setLoadingSubscription(false);
+    }
+  }
+
   const filtered = offers.filter((o) => {
     const q = query.trim().toLowerCase();
     if (!q) return true;
@@ -145,11 +193,43 @@ export default function OffersPage() {
               Log in to claim offers and start saving
             </p>
           )}
+          {isLoggedIn && (
+            <p className="text-sm text-slate-600 dark:text-slate-400 mt-2">
+              {subscribed 
+                ? "✓ You're subscribed to offer notifications via SMS" 
+                : "Subscribe to receive SMS notifications when new offers are available"}
+            </p>
+          )}
         </header>
+
+        {successMessage && (
+          <div className="mb-4 p-3 rounded-md bg-green-100 dark:bg-green-900/20 text-green-700 dark:text-green-400 text-sm">
+            {successMessage}
+          </div>
+        )}
+
+        {error && (
+          <div className="mb-4 p-3 rounded-md bg-red-100 dark:bg-red-900/20 text-red-700 dark:text-red-400 text-sm">
+            {error}
+          </div>
+        )}
 
         <section className="mb-6 flex gap-3 items-center">
           <input value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Search offers" className="flex-1 rounded-md border px-3 py-2 text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-red-300" />
-          <button onClick={() => setSubscribed((s) => !s)} className={`px-3 py-2 rounded text-sm ${subscribed ? 'bg-red-600 text-white' : 'bg-slate-100'}`}>{subscribed ? 'Subscribed' : 'Subscribe'}</button>
+          <div className="flex flex-col gap-1">
+            <button 
+              onClick={() => handleSubscriptionToggle()} 
+              disabled={loadingSubscription || !isLoggedIn}
+              className={`px-3 py-2 rounded text-sm transition-colors ${subscribed ? 'bg-red-600 text-white hover:bg-red-700' : 'bg-slate-100 hover:bg-slate-200'} ${loadingSubscription ? 'opacity-50 cursor-not-allowed' : ''} ${!isLoggedIn ? 'opacity-50 cursor-not-allowed' : ''}`}
+            >
+              {loadingSubscription ? 'Loading...' : subscribed ? 'Subscribed' : 'Subscribe'}
+            </button>
+            {isLoggedIn && (
+              <p className="text-xs text-slate-500 dark:text-slate-400">
+                Receive SMS when offers are added
+              </p>
+            )}
+          </div>
         </section>
 
         <main>

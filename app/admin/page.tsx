@@ -355,16 +355,11 @@ export default function AdminPage(): React.ReactElement {
 
       setBnplUsers(
         list.map((b: any) => {
-          const userData = b.user || {};
-          const userName = userData.first_name && userData.last_name 
-            ? `${userData.first_name} ${userData.last_name}` 
-            : userData.username || "Unknown User";
-          
           return {
             id: b.id,
-            user_id: userData.id ?? b.user_id,
-            user_name: userName,
-            user_phone: userData.phone ?? userData.phone_number,
+            user_id: b.user,
+            user_name: b.user_name || "Unknown User",
+            user_phone: b.user_phone,
             is_enrolled: b.is_enrolled ?? false,
             is_active: b.is_active ?? false,
             credit_limit: b.credit_limit ?? 0,
@@ -750,6 +745,8 @@ export default function AdminPage(): React.ReactElement {
                   <tr>
                     <th className="text-left py-3 px-4 font-medium">Code</th>
                     <th className="text-left py-3 px-4 font-medium">Status</th>
+                    <th className="text-left py-3 px-4 font-medium">User Name</th>
+                    <th className="text-left py-3 px-4 font-medium">Phone</th>
                     <th className="text-left py-3 px-4 font-medium">Location</th>
                     <th className="text-left py-3 px-4 font-medium">Rider</th>
                     <th className="text-right py-3 px-4 font-medium">Price (KSh)</th>
@@ -773,6 +770,8 @@ export default function AdminPage(): React.ReactElement {
                           {o.status}
                         </span>
                       </td>
+                      <td className="py-3 px-4">{o.raw?.user?.first_name && o.raw?.user?.last_name ? `${o.raw.user.first_name} ${o.raw.user.last_name}` : o.raw?.user?.username || "—"}</td>
+                      <td className="py-3 px-4">{o.raw?.user?.phone || "—"}</td>
                       <td className="py-3 px-4">{o.raw?.user?.location || "—"}</td>
                       <td className="py-3 px-4">{o.rider ?? "—"}</td>
                       <td className="py-3 px-4 text-right font-medium">
@@ -785,7 +784,7 @@ export default function AdminPage(): React.ReactElement {
                   ))}
                   {filteredOrders.length === 0 && (
                     <tr>
-                      <td colSpan={5} className="py-8 text-center text-slate-500">
+                      <td colSpan={8} className="py-8 text-center text-slate-500">
                         <div className="flex flex-col items-center gap-2">
                           <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                             <circle cx="12" cy="12" r="10"/>
