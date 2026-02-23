@@ -40,6 +40,19 @@ export default function OffersPage() {
     setIsLoggedIn(!!authState?.token);
   }, []);
 
+  // Auto-claim offer after login
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const offerId = params.get('claim_offer');
+    
+    if (offerId && isLoggedIn) {
+      const offerIdNum = parseInt(offerId, 10);
+      claimOffer(offerIdNum);
+      // Clean up the URL
+      window.history.replaceState({}, document.title, window.location.pathname);
+    }
+  }, [isLoggedIn]);
+
   useEffect(() => {
     async function fetchOffers() {
       setLoading(true);
@@ -66,7 +79,8 @@ export default function OffersPage() {
   async function claimOffer(id: number) {
     // Check if user is logged in
     if (!isLoggedIn) {
-      router.push("/login");
+      // Redirect to login with the offer ID to claim after login
+      router.push(`/login?claim_offer=${id}`);
       return;
     }
 
@@ -167,20 +181,13 @@ export default function OffersPage() {
                       <div className="px-3 py-2 rounded bg-green-100 dark:bg-green-900/20 text-green-600 dark:text-green-400 text-sm">
                         Claimed ✓
                       </div>
-                    ) : isLoggedIn ? (
+                    ) : (
                       <button 
                         onClick={() => claimOffer(o.id)}
                         disabled={claimingId === o.id}
                         className="px-3 py-2 rounded bg-red-600 hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed text-white text-sm transition-colors"
                       >
                         {claimingId === o.id ? 'Claiming...' : 'Claim Offer'}
-                      </button>
-                    ) : (
-                      <button 
-                        onClick={() => router.push("/login")}
-                        className="px-3 py-2 rounded bg-blue-600 hover:bg-blue-700 text-white text-sm transition-colors"
-                      >
-                        Log in to Claim
                       </button>
                     )}
                     <div className="ml-auto text-xs text-slate-500">
