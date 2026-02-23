@@ -40,19 +40,6 @@ export default function OffersPage() {
     setIsLoggedIn(!!authState?.token);
   }, []);
 
-  // Auto-claim offer after login
-  useEffect(() => {
-    const params = new URLSearchParams(window.location.search);
-    const offerId = params.get('claim_offer');
-    
-    if (offerId && isLoggedIn) {
-      const offerIdNum = parseInt(offerId, 10);
-      claimOffer(offerIdNum);
-      // Clean up the URL
-      window.history.replaceState({}, document.title, window.location.pathname);
-    }
-  }, [isLoggedIn]);
-
   useEffect(() => {
     async function fetchOffers() {
       setLoading(true);
@@ -63,6 +50,20 @@ export default function OffersPage() {
         // Ensure we always have an array, even if empty
         const offersData = Array.isArray(response) ? response : response.results || [];
         setOffers(offersData);
+        
+        // Auto-claim offer after offers are loaded
+        const params = new URLSearchParams(window.location.search);
+        const offerId = params.get('claim_offer');
+        
+        if (offerId && isLoggedIn && offersData.length > 0) {
+          const offerIdNum = parseInt(offerId, 10);
+          // Use setTimeout to ensure state is updated
+          setTimeout(() => {
+            claimOfferDirectly(offerIdNum, offersData);
+          }, 100);
+          // Clean up the URL
+          window.history.replaceState({}, document.title, window.location.pathname);
+        }
       } catch (err: any) {
         setError(err.message || "Failed to load offers");
         console.error("Error fetching offers:", err);
@@ -74,13 +75,16 @@ export default function OffersPage() {
     }
 
     fetchOffers();
-  }, []);
+  }, [isLoggedIn]);
 
   async function claimOffer(id: number) {
     // Check if user is logged in
     if (!isLoggedIn) {
-      // Redirect to login with the offer ID to claim after login
-      router.push(`/login?claim_offer=${id}`);
+      // Redirect to login with the offer ID and return URL
+      // Use URLSearchParams to properly encode the redirect_to parameter
+      const loginUrl = new URL('/login', window.location.origin);
+      loginUrl.searchParams.set('redirect', `/offers?claim_offer=${id}`);
+      router.push(loginUrl.pathname + loginUrl.search);
       return;
     }
 
@@ -90,6 +94,25 @@ export default function OffersPage() {
 
       // Refresh offers list to update claim status
       const updatedOffers = offers.map(offer => 
+        offer.id === id ? { ...offer, is_claimed: true } : offer
+      );
+      setOffers(updatedOffers);
+    } catch (err: any) {
+      setError(err.message || "Failed to claim offer");
+      console.error("Error claiming offer:", err);
+    } finally {
+      setClaimingId(null);
+    }
+  }
+
+  // Direct claim function that doesn't depend on state (used for auto-claiming)
+  async function claimOfferDirectly(id: number, offersData: Offer[]) {
+    try {
+      setClaimingId(id);
+      await client.post(`/offers/${id}/claim`);
+
+      // Update offers with the claimed status
+      const updatedOffers = offersData.map(offer => 
         offer.id === id ? { ...offer, is_claimed: true } : offer
       );
       setOffers(updatedOffers);
