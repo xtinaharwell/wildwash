@@ -265,9 +265,12 @@ export default function NavBar() {
                           <div className="border-t border-slate-200 dark:border-slate-700 my-1"></div>
                           <Link
                             href="/admin"
-                            className="block px-4 py-2 text-sm font-semibold text-amber-600 dark:text-amber-400 hover:bg-amber-50 dark:hover:bg-amber-900/20"
+                            className="block px-4 py-2 text-sm font-semibold text-amber-600 dark:text-amber-400 hover:bg-amber-50 dark:hover:bg-amber-900/20 flex items-center gap-2"
                             onClick={() => setProfileOpen(false)}>
-                            🔐 Admin Dashboard
+                            <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
+                              <path d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4zm-2 16h4v-5h-4v5zm2-7c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2z"/>
+                            </svg>
+                            Admin Dashboard
                           </Link>
                         </>
                       )}
@@ -276,9 +279,12 @@ export default function NavBar() {
                           <div className="border-t border-slate-200 dark:border-slate-700 my-1"></div>
                           <Link
                             href="/staff"
-                            className="block px-4 py-2 text-sm font-semibold text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20"
+                            className="block px-4 py-2 text-sm font-semibold text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20 flex items-center gap-2"
                             onClick={() => setProfileOpen(false)}>
-                            👷 Staff Panel
+                            <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
+                              <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/>
+                            </svg>
+                            Staff Panel
                           </Link>
                         </>
                       )}

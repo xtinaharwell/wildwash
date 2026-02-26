@@ -89,17 +89,10 @@ export default function BottomNav() {
             }`}
             title="Admin Dashboard">
             <svg
-              xmlns="http://www.w3.org/2000/svg"
-              fill={isActive('/admin') ? 'currentColor' : 'none'}
+              fill="currentColor"
               viewBox="0 0 24 24"
-              strokeWidth={1.5}
-              stroke="currentColor"
               className="w-6 h-6">
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                d="M12 3v1m6.366.366l-.707.707M21 12h-1m.366 6.366l-.707-.707M12 21v-1m-6.366-.366l.707-.707M3 12h1m-.366-6.366l.707.707M7 11a4 4 0 118 0 4 4 0 01-8 0z"
-              />
+              <path d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4zm-2 16h4v-5h-4v5zm2-7c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2z"/>
             </svg>
             <span className="text-xs font-medium">Admin</span>
           </Link>
@@ -116,17 +109,10 @@ export default function BottomNav() {
             }`}
             title="Staff Panel">
             <svg
-              xmlns="http://www.w3.org/2000/svg"
-              fill={isActive('/staff') ? 'currentColor' : 'none'}
+              fill="currentColor"
               viewBox="0 0 24 24"
-              strokeWidth={1.5}
-              stroke="currentColor"
               className="w-6 h-6">
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                d="M9 12h3.75M9 15h3.75M9 18h3.75m3 .75H18a2.25 2.25 0 002.25-2.25V6.108c0-1.135-.845-2.098-1.976-2.192a48.424 48.424 0 00-1.123-.08m-5.801 0c-.065.21-.148.408-.24.603a23.996 23.996 0 003.183.803a23.997 23.997 0 003.183-.803a23.997 23.997 0 00-.241-.603m-3.72 0a45.422 45.422 0 015.05.5c1.54.213 2.9 1.22 3.405 2.544m-4.604-6.817a23.987 23.987 0 00-5.05-.5c-1.54.213-2.9 1.22-3.405 2.544M6.75 7.5a3 3 0 11-6 0 3 3 0 016 0z"
-              />
+              <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/>
             </svg>
             <span className="text-xs font-medium">Staff</span>
           </Link>
