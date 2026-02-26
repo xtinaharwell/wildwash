@@ -133,7 +133,7 @@ export default function StaffDashboard(): React.ReactElement {
     }
 
     // If user is logged in but not staff, show access denied (don't redirect to login)
-    if (!stored.user?.is_staff && !stored.user?.is_superuser) {
+    if (stored.user?.role !== 'staff' && stored.user?.role !== 'admin' && !stored.user?.is_superuser) {
       setLoading(false);
       setError('You do not have permission to access the staff dashboard.');
       return;
