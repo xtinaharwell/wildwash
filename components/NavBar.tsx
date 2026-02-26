@@ -260,6 +260,28 @@ export default function NavBar() {
                           Your Orders
                         </Link>
                       )}
+                      {userRole === 'admin' && (
+                        <>
+                          <div className="border-t border-slate-200 dark:border-slate-700 my-1"></div>
+                          <Link
+                            href="/admin"
+                            className="block px-4 py-2 text-sm font-semibold text-amber-600 dark:text-amber-400 hover:bg-amber-50 dark:hover:bg-amber-900/20"
+                            onClick={() => setProfileOpen(false)}>
+                            🔐 Admin Dashboard
+                          </Link>
+                        </>
+                      )}
+                      {userRole === 'staff' && (
+                        <>
+                          <div className="border-t border-slate-200 dark:border-slate-700 my-1"></div>
+                          <Link
+                            href="/staff"
+                            className="block px-4 py-2 text-sm font-semibold text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20"
+                            onClick={() => setProfileOpen(false)}>
+                            👷 Staff Panel
+                          </Link>
+                        </>
+                      )}
                       <button
                         onClick={handleLogout}
                         className="hidden md:block w-full text-left px-4 py-2 text-sm text-red-600 dark:text-red-400 hover:bg-slate-100 dark:hover:bg-slate-700">
@@ -391,6 +413,32 @@ export default function NavBar() {
               </svg>
               <span className="text-xs font-medium text-center">Casino</span>
             </Link>
+
+            {/* Admin Dashboard - only for admin users */}
+            {userRole === 'admin' && (
+              <Link
+                href="/admin"
+                className="flex flex-col items-center justify-center p-4 rounded-xl bg-gradient-to-br from-yellow-50 to-yellow-100 dark:from-yellow-900/30 dark:to-yellow-800/30 hover:from-yellow-100 hover:to-yellow-200 dark:hover:from-yellow-900/50 dark:hover:to-yellow-800/50 transition-colors group"
+                onClick={() => setAppsOpen(false)}>
+                <svg className="w-8 h-8 text-yellow-600 dark:text-yellow-400 mb-2 group-hover:scale-110 transition-transform" fill="currentColor" viewBox="0 0 24 24">
+                  <path d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4zm-2 16h4v-5h-4v5zm2-7c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2z"/>
+                </svg>
+                <span className="text-xs font-medium text-center">Admin</span>
+              </Link>
+            )}
+
+            {/* Staff Panel - only for staff users */}
+            {userRole === 'staff' && (
+              <Link
+                href="/staff"
+                className="flex flex-col items-center justify-center p-4 rounded-xl bg-gradient-to-br from-indigo-50 to-indigo-100 dark:from-indigo-900/30 dark:to-indigo-800/30 hover:from-indigo-100 hover:to-indigo-200 dark:hover:from-indigo-900/50 dark:hover:to-indigo-800/50 transition-colors group"
+                onClick={() => setAppsOpen(false)}>
+                <svg className="w-8 h-8 text-indigo-600 dark:text-indigo-400 mb-2 group-hover:scale-110 transition-transform" fill="currentColor" viewBox="0 0 24 24">
+                  <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/>
+                </svg>
+                <span className="text-xs font-medium text-center">Staff</span>
+              </Link>
+            )}
           </div>
         </div>
       )}
