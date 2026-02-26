@@ -24,7 +24,7 @@ export default function Page() {
   const [dropoffAddress, setDropoffAddress] = useState("");
   const [sameAsPickup, setSameAsPickup] = useState(true);
   const [userProfile, setUserProfile] = useState<any>(null);
-  const [deliveryHours, setDeliveryHours] = useState(24); // Delivery time in hours (1-72)
+  const [deliveryHours, setDeliveryHours] = useState(72); // Delivery time in hours (default 72 for economy pricing)
   const [sending, setSending] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
   const [serverErrors, setServerErrors] = useState<any | null>(null);
@@ -86,13 +86,15 @@ export default function Page() {
   // Calculate price multiplier based on exact delivery hours with smooth interpolation
   const calculatePriceMultiplier = (hours: number): number => {
     // Define key price points for smooth pricing curve
+    // Slower delivery = Lower price (minimum 1.0x = base price)
+    // Faster delivery = Higher price
     // Hours -> Multiplier
-    // 6h = 2.0x (express)
-    // 12h = 1.6x (fast)
+    // 6h = 2.0x (express, most expensive)
+    // 12h = 1.6x (faster)
     // 24h = 1.3x (fast)
-    // 36h = 1.1x (normal)
+    // 36h = 1.1x 
     // 48h = 1.0x (normal)
-    // 72h = 0.7x (economy)
+    // 72h = 1.0x (economy, cheapest = base price)
     
     const pricePoints = [
       { hours: 6, multiplier: 2.0 },
@@ -100,7 +102,7 @@ export default function Page() {
       { hours: 24, multiplier: 1.3 },
       { hours: 36, multiplier: 1.1 },
       { hours: 48, multiplier: 1.0 },
-      { hours: 72, multiplier: 0.7 },
+      { hours: 72, multiplier: 1.0 },
     ];
 
     // Find the two surrounding points for interpolation
@@ -115,8 +117,8 @@ export default function Page() {
       }
     }
 
-    // If beyond all points, return the last one
-    return pricePoints[pricePoints.length - 1].multiplier;
+    // If beyond all points, return the last one (1.0x minimum)
+    return Math.max(pricePoints[pricePoints.length - 1].multiplier, 1.0);
   };
 
   // Format delivery speed label based on exact multiplier
@@ -124,13 +126,14 @@ export default function Page() {
     const multiplier = calculatePriceMultiplier(hours);
     if (multiplier >= 2.0) return "Express";
     if (multiplier >= 1.5) return "Fast";
-    if (multiplier >= 1.0) return "Normal";
-    return "Economy";
+    if (multiplier > 1.0) return "Normal";
+    if (hours >= 48) return "Economy";
+    return "Standard";
   };
 
   // Calculate minimum delivery hours based on items in cart
   const calculateMinDeliveryHours = (): number => {
-    if (cartItems.length === 0) return 6; // Default minimum if no items
+    if (cartItems.length === 0) return 72; // Default minimum if no items (economy)
     
     // Get the maximum processing time from all items
     const maxProcessingTime = Math.max(
@@ -277,7 +280,7 @@ export default function Page() {
         setPickupContact("");
         setDropoffAddress("");
         setSameAsPickup(false);
-        setDeliveryHours(24);
+        setDeliveryHours(72);
         setFieldErrors({}); // Clear all validation errors
         
         // Redirect to orders page after a short delay
@@ -623,7 +626,7 @@ export default function Page() {
                 setPickupContact("");
                 setDropoffAddress("");
                 setSameAsPickup(false);
-                setDeliveryHours(24);
+                setDeliveryHours(72);
                 setFieldErrors({}); // Clear validation errors
                 resetMessage();
               }} 
