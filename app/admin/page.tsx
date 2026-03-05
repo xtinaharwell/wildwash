@@ -4,6 +4,18 @@ import React, { useEffect, useState, useCallback } from "react";
 import Link from "next/link";
 import RouteGuard from "@/components/RouteGuard";
 import { client } from "@/lib/api/client";
+import { useDispatch, useSelector } from "react-redux";
+import { RootState, AppDispatch } from "@/redux/store";
+import {
+  fetchOrders,
+  fetchLocations,
+  fetchUsers,
+  fetchLoans,
+  fetchTradeIns,
+  fetchBNPL,
+  fetchTransactions,
+  setAdminApiClient,
+} from "@/redux/features/adminSlice";
 import {
   LineChart,
   Line,
@@ -46,8 +58,8 @@ type RiderLocation = {
   id?: number;
   rider?: string | number | null;
   rider_display?: string | null;
-  latitude?: number | string;
-  longitude?: number | string;
+  latitude?: number | string | null;
+  longitude?: number | string | null;
   accuracy?: number | null;
   speed?: number | null;
   recorded_at?: string | null;
@@ -124,13 +136,43 @@ type BNPLUser = {
 
 /* --- Component --- */
 export default function AdminPage(): React.ReactElement {
-  const [orders, setOrders] = useState<Order[]>([]);
-  const [locations, setLocations] = useState<RiderLocation[]>([]);
-  const [users, setUsers] = useState<User[]>([]);
-  const [loans, setLoans] = useState<LoanApplication[]>([]);
-  const [tradeIns, setTradeIns] = useState<TradeIn[]>([]);
-  const [bnplUsers, setBnplUsers] = useState<BNPLUser[]>([]);
-  const [activeTab, setActiveTab] = useState<'orders' | 'riders' | 'users' | 'loans' | 'tradeins' | 'bnpl' | 'analytics'>('orders');
+  const dispatch = useDispatch<AppDispatch>();
+
+  // Redux state
+  const adminState = useSelector((state: RootState) => state.admin);
+  const {
+    orders,
+    locations,
+    users,
+    loans,
+    tradeIns,
+    bnplUsers,
+    transactions,
+    ordersLoading,
+    locationsLoading,
+    usersLoading,
+    loansLoading,
+    tradeInsLoading,
+    bnplLoading,
+    transactionsLoading,
+    ordersRefreshing,
+    locationsRefreshing,
+    usersRefreshing,
+    loansRefreshing,
+    tradeInsRefreshing,
+    bnplRefreshing,
+    transactionsRefreshing,
+    ordersError,
+    locationsError,
+    usersError,
+    loansError,
+    tradeInsError,
+    bnplError,
+    transactionsError,
+  } = adminState;
+
+  // Local UI state
+  const [activeTab, setActiveTab] = useState<'orders' | 'riders' | 'users' | 'loans' | 'tradeins' | 'bnpl' | 'transactions' | 'analytics'>('orders');
   const [statusFilter, setStatusFilter] = useState<string>('');
   const [riderFilter, setRiderFilter] = useState<string>('');
   const [locationFilter, setLocationFilter] = useState<string>('');
@@ -144,22 +186,24 @@ export default function AdminPage(): React.ReactElement {
   const [loanStatusFilter, setLoanStatusFilter] = useState<string>('');
   const [tradeInStatusFilter, setTradeInStatusFilter] = useState<string>('');
   const [bnplSearchQuery, setBnplSearchQuery] = useState<string>('');
-
-  const [loadingOrders, setLoadingOrders] = useState<boolean>(true);
-  const [loadingLocations, setLoadingLocations] = useState<boolean>(true);
-  const [loadingUsers, setLoadingUsers] = useState<boolean>(true);
-  const [loadingLoans, setLoadingLoans] = useState<boolean>(true);
-  const [loadingTradeIns, setLoadingTradeIns] = useState<boolean>(true);
-  const [loadingBNPL, setLoadingBNPL] = useState<boolean>(true);
-
-  const [errorOrders, setErrorOrders] = useState<string | null>(null);
-  const [errorLocations, setErrorLocations] = useState<string | null>(null);
-  const [errorUsers, setErrorUsers] = useState<string | null>(null);
-  const [errorLoans, setErrorLoans] = useState<string | null>(null);
-  const [errorTradeIns, setErrorTradeIns] = useState<string | null>(null);
-  const [errorBNPL, setErrorBNPL] = useState<string | null>(null);
-
+  const [transactionStatusFilter, setTransactionStatusFilter] = useState<string>('');
+  const [transactionProviderFilter, setTransactionProviderFilter] = useState<string>('');
   const [selectedLoan, setSelectedLoan] = useState<LoanApplication | null>(null);
+
+  // User Management States
+  const [selectedUser, setSelectedUser] = useState<User | null>(null);
+  const [editModalOpen, setEditModalOpen] = useState(false);
+  const [editFormData, setEditFormData] = useState({ first_name: '', last_name: '', email: '', phone: '' });
+  const [userActionLoading, setUserActionLoading] = useState(false);
+  const [userActionError, setUserActionError] = useState<string | null>(null);
+  const [userActionSuccess, setUserActionSuccess] = useState<string | null>(null);
+  const [activityLogs, setActivityLogs] = useState<any[]>([]);
+  const [selectedUserForLogs, setSelectedUserForLogs] = useState<User | null>(null);
+
+  // Initialize Redux API client once
+  useEffect(() => {
+    setAdminApiClient(client);
+  }, []);
 
   // Helper function to calculate price from order_items with quantities
   const calculateOrderPrice = (order: any): number => {
@@ -173,221 +217,115 @@ export default function AdminPage(): React.ReactElement {
     return Number(order.total_price ?? order.price ?? order.price_display ?? 0);
   };
 
-  const fetchOrders = useCallback(async () => {
-    setLoadingOrders(true);
-    setErrorOrders(null);
+  // User Management Functions
+  const updateUserDetails = useCallback(async (userId: number, data: any) => {
+    setUserActionLoading(true);
+    setUserActionError(null);
     try {
-      const data = await client.get("/orders/?page_size=100");
-      const list: any[] = Array.isArray(data) ? data : Array.isArray(data?.results) ? data.results : [];
-      setOrders(
-        list.map((o: any) => ({
-          id: o.id,
-          code: o.code,
-          created_at: o.created_at,
-          price: calculateOrderPrice(o),
-          status: o.status ?? o.status_code ?? o.state ?? "unknown",
-          rider: typeof o.rider === 'object' 
-            ? (o.rider?.username || o.rider?.first_name || o.rider?.name || null)
-            : o.rider ?? o.user ?? null,
-          raw: o,
-        }))
-      );
+      await client.patch(`/users/users/${userId}/`, {
+        first_name: data.first_name,
+        last_name: data.last_name,
+        email: data.email,
+        phone_number: data.phone,
+      });
+      setUserActionSuccess('User details updated successfully');
+      setEditModalOpen(false);
+      dispatch(fetchUsers());
+      setTimeout(() => setUserActionSuccess(null), 3000);
     } catch (err: any) {
-      console.error("fetchOrders error:", err);
-      setErrorOrders(err?.message ?? "Failed to load orders");
-      setOrders([]);
+      setUserActionError(err?.message ?? 'Failed to update user');
     } finally {
-      setLoadingOrders(false);
+      setUserActionLoading(false);
+    }
+  }, [dispatch]);
+
+  const resetUserPassword = useCallback(async (userId: number, email: string) => {
+    setUserActionLoading(true);
+    setUserActionError(null);
+    try {
+      await client.post('/users/password-reset/', { email });
+      setUserActionSuccess('Password reset email sent successfully');
+      setTimeout(() => setUserActionSuccess(null), 3000);
+    } catch (err: any) {
+      setUserActionError(err?.message ?? 'Failed to send password reset email');
+    } finally {
+      setUserActionLoading(false);
     }
   }, []);
 
-  const fetchLocations = useCallback(async () => {
-    setLoadingLocations(true);
-    setErrorLocations(null);
+  const changeUserRole = useCallback(async (userId: number, newRole: string) => {
+    setUserActionLoading(true);
+    setUserActionError(null);
     try {
-      // Use authenticated client for rider locations
-      const data = await client.get("/riders/");
-      const list: any[] = Array.isArray(data) ? data : Array.isArray(data?.results) ? data.results : [];
-
-      setLocations(
-        list.map((l: any) => ({
-          id: l.id,
-          rider: l.rider ?? null,
-          rider_display: l.rider_display ?? (l.rider && l.rider.username) ?? null,
-          latitude: l.latitude ?? l.lat ?? null,
-          longitude: l.longitude ?? l.lon ?? l.lng ?? null,
-          accuracy: l.accuracy ?? null,
-          speed: l.speed ?? null,
-          recorded_at: l.recorded_at ?? l.created_at ?? null,
-          raw: l,
-        }))
-      );
+      const payload: any = {};
+      if (newRole === 'admin') {
+        payload.is_superuser = true;
+        payload.is_staff = true;
+      } else if (newRole === 'staff') {
+        payload.is_staff = true;
+        payload.is_superuser = false;
+      } else {
+        payload.is_staff = false;
+        payload.is_superuser = false;
+        payload.role = newRole || 'customer';
+      }
+      await client.patch(`/users/users/${userId}/`, payload);
+      setUserActionSuccess(`User role changed to ${newRole}`);
+      dispatch(fetchUsers());
+      setTimeout(() => setUserActionSuccess(null), 3000);
     } catch (err: any) {
-      console.error("fetchLocations error:", err);
-      setErrorLocations(err?.message ?? "Failed to load rider locations");
-      setLocations([]);
+      setUserActionError(err?.message ?? 'Failed to change user role');
     } finally {
-      setLoadingLocations(false);
+      setUserActionLoading(false);
+    }
+  }, [dispatch]);
+
+  const toggleUserStatus = useCallback(async (userId: number, shouldDeactivate: boolean) => {
+    setUserActionLoading(true);
+    setUserActionError(null);
+    try {
+      await client.patch(`/users/users/${userId}/`, { is_active: !shouldDeactivate });
+      setUserActionSuccess(shouldDeactivate ? 'User account suspended' : 'User account reactivated');
+      dispatch(fetchUsers());
+      setTimeout(() => setUserActionSuccess(null), 3000);
+    } catch (err: any) {
+      setUserActionError(err?.message ?? 'Failed to change user status');
+    } finally {
+      setUserActionLoading(false);
+    }
+  }, [dispatch]);
+
+  const fetchActivityLogs = useCallback(async (userId: number) => {
+    try {
+      const response = await client.get(`/users/users/${userId}/activity-logs/`);
+      setActivityLogs(Array.isArray(response) ? response : response?.results ?? []);
+    } catch (err: any) {
+      console.error('Failed to load activity logs:', err);
+      setActivityLogs([]);
     }
   }, []);
 
-  const fetchUsers = useCallback(async () => {
-    setLoadingUsers(true);
-    setErrorUsers(null);
-    try {
-      // Use authenticated client to fetch users from the correct endpoint
-      const data = await client.get("/users/users/?page_size=100");
-      const list: any[] = Array.isArray(data) ? data : Array.isArray(data?.results) ? data.results : [];
+  const openEditModal = (user: User) => {
+    setSelectedUser(user);
+    setEditFormData({
+      first_name: user.first_name || '',
+      last_name: user.last_name || '',
+      email: user.email || '',
+      phone: user.phone || '',
+    });
+    setEditModalOpen(true);
+  };
 
-      setUsers(
-        list.map((u: any) => ({
-          id: u.id,
-          username: u.username,
-          email: u.email,
-          phone: u.phone ?? u.phone_number ?? null,
-          first_name: u.first_name,
-          last_name: u.last_name,
-          role: u.role ?? null,
-          location: u.location ?? null,
-          is_staff: u.is_staff ?? false,
-          is_superuser: u.is_superuser ?? false,
-          date_joined: u.date_joined,
-          created_at: u.created_at,
-          raw: u,
-        }))
-      );
-    } catch (err: any) {
-      console.error("fetchUsers error:", err);
-      setErrorUsers(err?.message ?? "Failed to load users");
-      setUsers([]);
-    } finally {
-      setLoadingUsers(false);
-    }
-  }, []);
-
-  const fetchLoans = useCallback(async () => {
-    setLoadingLoans(true);
-    setErrorLoans(null);
-    try {
-      const data = await client.get("/loans/loans/?page_size=100");
-      const list: any[] = Array.isArray(data) ? data : Array.isArray(data?.results) ? data.results : [];
-
-      setLoans(
-        list.map((l: any) => {
-          // Extract user information from the loan object
-          const userData = l.user || {};
-          const userName = userData.first_name && userData.last_name 
-            ? `${userData.first_name} ${userData.last_name}` 
-            : userData.username || "Unknown User";
-          
-          return {
-            id: l.id,
-            loan_type: l.loan_type ?? "unknown",
-            loan_amount: l.loan_amount ?? 0,
-            duration_days: l.duration_days ?? 0,
-            purpose: l.purpose ?? "",
-            status: l.status ?? "pending",
-            total_repayment: l.total_repayment ?? 0,
-            created_at: l.created_at,
-            approved_at: l.approved_at,
-            order_code: l.order_code,
-            user_id: userData.id ?? l.user_id,
-            user_name: userName,
-            user_email: userData.email ?? l.user_email,
-            user_phone: userData.phone ?? userData.phone_number ?? l.user_phone,
-            guarantors: l.guarantors ?? [],
-            raw: l,
-          };
-        })
-      );
-    } catch (err: any) {
-      console.error("fetchLoans error:", err);
-      setErrorLoans(err?.message ?? "Failed to load loan applications");
-      setLoans([]);
-    } finally {
-      setLoadingLoans(false);
-    }
-  }, []);
-
-  const fetchTradeIns = useCallback(async () => {
-    setLoadingTradeIns(true);
-    setErrorTradeIns(null);
-    try {
-      const data = await client.get("/payments/tradein/?page_size=100");
-      const list: any[] = Array.isArray(data) ? data : Array.isArray(data?.results) ? data.results : [];
-
-      setTradeIns(
-        list.map((t: any) => {
-          const userData = t.user || {};
-          const userName = userData.first_name && userData.last_name 
-            ? `${userData.first_name} ${userData.last_name}` 
-            : userData.username || "Unknown User";
-          
-          return {
-            id: t.id,
-            user_id: userData.id ?? t.user_id,
-            user_name: userName,
-            user_phone: userData.phone ?? userData.phone_number,
-            description: t.description ?? "",
-            estimated_price: t.estimated_price ?? 0,
-            contact_phone: t.contact_phone ?? "",
-            status: t.status ?? "pending",
-            created_at: t.created_at,
-            raw: t,
-          };
-        })
-      );
-    } catch (err: any) {
-      console.error("fetchTradeIns error:", err);
-      setErrorTradeIns(err?.message ?? "Failed to load trade-ins");
-      setTradeIns([]);
-    } finally {
-      setLoadingTradeIns(false);
-    }
-  }, []);
-
-  const fetchBNPL = useCallback(async () => {
-    setLoadingBNPL(true);
-    setErrorBNPL(null);
-    try {
-      const data = await client.get("/payments/bnpl/users/?page_size=100");
-      const list: any[] = Array.isArray(data) ? data : Array.isArray(data?.results) ? data.results : [];
-
-      setBnplUsers(
-        list.map((b: any) => {
-          return {
-            id: b.id,
-            user_id: b.user,
-            user_name: b.user_name || "Unknown User",
-            user_phone: b.user_phone,
-            is_enrolled: b.is_enrolled ?? false,
-            is_active: b.is_active ?? false,
-            credit_limit: b.credit_limit ?? 0,
-            current_balance: b.current_balance ?? 0,
-            created_at: b.created_at,
-            updated_at: b.updated_at,
-            raw: b,
-          };
-        })
-      );
-    } catch (err: any) {
-      console.error("fetchBNPL error:", err);
-      setErrorBNPL(err?.message ?? "Failed to load BNPL users");
-      setBnplUsers([]);
-    } finally {
-      setLoadingBNPL(false);
-    }
-  }, []);
-
+  // Initial data load
   useEffect(() => {
-    // initial load
-    fetchOrders();
-    fetchLocations();
-    fetchUsers();
-    fetchLoans();
-    fetchTradeIns();
-    fetchBNPL();
-  }, [fetchOrders, fetchLocations, fetchUsers, fetchLoans, fetchTradeIns, fetchBNPL]);
+    dispatch(fetchOrders());
+    dispatch(fetchLocations());
+    dispatch(fetchUsers());
+    dispatch(fetchLoans());
+    dispatch(fetchTradeIns());
+    dispatch(fetchBNPL());
+    dispatch(fetchTransactions());
+  }, [dispatch]);
 
   // Derived metrics
   const totalOrders = orders.length;
@@ -426,12 +364,28 @@ export default function AdminPage(): React.ReactElement {
   );
 
   const refreshAll = async () => {
-    await Promise.all([fetchOrders(), fetchLocations(), fetchUsers(), fetchLoans(), fetchTradeIns(), fetchBNPL()]);
+    dispatch(fetchOrders());
+    dispatch(fetchLocations());
+    dispatch(fetchUsers());
+    dispatch(fetchLoans());
+    dispatch(fetchTradeIns());
+    dispatch(fetchBNPL());
+    dispatch(fetchTransactions());
   };
 
   // filter helpers
+  const getRiderName = (rider: any): string => {
+    if (!rider) return '';
+    if (typeof rider === 'string') return rider;
+    if (typeof rider === 'number') return String(rider);
+    if (typeof rider === 'object') {
+      return rider.username || rider.first_name || rider.name || String(rider.id || '');
+    }
+    return '';
+  };
+
   const availableStatuses = Array.from(new Set(orders.map(o => (o.status ?? '').toString()))).filter(Boolean);
-  const availableRiders = Array.from(new Set(orders.map(o => (o.rider ?? '').toString()))).filter(Boolean);
+  const availableRiders = Array.from(new Set(orders.map(o => getRiderName(o.rider)))).filter(Boolean);
   const availableLocations = Array.from(new Set(orders.map(o => (o.raw?.user?.location || '').toString()))).filter(Boolean);
 
   const getDateRange = useCallback(() => {
@@ -470,7 +424,7 @@ export default function AdminPage(): React.ReactElement {
 
   const filteredOrders = orders.filter(o => {
     if (statusFilter && String(o.status ?? '').toLowerCase() !== statusFilter.toLowerCase()) return false;
-    if (riderFilter && String(o.rider ?? '').toLowerCase() !== riderFilter.toLowerCase()) return false;
+    if (riderFilter && getRiderName(o.rider).toLowerCase() !== riderFilter.toLowerCase()) return false;
     if (locationFilter) {
       const customerLocation = (o.raw?.user?.location || '').toLowerCase();
       if (customerLocation !== locationFilter.toLowerCase()) return false;
@@ -478,7 +432,7 @@ export default function AdminPage(): React.ReactElement {
     if (searchQuery) {
       const q = searchQuery.toLowerCase();
       const matchesCode = String(o.code ?? '').toLowerCase().includes(q);
-      const matchesRider = String(o.rider ?? '').toLowerCase().includes(q);
+      const matchesRider = getRiderName(o.rider).toLowerCase().includes(q);
       if (!matchesCode && !matchesRider) return false;
     }
 
@@ -538,18 +492,19 @@ export default function AdminPage(): React.ReactElement {
 
   // Compute body JSX separately to avoid complex inline nested ternaries in JSX
   const body = (() => {
-    if (loadingOrders || loadingLocations) {
+    // Show full loading only on initial load (first time fetching)
+    if (ordersLoading || locationsLoading) {
       return (
         <div className="flex justify-center items-center py-20">
           <Loader2 className="animate-spin text-red-600 w-6 h-6" />
         </div>
       );
     }
-    if (errorOrders || errorLocations) {
+    if (ordersError || locationsError) {
       return (
         <div className="py-8">
-          {errorOrders && <div className="mb-2 text-red-600 flex items-center gap-2"><AlertCircle className="w-4 h-4"/> Orders error: {errorOrders}</div>}
-          {errorLocations && <div className="text-red-600 flex items-center gap-2"><AlertCircle className="w-4 h-4"/> Riders error: {errorLocations}</div>}
+          {ordersError && <div className="mb-2 text-red-600 flex items-center gap-2"><AlertCircle className="w-4 h-4"/> Orders error: {ordersError}</div>}
+          {locationsError && <div className="text-red-600 flex items-center gap-2"><AlertCircle className="w-4 h-4"/> Riders error: {locationsError}</div>}
         </div>
       );
     }
@@ -617,6 +572,16 @@ export default function AdminPage(): React.ReactElement {
             }`}
           >
             BNPL
+          </button>
+          <button
+            onClick={() => setActiveTab('transactions')}
+            className={`px-3 sm:px-6 md:px-8 py-2 sm:py-3 text-xs sm:text-sm md:text-base font-semibold rounded-lg transition-all whitespace-nowrap flex-shrink-0 ${
+              activeTab === 'transactions'
+                ? 'bg-red-600 text-white shadow-lg hover:bg-red-700'
+                : 'bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700'
+            }`}
+          >
+            Transactions
           </button>
           <button
             onClick={() => setActiveTab('analytics')}
@@ -773,7 +738,7 @@ export default function AdminPage(): React.ReactElement {
                       <td className="py-3 px-4">{o.raw?.user?.first_name && o.raw?.user?.last_name ? `${o.raw.user.first_name} ${o.raw.user.last_name}` : o.raw?.user?.username || "—"}</td>
                       <td className="py-3 px-4">{o.raw?.user?.phone || "—"}</td>
                       <td className="py-3 px-4">{o.raw?.user?.location || "—"}</td>
-                      <td className="py-3 px-4">{o.rider ?? "—"}</td>
+                      <td className="py-3 px-4">{getRiderName(o.rider) || "—"}</td>
                       <td className="py-3 px-4 text-right font-medium">
                         {isNaN(Number(o.price)) || o.price === null || o.price === undefined 
                           ? '—' 
@@ -800,6 +765,142 @@ export default function AdminPage(): React.ReactElement {
                 </tbody>
               </table>
             </div>
+          </div>
+        </div>
+        )}
+
+        {/* Recent Transactions - Transactions Tab */}
+        {activeTab === 'transactions' && (
+        <div className="mb-8">
+          <div className="rounded-2xl bg-white/80 dark:bg-slate-900/50 backdrop-blur-sm p-6 shadow-lg shadow-slate-200/20 dark:shadow-slate-900/30 border border-slate-200/50 dark:border-slate-700/50">
+            <h2 className="text-xl font-semibold mb-4 text-slate-900 dark:text-white">Recent Transactions</h2>
+
+            {transactionsError && (
+              <div className="mb-4 p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg text-red-600 dark:text-red-400 flex items-center gap-2">
+                <AlertCircle className="w-4 h-4" />
+                {transactionsError}
+              </div>
+            )}
+
+            {/* Filters */}
+            <div className="mb-4 flex flex-wrap items-center gap-3">
+              <div className="flex-1 min-w-[200px]">
+                <select
+                  value={transactionStatusFilter}
+                  onChange={(e) => setTransactionStatusFilter(e.target.value)}
+                  className="w-full rounded-lg border border-slate-200 bg-white/50 backdrop-blur-sm dark:border-slate-800 dark:bg-slate-900/50 px-3 py-2 text-sm transition-shadow duration-200 hover:bg-white dark:hover:bg-slate-900 focus:outline-none focus:ring-2 focus:ring-red-500/20"
+                >
+                  <option value="">All statuses</option>
+                  <option value="success">Success</option>
+                  <option value="pending">Pending</option>
+                  <option value="failed">Failed</option>
+                  <option value="initiated">Initiated</option>
+                </select>
+              </div>
+
+              <div className="flex-1 min-w-[200px]">
+                <select
+                  value={transactionProviderFilter}
+                  onChange={(e) => setTransactionProviderFilter(e.target.value)}
+                  className="w-full rounded-lg border border-slate-200 bg-white/50 backdrop-blur-sm dark:border-slate-800 dark:bg-slate-900/50 px-3 py-2 text-sm transition-shadow duration-200 hover:bg-white dark:hover:bg-slate-900 focus:outline-none focus:ring-2 focus:ring-red-500/20"
+                >
+                  <option value="">All providers</option>
+                  <option value="mpesa">M-Pesa</option>
+                </select>
+              </div>
+
+              <button
+                onClick={() => {
+                  setTransactionStatusFilter('');
+                  setTransactionProviderFilter('');
+                  dispatch(fetchTransactions());
+                }}
+                className="px-4 py-2 bg-slate-300 dark:bg-slate-700 rounded-lg hover:bg-slate-400 dark:hover:bg-slate-600 transition-all font-medium text-sm"
+              >
+                Reset
+              </button>
+            </div>
+
+            {transactionsLoading && !transactionsRefreshing ? (
+              <div className="flex justify-center items-center py-10">
+                <Loader2 className="animate-spin text-red-600 w-6 h-6" />
+              </div>
+            ) : (
+              <div className="overflow-x-auto overflow-y-auto max-h-[600px] scrollbar-thin scrollbar-thumb-gray-400 scrollbar-track-gray-100 dark:scrollbar-thumb-gray-600 dark:scrollbar-track-gray-800 relative">
+                {transactionsRefreshing && (
+                  <div className="absolute inset-0 z-10 pointer-events-none flex items-start justify-center pt-2">
+                    <div className="bg-blue-500 text-white px-2 py-1 rounded text-xs flex items-center gap-1 opacity-75">
+                      <Loader2 className="w-3 h-3 animate-spin" />
+                      Refreshing...
+                    </div>
+                  </div>
+                )}
+                <table className="min-w-full text-sm divide-y divide-slate-200/50 dark:divide-slate-800/50">
+                  <thead className="text-slate-600 dark:text-slate-400 sticky top-0 bg-white/50 dark:bg-slate-900/50">
+                    <tr>
+                      <th className="text-left py-3 px-4 font-medium">ID</th>
+                      <th className="text-left py-3 px-4 font-medium">User</th>
+                      <th className="text-left py-3 px-4 font-medium">Phone</th>
+                      <th className="text-right py-3 px-4 font-medium">Amount</th>
+                      <th className="text-center py-3 px-4 font-medium">Provider</th>
+                      <th className="text-center py-3 px-4 font-medium">Status</th>
+                      <th className="text-left py-3 px-4 font-medium">Date</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-200/50 dark:divide-slate-800/50">
+                    {transactions
+                      .filter(t => {
+                        if (transactionStatusFilter && t.status !== transactionStatusFilter) return false;
+                        if (transactionProviderFilter && t.provider !== transactionProviderFilter) return false;
+                        return true;
+                      })
+                      .slice(0, 100)
+                      .map((t) => (
+                        <tr key={t.id} className="hover:bg-slate-50/50 dark:hover:bg-slate-800/50 transition-colors duration-150">
+                          <td className="py-3 px-4 font-mono text-xs text-slate-600 dark:text-slate-400">{t.id}</td>
+                          <td className="py-3 px-4 font-medium text-indigo-600 dark:text-indigo-400">{t.user_name || '—'}</td>
+                          <td className="py-3 px-4 text-slate-600 dark:text-slate-400">{t.user_phone}</td>
+                          <td className="py-3 px-4 text-right font-semibold text-slate-900 dark:text-white">
+                            {t.currency} {Number(t.amount).toLocaleString()}
+                          </td>
+                          <td className="py-3 px-4 text-center">
+                            <span className="inline-flex px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400 uppercase">
+                              {t.provider}
+                            </span>
+                          </td>
+                          <td className="py-3 px-4 text-center">
+                            <span className={`inline-flex px-2 py-1 rounded-full text-xs font-medium ${
+                              t.status === 'success' ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400' :
+                              t.status === 'failed' ? 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400' :
+                              t.status === 'pending' ? 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400' :
+                              'bg-slate-100 text-slate-800 dark:bg-slate-700/30 dark:text-slate-300'
+                            }`}>
+                              {t.status}
+                            </span>
+                          </td>
+                          <td className="py-3 px-4 text-slate-600 dark:text-slate-400 whitespace-nowrap">
+                            {t.created_at ? new Date(t.created_at).toLocaleString() : '—'}
+                          </td>
+                        </tr>
+                      ))}
+                    {transactions.filter(t => {
+                      if (transactionStatusFilter && t.status !== transactionStatusFilter) return false;
+                      if (transactionProviderFilter && t.provider !== transactionProviderFilter) return false;
+                      return true;
+                    }).length === 0 && (
+                      <tr>
+                        <td colSpan={7} className="py-8 text-center text-slate-500">
+                          <div className="flex flex-col items-center gap-2">
+                            <DollarSign className="w-6 h-6" />
+                            <span>No transactions found</span>
+                          </div>
+                        </td>
+                      </tr>
+                    )}
+                  </tbody>
+                </table>
+              </div>
+            )}
           </div>
         </div>
         )}
@@ -901,13 +1002,13 @@ export default function AdminPage(): React.ReactElement {
               </button>
             </div>
 
-            {loadingLoans ? (
+            {loansLoading ? (
               <div className="flex justify-center items-center py-10">
                 <Loader2 className="animate-spin text-red-600 w-6 h-6" />
               </div>
-            ) : errorLoans ? (
+            ) : loansError ? (
               <div className="p-4 text-red-600 dark:text-red-400 bg-red-100 dark:bg-red-900/30 rounded-lg flex items-center gap-2">
-                <AlertCircle className="w-4 h-4" /> {errorLoans}
+                <AlertCircle className="w-4 h-4" /> {loansError}
               </div>
             ) : (
               <div className="overflow-x-auto">
@@ -1192,10 +1293,19 @@ export default function AdminPage(): React.ReactElement {
                     const total = riderOrders.length;
                     const successRate = total > 0 ? ((completed / total) * 100).toFixed(1) : '0';
                     
+                    // Safely get location name from nested service_location
+                    const getLocationName = () => {
+                      const svcLoc = riderOrders[0]?.raw?.rider?.service_location;
+                      if (!svcLoc) return '—';
+                      if (typeof svcLoc === 'string') return svcLoc;
+                      if (typeof svcLoc === 'object' && svcLoc?.name) return String(svcLoc.name);
+                      return '—';
+                    };
+                    
                     return (
                       <tr key={rider} className="border-b border-slate-100 dark:border-slate-800 hover:bg-slate-50/50 dark:hover:bg-slate-800/50">
                         <td className="py-3 px-4 font-medium">{rider}</td>
-                        <td className="py-3 px-4">{riderOrders[0]?.raw?.rider?.service_location?.name || "—"}</td>
+                        <td className="py-3 px-4">{getLocationName()}</td>
                         <td className="py-3 px-4 text-center">{total}</td>
                         <td className="py-3 px-4 text-center text-green-600">{completed}</td>
                         <td className="py-3 px-4 text-center text-blue-600">{inProgress}</td>
@@ -1205,7 +1315,7 @@ export default function AdminPage(): React.ReactElement {
                   })}
                   {availableRiders.length === 0 && (
                     <tr>
-                      <td colSpan={5} className="py-8 text-center text-slate-500">No riders found.</td>
+                      <td colSpan={6} className="py-8 text-center text-slate-500">No riders found.</td>
                     </tr>
                   )}
                 </tbody>
@@ -1221,10 +1331,10 @@ export default function AdminPage(): React.ReactElement {
           <div className="rounded-2xl bg-white/80 dark:bg-slate-900/50 backdrop-blur-sm p-6 shadow-lg shadow-slate-200/20 dark:shadow-slate-900/30 border border-slate-200/50 dark:border-slate-700/50">
             <h2 className="text-xl font-semibold mb-4 text-slate-900 dark:text-white">Registered Users</h2>
             
-            {errorUsers && (
+            {usersError && (
               <div className="mb-4 p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg text-red-600 dark:text-red-400 flex items-center gap-2">
                 <AlertCircle className="w-4 h-4" />
-                {errorUsers}
+                {usersError}
               </div>
             )}
 
@@ -1288,7 +1398,9 @@ export default function AdminPage(): React.ReactElement {
                     <th className="text-left py-3 px-4 font-medium">Phone</th>
                     <th className="text-left py-3 px-4 font-medium">Name</th>
                     <th className="text-center py-3 px-4 font-medium">Role</th>
+                    <th className="text-center py-3 px-4 font-medium">Status</th>
                     <th className="text-right py-3 px-4 font-medium">Joined</th>
+                    <th className="text-center py-3 px-4 font-medium">Actions</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-200/50 dark:divide-slate-800/50">
@@ -1305,12 +1417,71 @@ export default function AdminPage(): React.ReactElement {
                           {!u.is_staff && !u.is_superuser && !u.role && <span className="inline-flex px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400">User</span>}
                         </span>
                       </td>
+                      <td className="py-3 px-4 text-center">
+                        <span className={`inline-flex px-2 py-1 rounded-full text-xs font-medium ${u.raw?.is_active !== false ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400' : 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400'}`}>
+                          {u.raw?.is_active !== false ? 'Active' : 'Suspended'}
+                        </span>
+                      </td>
                       <td className="py-3 px-4 text-right text-slate-500 whitespace-nowrap">{(u.created_at || u.date_joined)?.split?.("T")?.[0] ?? "—"}</td>
+                      <td className="py-3 px-4 text-center">
+                        <div className="flex items-center justify-center gap-2">
+                          <button
+                            onClick={() => openEditModal(u)}
+                            className="px-2 py-1 text-xs bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400 rounded hover:bg-blue-200 dark:hover:bg-blue-900/50 transition-colors"
+                            title="Edit user"
+                          >
+                            Edit
+                          </button>
+                          <button
+                            onClick={() => resetUserPassword(u.id!, u.email!)}
+                            disabled={userActionLoading}
+                            className="px-2 py-1 text-xs bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400 rounded hover:bg-amber-200 dark:hover:bg-amber-900/50 transition-colors disabled:opacity-50"
+                            title="Reset password"
+                          >
+                            Reset Pwd
+                          </button>
+                          <div className="relative group">
+                            <button
+                              className="px-2 py-1 text-xs bg-slate-200 text-slate-700 dark:bg-slate-700 dark:text-slate-300 rounded hover:bg-slate-300 dark:hover:bg-slate-600 transition-colors"
+                              title="Change role"
+                            >
+                              Role ▼
+                            </button>
+                            <div className="absolute right-0 mt-1 w-32 bg-white dark:bg-slate-800 rounded-lg shadow-lg border border-slate-200 dark:border-slate-700 hidden group-hover:block z-10">
+                              <button onClick={() => changeUserRole(u.id!, 'admin')} className="w-full text-left px-3 py-2 text-xs hover:bg-slate-100 dark:hover:bg-slate-700">Make Admin</button>
+                              <button onClick={() => changeUserRole(u.id!, 'staff')} className="w-full text-left px-3 py-2 text-xs hover:bg-slate-100 dark:hover:bg-slate-700">Make Staff</button>
+                              <button onClick={() => changeUserRole(u.id!, 'customer')} className="w-full text-left px-3 py-2 text-xs hover:bg-slate-100 dark:hover:bg-slate-700">Make Customer</button>
+                            </div>
+                          </div>
+                          <button
+                            onClick={() => toggleUserStatus(u.id!, u.raw?.is_active !== false)}
+                            disabled={userActionLoading}
+                            className={`px-2 py-1 text-xs rounded transition-colors disabled:opacity-50 ${
+                              u.raw?.is_active !== false
+                                ? 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400 hover:bg-red-200 dark:hover:bg-red-900/50'
+                                : 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400 hover:bg-green-200 dark:hover:bg-green-900/50'
+                            }`}
+                            title={u.raw?.is_active !== false ? 'Suspend account' : 'Activate account'}
+                          >
+                            {u.raw?.is_active !== false ? 'Suspend' : 'Activate'}
+                          </button>
+                          <button
+                            onClick={() => {
+                              setSelectedUserForLogs(u);
+                              fetchActivityLogs(u.id!);
+                            }}
+                            className="px-2 py-1 text-xs bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400 rounded hover:bg-purple-200 dark:hover:bg-purple-900/50 transition-colors"
+                            title="View activity logs"
+                          >
+                            Logs
+                          </button>
+                        </div>
+                      </td>
                     </tr>
                   ))}
                   {filteredUsers.length === 0 && (
                     <tr>
-                      <td colSpan={5} className="py-8 text-center text-slate-500">
+                      <td colSpan={7} className="py-8 text-center text-slate-500">
                         <div className="flex flex-col items-center gap-2">
                           <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                             <circle cx="12" cy="12" r="10"/>
@@ -1327,6 +1498,140 @@ export default function AdminPage(): React.ReactElement {
               </table>
             </div>
           </div>
+        </div>
+        )}
+
+        {/* Edit User Modal */}
+        {editModalOpen && selectedUser && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-2xl max-w-md w-full p-6">
+            <h3 className="text-xl font-semibold mb-4 text-slate-900 dark:text-white">Edit User Details</h3>
+            
+            {userActionError && (
+              <div className="mb-4 p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg text-sm text-red-600 dark:text-red-400 flex items-center gap-2">
+                <AlertCircle className="w-4 h-4" />
+                {userActionError}
+              </div>
+            )}
+
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">First Name</label>
+                <input
+                  type="text"
+                  value={editFormData.first_name}
+                  onChange={(e) => setEditFormData({ ...editFormData, first_name: e.target.value })}
+                  className="w-full rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Last Name</label>
+                <input
+                  type="text"
+                  value={editFormData.last_name}
+                  onChange={(e) => setEditFormData({ ...editFormData, last_name: e.target.value })}
+                  className="w-full rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Email</label>
+                <input
+                  type="email"
+                  value={editFormData.email}
+                  onChange={(e) => setEditFormData({ ...editFormData, email: e.target.value })}
+                  className="w-full rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Phone</label>
+                <input
+                  type="tel"
+                  value={editFormData.phone}
+                  onChange={(e) => setEditFormData({ ...editFormData, phone: e.target.value })}
+                  className="w-full rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                />
+              </div>
+            </div>
+
+            <div className="flex gap-3 mt-6">
+              <button
+                onClick={() => setEditModalOpen(false)}
+                className="flex-1 px-4 py-2 rounded-lg border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={() => updateUserDetails(selectedUser.id!, editFormData)}
+                disabled={userActionLoading}
+                className="flex-1 px-4 py-2 rounded-lg bg-blue-600 text-white hover:bg-blue-700 transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
+              >
+                {userActionLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : null}
+                Save Changes
+              </button>
+            </div>
+          </div>
+        </div>
+        )}
+
+        {/* Activity Logs Modal */}
+        {selectedUserForLogs && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-2xl max-w-2xl w-full p-6 max-h-[80vh] overflow-y-auto">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-xl font-semibold text-slate-900 dark:text-white">Activity Logs for {selectedUserForLogs.username}</h3>
+              <button
+                onClick={() => {
+                  setSelectedUserForLogs(null);
+                  setActivityLogs([]);
+                }}
+                className="text-slate-500 hover:text-slate-700 dark:hover:text-slate-300"
+              >
+                ✕
+              </button>
+            </div>
+
+            {activityLogs.length === 0 ? (
+              <div className="text-center py-8 text-slate-500">
+                <p>No activity logs found</p>
+              </div>
+            ) : (
+              <div className="space-y-3">
+                {activityLogs.map((log: any, idx: number) => (
+                  <div key={idx} className="p-4 bg-slate-50 dark:bg-slate-900/50 rounded-lg border border-slate-200 dark:border-slate-700">
+                    <div className="flex items-center justify-between mb-2">
+                      <p className="font-medium text-slate-900 dark:text-white">{log.action || 'Activity'}</p>
+                      <span className="text-xs text-slate-500">{log.timestamp?.split('T')[0]}</span>
+                    </div>
+                    {log.details && <p className="text-sm text-slate-600 dark:text-slate-400">{log.details}</p>}
+                    {log.ip_address && <p className="text-xs text-slate-500 mt-1">IP: {log.ip_address}</p>}
+                  </div>
+                ))}
+              </div>
+            )}
+
+            <button
+              onClick={() => {
+                setSelectedUserForLogs(null);
+                setActivityLogs([]);
+              }}
+              className="w-full mt-4 px-4 py-2 rounded-lg border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors"
+            >
+              Close
+            </button>
+          </div>
+        </div>
+        )}
+
+        {/* Success Message Toast */}
+        {userActionSuccess && (
+        <div className="fixed bottom-4 right-4 z-50 p-4 bg-green-100 dark:bg-green-900/30 border border-green-200 dark:border-green-800 rounded-lg text-green-700 dark:text-green-400 flex items-center gap-2 animate-pulse">
+          <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
+            <path d="M9 16.2L4.8 12l-1.4 1.4L9 19 21 7l-1.4-1.4L9 16.2z" />
+          </svg>
+          {userActionSuccess}
         </div>
         )}
 
@@ -1361,13 +1666,13 @@ export default function AdminPage(): React.ReactElement {
               </button>
             </div>
 
-            {loadingTradeIns ? (
+            {tradeInsLoading ? (
               <div className="flex justify-center items-center py-10">
                 <Loader2 className="animate-spin text-red-600 w-6 h-6" />
               </div>
-            ) : errorTradeIns ? (
+            ) : tradeInsError ? (
               <div className="p-4 text-red-600 dark:text-red-400 bg-red-100 dark:bg-red-900/30 rounded-lg flex items-center gap-2">
-                <AlertCircle className="w-4 h-4" /> {errorTradeIns}
+                <AlertCircle className="w-4 h-4" /> {tradeInsError}
               </div>
             ) : (
               <div className="overflow-x-auto">
@@ -1448,13 +1753,13 @@ export default function AdminPage(): React.ReactElement {
               </button>
             </div>
 
-            {loadingBNPL ? (
+            {bnplLoading ? (
               <div className="flex justify-center items-center py-10">
                 <Loader2 className="animate-spin text-red-600 w-6 h-6" />
               </div>
-            ) : errorBNPL ? (
+            ) : bnplError ? (
               <div className="p-4 text-red-600 dark:text-red-400 bg-red-100 dark:bg-red-900/30 rounded-lg flex items-center gap-2">
-                <AlertCircle className="w-4 h-4" /> {errorBNPL}
+                <AlertCircle className="w-4 h-4" /> {bnplError}
               </div>
             ) : (
               <div className="overflow-x-auto">

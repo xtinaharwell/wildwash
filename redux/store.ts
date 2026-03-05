@@ -5,6 +5,7 @@ import ordersReducer from './features/orderSlice';
 import authReducer from './features/authSlice';
 import cartReducer from './features/cartSlice';
 import riderOrderNotificationReducer from './features/riderOrderNotificationSlice';
+import adminReducer from './features/adminSlice';
 
 export const store = configureStore({
   reducer: {
@@ -13,6 +14,7 @@ export const store = configureStore({
     orders: ordersReducer,
     cart: cartReducer,
     riderOrderNotification: riderOrderNotificationReducer,
+    admin: adminReducer,
   },
   middleware: (getDefaultMiddleware) => getDefaultMiddleware().concat(apiSlice.middleware),
   devTools: process.env.NODE_ENV !== 'production',
