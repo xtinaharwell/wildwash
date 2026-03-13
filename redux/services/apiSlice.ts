@@ -154,7 +154,7 @@ export const apiSlice = createApi({
     }),
     // Service endpoints
     getServices: builder.query<Service[], void>({
-      query: () => '/services/',
+      query: () => '/services/?limit=100',
       transformResponse: (response: any) => {
         // Handle paginated response or direct array
         return Array.isArray(response) ? response : (response?.results || []);

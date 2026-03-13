@@ -49,28 +49,20 @@ function getImageForService(serviceName: string): string {
   if (nameLower.includes("dry") || nameLower.includes("dryclean"))
     return "Dry Cleaning.png";
   if (nameLower.includes("express")) return "Express Wash.png";
-  if (nameLower.includes("wash") || nameLower.includes("laundry"))
+  if (nameLower.includes("wash") || nameLower.includes("laundry") || nameLower.includes("clean"))
     return "Standard Wash.png";
   return "Standard Wash.png";
 }
 
 function getIconForCategory(category: string): React.ComponentType<any> {
-  switch (category) {
-    case "laundry":
-      return CheckBadgeIcon;
-    case "duvet":
-      return CubeTransparentIcon;
-    case "carpet":
-      return TrashIcon;
-    case "house":
-      return HomeModernIcon;
-    case "fumigation":
-      return BugAntIcon;
-    case "installation":
-      return WrenchIcon;
-    default:
-      return SparklesIcon;
-  }
+  const categoryLower = category?.toLowerCase() || '';
+  if (categoryLower.includes('laundry')) return CheckBadgeIcon;
+  if (categoryLower.includes('duvet')) return CubeTransparentIcon;
+  if (categoryLower.includes('carpet')) return TrashIcon;
+  if (categoryLower.includes('house')) return HomeModernIcon;
+  if (categoryLower.includes('fumigation')) return BugAntIcon;
+  if (categoryLower.includes('installation') || categoryLower.includes('mounting') || categoryLower.includes('shower')) return WrenchIcon;
+  return SparklesIcon;
 }
 
 export default function HomePage() {
@@ -152,14 +144,18 @@ export default function HomePage() {
     return matchesSearch && matchesCategory;
   });
 
-  const categories = ["laundry", "duvet", "carpet", "house", "fumigation", "installation"];
+  const categories = ["laundry", "duvet-cleaning", "carpet-cleaning", "house-cleaning", "fumigation", "sofa-cleaning", "moving-services", "storage-services", "hot-shower-installation", "tv-mounting-hot-shower-installation"];
   const categoryLabels: Record<string, string> = {
     laundry: "Laundry",
-    duvet: "Duvet",
-    carpet: "Carpet",
-    house: "Cleaning",
+    "duvet-cleaning": "Duvet",
+    "carpet-cleaning": "Carpet",
+    "house-cleaning": "Cleaning",
     fumigation: "Fumigation",
-    installation: "Install",
+    "sofa-cleaning": "Sofa",
+    "moving-services": "Moving",
+    "storage-services": "Storage",
+    "hot-shower-installation": "Hot Shower",
+    "tv-mounting-hot-shower-installation": "Install",
   };
 
   return (

@@ -4,7 +4,7 @@ import "./globals.css";
 import { NavBar, Footer, WhatsAppButton, BottomNav } from '@/components'
 import CustomProvider from '@/redux/provider';
 import AuthInitializer from '@/components/AuthInitializer';
-
+import { Analytics } from "@vercel/analytics/next"
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -40,6 +40,7 @@ export default function RootLayout({
           <BottomNav />
           <WhatsAppButton />         
           <Footer />
+          <Analytics />
         </CustomProvider>
       </body>
     </html>
